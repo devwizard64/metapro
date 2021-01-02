@@ -7,7 +7,7 @@ ifeq ($(TARGET),native)
 	LIB     := -l m -l SDL2 -l GL
 else ifeq ($(TARGET),3ds)
 	LIBCTRU := $(DEVKITPRO)/libctru
-	PICAGL  := picaGL_metapro
+	PICAGL  := picaGL
 	CC      := arm-none-eabi-gcc -march=armv6k -mtune=mpcore
 	CC      += -mfloat-abi=hard -mtp=soft -mword-relocations
 	CC      += -fomit-frame-pointer -ffunction-sections
