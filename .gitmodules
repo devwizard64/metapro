@@ -1,0 +1,3 @@
+[submodule "picaGL"]
+	path = picaGL
+	url = https://github.com/devwizard64/picaGL
