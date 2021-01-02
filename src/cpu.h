@@ -24,20 +24,24 @@ struct cache_t
 #include "app.h"
 
 #ifdef _GCN
-#define PATH_PREFIX "cardb:" SEP
-#elif defined(_3DS) && 0
-#define PATH_PREFIX "sdmc:" SEP "3ds" SEP
+#define PATH_START  "cardb:" SEP
+#elif defined(_3DS) && defined(_DEBUG)
+#define PATH_START  "sdmc:" SEP "3ds" SEP
 #else
-#define PATH_PREFIX ""
+#define PATH_START  ""
 #endif
 
-#define PATH_ROOT   PATH_PREFIX "app" SEP APP_PATH SEP
+#ifdef _NATIVE
+#define PATH_ROOT   PATH_START "app" SEP APP_PATH SEP
+#else
+#define PATH_ROOT   PATH_START
+#endif
 
-#define PATH_APP    PATH_ROOT   "app.bin"
-#define PATH_EEPROM PATH_ROOT   "eeprom.bin"
-#define PATH_DRAM   PATH_ROOT   "dram.bin"
-#define PATH_INPUT  PATH_ROOT   "input.bin"
-#define PATH_CONFIG PATH_PREFIX "config.bin"
+#define PATH_APP    PATH_ROOT  "app.bin"
+#define PATH_EEPROM PATH_ROOT  "eeprom.bin"
+#define PATH_DRAM   PATH_ROOT  "dram.bin"
+#define PATH_INPUT  PATH_ROOT  "input.bin"
+#define PATH_CONFIG PATH_START "config.bin"
 
 #ifdef _GCN
 #define IX      1

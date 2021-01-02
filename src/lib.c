@@ -1341,7 +1341,11 @@ static void lib_main(void)
             entry = thread->entry;
             asm volatile(
             #ifdef _NATIVE
+            #ifdef WIN32
+                "mov %[stack], %%esp"
+            #else
                 "mov %[stack], %%rsp"
+            #endif
             #endif
             #ifdef _3DS
                 "mov sp, %[stack]"

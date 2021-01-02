@@ -915,21 +915,15 @@ static const GLint gsp_texture_fmt_table[] =
 #endif
 
 #ifndef GSP_LEGACY
-#ifdef _3DS
-#define c_t   f32
-#else
-#define c_t   u8
-#endif
 static s16  gsp_output_vtx_buf[3*3*GSP_OUTPUT_LEN];
 static f32  gsp_output_txc_buf[2*3*GSP_OUTPUT_LEN];
-static c_t  gsp_output_col_buf[4*3*GSP_OUTPUT_LEN];
+static u8   gsp_output_col_buf[4*3*GSP_OUTPUT_LEN];
 static s16 *gsp_output_vtx;
 static f32 *gsp_output_txc;
-static c_t *gsp_output_col;
+static u8  *gsp_output_col;
 static s16 *gsp_output_v;
 static f32 *gsp_output_t;
-static c_t *gsp_output_c;
-#undef c_t
+static u8  *gsp_output_c;
 static u32  gsp_output_total;
 static u32  gsp_output_count;
 #endif
@@ -957,8 +951,8 @@ static s32  gsp_dl_index;
 static void *const gsp_movemem_table[] =
 {
     /* 0x80 G_MV_VIEWPORT */ &gsp_viewport,
-    /* 0x82 G_MV_LOOKATY  */ &gsp_light_buf[0],
-    /* 0x84 G_MV_LOOKATX  */ &gsp_light_buf[1],
+    /* 0x82 G_MV_LOOKATY  */ &gsp_light_buf[1],
+    /* 0x84 G_MV_LOOKATX  */ &gsp_light_buf[0],
     /* 0x86 G_MV_L0       */ &gsp_light_buf[2],
     /* 0x88 G_MV_L1       */ &gsp_light_buf[3],
     /* 0x8A G_MV_L2       */ &gsp_light_buf[4],
@@ -1486,7 +1480,6 @@ static void gsp_flush_rendermode(void)
 
 static void gsp_flush_scissor(void)
 {
-#ifndef _3DS
     s32 l = gsp_scissor_l;
     s32 r = gsp_scissor_r;
     s32 t = gsp_scissor_t;
@@ -1505,7 +1498,6 @@ static void gsp_flush_scissor(void)
         (  r-l) * lib_video_w/1280,
         (  b-t) * lib_video_h/ 960
     );
-#endif
 #endif
 }
 
@@ -1619,11 +1611,7 @@ static void gsp_flush_triangles(void)
     #else
         glVertexPointer(3, GL_SHORT, 0, gsp_output_vtx);
         glTexCoordPointer(2, GL_FLOAT, 0, gsp_output_txc);
-    #ifdef _3DS
-        glColorPointer(4, GL_FLOAT, 0, gsp_output_col);
-    #else
         glColorPointer(4, GL_UNSIGNED_BYTE, 0, gsp_output_col);
-    #endif
         glDrawArrays(GL_TRIANGLES, 0, gsp_output_count);
     #endif
         gsp_output_vtx = gsp_output_v;
@@ -1892,17 +1880,10 @@ static void gsp_write_triangle_init(u8 *t)
         gsp_output_v[2] = vtx->z;
         gsp_output_t[0] = vtxf->u*gsp_texture_tscale[0];
         gsp_output_t[1] = vtxf->v*gsp_texture_tscale[1];
-    #ifdef _3DS
-        gsp_output_c[0] = (1.0F/0xFF) * col[0];
-        gsp_output_c[1] = (1.0F/0xFF) * col[1];
-        gsp_output_c[2] = (1.0F/0xFF) * col[2];
-        gsp_output_c[3] = (1.0F/0xFF) * col[3];
-    #else
         gsp_output_c[0] = col[0];
         gsp_output_c[1] = col[1];
         gsp_output_c[2] = col[2];
         gsp_output_c[3] = col[3];
-    #endif
         gsp_output_v += 3;
         gsp_output_t += 2;
         gsp_output_c += 4;
@@ -2987,9 +2968,7 @@ void gsp_init(void)
 #ifdef _3DS
     pglInit();
 #endif
-#ifndef _3DS
     glEnable(GL_SCISSOR_TEST);
-#endif
     glEnable(GL_POLYGON_OFFSET_FILL);
 #ifdef _3DS
     glDepthFunc(GL_LESS);
@@ -3034,9 +3013,7 @@ static void gsp_draw(void *ucode, u32 *dl)
     GX_SetViewport(0.0F, 0.0F, lib_video_w, lib_video_h, 0.0F, 1.0F);
 #else
     glViewport(0, 0, lib_video_w, lib_video_h);
-#ifndef _3DS
     glScissor(0, 0, lib_video_w, lib_video_h);
-#endif
     glDepthMask(GL_TRUE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 #endif

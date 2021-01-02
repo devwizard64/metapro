@@ -1,0 +1,8 @@
+build/
+__pycache__
+*.dll
+app.bin
+eeprom.bin
+dram.bin
+input.bin
+config.bin
