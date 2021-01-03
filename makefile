@@ -31,6 +31,15 @@ else ifeq ($(TARGET),gcn)
 	CC      += -I $(LIBOGC)/include
 	LD      += -L $(LIBOGC)/lib/cube
 	LIB     := -l fat -l m -l ogc
+else ifeq ($(TARGET),wii)
+	LIBOGC  := $(DEVKITPRO)/libogc
+	CC      := powerpc-eabi-gcc -mrvl -mcpu=750 -meabi -mhard-float
+	CC      += -ffunction-sections -fwrapv
+	LD      := $(CC)
+	CC      += -D GEKKO -D _WII
+	CC      += -I $(LIBOGC)/include
+	LD      += -L $(LIBOGC)/lib/wii
+	LIB     := -l fat -l m -l ogc
 endif
 
 APP_SRC = build/$(APP)/app
@@ -87,6 +96,7 @@ native: $(BUILD)/app.elf
 win32: $(BUILD)/app.exe
 3ds: $(BUILD)/app.3dsx
 gcn: $(BUILD)/app.dol
+wii: $(BUILD)/app.dol
 
 -include $(SRC_OBJ:.o=.d)
 -include $(APP_OBJ:.o=.d)

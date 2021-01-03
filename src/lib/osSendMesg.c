@@ -14,7 +14,7 @@ void lib_osSendMesg(void)
             return;
         }
         __write_u32(MQ_SEND, lib_thread->addr);
-        lib_thread->ready = 0;
+        lib_thread->ready = false;
         thread_yield(THREAD_YIELD_QUEUE);
     }
     thread = __read_u32(MQ_RECV);
@@ -27,7 +27,7 @@ void lib_osSendMesg(void)
     __write_u32(MQ_COUNT, count+1);
     if (thread != 0)
     {
-        thread_find(thread)->ready = 1;
+        thread_find(thread)->ready = true;
         if (lib_thread != NULL)
         {
             thread_yield(THREAD_YIELD_QUEUE);

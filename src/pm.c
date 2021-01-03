@@ -17,7 +17,7 @@ typedef clock_t pm_time_t;
 #define PM_USEC         (1000000.0F/SYSCLOCK_ARM11)
 typedef u64 pm_time_t;
 #endif
-#ifdef _GCN
+#ifdef GEKKO
 #define pm_time()       0
 #define PM_USEC         0.0F
 typedef u8 pm_time_t;
@@ -33,18 +33,25 @@ static const char *const pm_str[PM_LEN] =
 
 static pm_time_t pm_table[PM_LEN] = {0};
 static pm_time_t pm_cpu_stack[8]  = {0};
-static pm_time_t pm_rsp_stack[8]  = {0};
+static pm_time_t pm_gsp_stack[8]  = {0};
+static pm_time_t pm_asp_stack[8]  = {0};
 static u8 pm_cpu_index = 0;
-static u8 pm_rsp_index = 0;
+static u8 pm_gsp_index = 0;
+static u8 pm_asp_index = 0;
 
 void pm_cpu_start(void)
 {
     pm_cpu_stack[pm_cpu_index++] = pm_time();
 }
 
-void pm_rsp_start(void)
+void pm_gsp_start(void)
 {
-    pm_rsp_stack[pm_rsp_index++] = pm_time();
+    pm_gsp_stack[pm_gsp_index++] = pm_time();
+}
+
+void pm_asp_start(void)
+{
+    pm_asp_stack[pm_asp_index++] = pm_time();
 }
 
 void pm_cpu_end(enum pm_index_t index)
@@ -52,9 +59,14 @@ void pm_cpu_end(enum pm_index_t index)
     pm_table[index] += pm_time() - pm_cpu_stack[--pm_cpu_index];
 }
 
-void pm_rsp_end(enum pm_index_t index)
+void pm_gsp_end(enum pm_index_t index)
 {
-    pm_table[index] += pm_time() - pm_rsp_stack[--pm_rsp_index];
+    pm_table[index] += pm_time() - pm_gsp_stack[--pm_gsp_index];
+}
+
+void pm_asp_end(enum pm_index_t index)
+{
+    pm_table[index] += pm_time() - pm_asp_stack[--pm_asp_index];
 }
 
 void pm_update(void)

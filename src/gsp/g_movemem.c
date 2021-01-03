@@ -17,9 +17,9 @@ static void gsp_g_movemem(u32 w0, u32 w1)
             {
                 if (index < G_MV_LOOKATX+2)
                 {
-                    gsp_lookat = 1;
+                    gsp_lookat = true;
                 }
-                gsp_light_new = 1;
+                gsp_light_new = true;
             }
         }
     }
@@ -42,9 +42,9 @@ static void gsp_g_movemem(u32 w0, u32 w1)
                 case G_MV_LIGHT:
                     if (offset < G_MVO_L0)
                     {
-                        gsp_lookat = 1;
+                        gsp_lookat = true;
                     }
-                    gsp_light_new = 1;
+                    gsp_light_new = true;
                     break;
             }
         }

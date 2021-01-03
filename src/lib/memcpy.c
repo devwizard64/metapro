@@ -1,6 +1,6 @@
 void lib_memcpy(void)
 {
-#ifdef _GCN
+#ifdef _EB
     memmove(__tlb(a0.i[IX]), __tlb(a1.i[IX]), a2.i[IX]);
 #else
     while (a2.i[IX]-- != 0)

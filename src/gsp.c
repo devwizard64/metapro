@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _GCN
+#ifdef GEKKO
 #include <malloc.h>
 #endif
 
 #include <math.h>
-#ifndef _GCN
+#ifndef GEKKO
 #include <GL/gl.h>
 #endif
 #ifdef _3DS
@@ -101,7 +101,7 @@
 #define MP (*gsp_mtxf_projection)
 #define MM (*gsp_mtxf_modelview)
 
-#ifndef _GCN
+#ifndef GEKKO
 struct texture_t
 {
     void  *addr;
@@ -111,7 +111,7 @@ struct texture_t
 
 struct viewport_t
 {
-#ifdef _GCN
+#ifdef _EB
     s16 w;
     s16 h;
     s16 d;
@@ -134,7 +134,7 @@ struct viewport_t
 
 struct vtx_t
 {
-#ifdef _GCN
+#ifdef _EB
     s16 x;
     s16 y;
     s16 z;
@@ -170,7 +170,7 @@ struct light_t
 {
     struct
     {
-    #ifdef _GCN
+    #ifdef _EB
         u8 r;
         u8 g;
         u8 b;
@@ -183,7 +183,7 @@ struct light_t
     #endif
     }
     col[2];
-#ifdef _GCN
+#ifdef _EB
     s8 x;
     s8 y;
     s8 z;
@@ -414,7 +414,7 @@ static void gsp_g_obj_movemem(u32, u32);
 static void gsp_g_rdphalf_0(u32, u32);
 #endif
 
-#ifdef _GCN
+#ifdef GEKKO
 unused
 #endif
 static void (*gsp_texture_read_table[])(void *, const void *, uint) =
@@ -869,7 +869,7 @@ static void (*gsp_write_triangle)(u8 *);
 #endif
 static void (*gsp_triangle)(u8 *);
 
-#ifdef _GCN
+#ifdef GEKKO
 #else
 static const GLuint gsp_texture_flag_table[] =
 {
@@ -1012,15 +1012,15 @@ static u16   gsp_texture_size[2];
 static f32   gsp_texture_tscale[2];
 static f32   gsp_texture_vscale[2];
 
-static u8  gsp_texrect_flip;
-static s16 gsp_texrect_xh;
-static s16 gsp_texrect_yh;
-static s16 gsp_texrect_xl;
-static s16 gsp_texrect_yl;
-static f32 gsp_texrect_ul;
-static f32 gsp_texrect_vl;
-static f32 gsp_texrect_dsdx;
-static f32 gsp_texrect_dtdy;
+static bool gsp_texrect_flip;
+static s16  gsp_texrect_xh;
+static s16  gsp_texrect_yh;
+static s16  gsp_texrect_xl;
+static s16  gsp_texrect_yl;
+static f32  gsp_texrect_ul;
+static f32  gsp_texrect_vl;
+static f32  gsp_texrect_dsdx;
+static f32  gsp_texrect_dtdy;
 
 #ifdef GSP_F3DEX2
 static u8  gsp_obj_rendermode;
@@ -1029,14 +1029,14 @@ static u8  gsp_obj_rendermode;
 #ifdef _3DS
 static f32 gsp_depth;
 #endif
-static u8  gsp_lookat;
-static u8  gsp_light_new;
-static u8  gsp_texture_enabled;
+static bool gsp_lookat;
+static bool gsp_light_new;
+static bool gsp_texture_enabled;
 static u8  gsp_rect;
 static u8  gsp_change;
-static u8  gsp_cache_flag;
+static bool gsp_cache_flag;
 
-#ifdef _GCN
+#ifdef GEKKO
 #define GL_NEAREST 0
 #define GL_LINEAR  1
 static u8     gsp_texture_filter;
@@ -1052,7 +1052,7 @@ static void mtx_read(f32 *dst, const s16 *src)
     uint cnt = 4*4;
     do
     {
-    #ifdef _GCN
+    #ifdef _EB
         dst[0x00] = (1.0F/0x10000) * (s32)(src[0x00] << 16 | (u16)src[0x10]);
         dst[0x01] = (1.0F/0x10000) * (s32)(src[0x01] << 16 | (u16)src[0x11]);
     #else
@@ -1285,7 +1285,7 @@ static void gsp_texture_read_i8(void *buf, const void *addr, uint len)
 
 static void gsp_flush_mtxf_projection(void)
 {
-#ifdef _GCN
+#ifdef GEKKO
     Mtx44 mtx;
     uint type;
     mtx[0][0] = MP[0][0];
@@ -1316,7 +1316,7 @@ static void gsp_flush_mtxf_projection(void)
 
 static void gsp_flush_mtxf_modelview(void)
 {
-#ifdef _GCN
+#ifdef GEKKO
     Mtx mtx;
     mtx[0][0] = MM[0][0];
     mtx[0][1] = MM[1][0];
@@ -1357,7 +1357,7 @@ static void gsp_flush_viewport(void)
         t =    0;
         b =  960;
     }
-#ifdef _GCN
+#ifdef GEKKO
     GX_SetViewport(
         (  l) * lib_video_w/1280.0F,
         (  t) * lib_video_h/ 960.0F,
@@ -1380,7 +1380,7 @@ static void gsp_flush_cull(void)
 {
     if (gsp_rect == 0)
     {
-    #ifdef _GCN
+    #ifdef GEKKO
         /* GX_SetCullMode(gsp_geometry_mode >> 12 & 0x03); */
         GX_SetCullMode(GX_CULL_NONE);
     #else
@@ -1406,7 +1406,7 @@ static void gsp_flush_cull(void)
     }
     else
     {
-    #ifdef _GCN
+    #ifdef GEKKO
         /* GX_SetCullMode(GX_CULL_BACK); */
         GX_SetCullMode(GX_CULL_NONE);
     #else
@@ -1426,7 +1426,7 @@ static void gsp_flush_rendermode(void)
 {
     u32 othermode_l =
         gsp_cycle ? G_RM_TEX_EDGE | G_RM_TEX_EDGE2 : gsp_othermode_l;
-#ifdef _GCN
+#ifdef GEKKO
     GX_SetZMode(EN_ZR, GX_LEQUAL, EN_ZW);
     GX_SetBlendMode(
         EN_BL ? GX_BM_BLEND : GX_BM_NONE, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA,
@@ -1484,7 +1484,7 @@ static void gsp_flush_scissor(void)
     s32 r = gsp_scissor_r;
     s32 t = gsp_scissor_t;
     s32 b = gsp_scissor_b;
-#ifdef _GCN
+#ifdef GEKKO
     GX_SetScissor(
         (  l) * lib_video_w/1280,
         (  t) * lib_video_h/ 960,
@@ -1504,7 +1504,7 @@ static void gsp_flush_scissor(void)
 #define EN_TX ((gsp_rect == 0 && gsp_texture_enabled) || gsp_rect == 1)
 static void gsp_flush_texture_enabled(void)
 {
-#ifdef _GCN
+#ifdef GEKKO
     GX_SetTevOp(GX_TEVSTAGE0, EN_TX ? GX_MODULATE : GX_PASSCLR);
 #else
     if (EN_TX)
@@ -1521,7 +1521,7 @@ static void gsp_flush_texture_enabled(void)
 
 static void gsp_flush_texture(void)
 {
-#ifdef _GCN
+#ifdef GEKKO
     /* todo: texture */
 #else
     void  *addr   = gsp_texture_addr;
@@ -1595,7 +1595,7 @@ static void gsp_flush_triangles(void)
 #ifndef GSP_LEGACY
     if (gsp_output_count > 0)
     {
-    #ifdef _GCN
+    #ifdef GEKKO
         uint i;
         GX_SetArray(GX_VA_POS,  gsp_output_vtx, sizeof(s16)*3);
         GX_SetArray(GX_VA_TEX0, gsp_output_txc, sizeof(f32)*2);
@@ -2159,8 +2159,8 @@ static void gsp_start(void *ucode, u32 *dl)
     }
     gsp_dl_stack[0] = dl;
     gsp_dl_index = 0;
-    gsp_lookat = 0;
-    gsp_light_new = 0;
+    gsp_lookat = false;
+    gsp_light_new = false;
     gsp_rect = 0;
     gsp_change = CHANGE_MTXF_PROJECTION | CHANGE_MTXF_MODELVIEW;
 }
@@ -2367,7 +2367,7 @@ static void gsp_g_texrect(u32 w0, u32 w1)
     gsp_texrect_yh = (s16)(w0 << 4) >> 4;
     gsp_texrect_xl = (s16)(w1 >> 8) >> 4;
     gsp_texrect_yl = (s16)(w1 << 4) >> 4;
-    gsp_texrect_flip = 0;
+    gsp_texrect_flip = false;
 }
 
 /* 0xE5 G_TEXRECTFLIP */
@@ -2377,7 +2377,7 @@ static void gsp_g_texrectflip(u32 w0, u32 w1)
     gsp_texrect_yh = (s16)(w0 << 4) >> 4;
     gsp_texrect_xl = (s16)(w1 >> 8) >> 4;
     gsp_texrect_yl = (s16)(w1 << 4) >> 4;
-    gsp_texrect_flip = 1;
+    gsp_texrect_flip = true;
 }
 
 #ifdef _DEBUG
@@ -2952,7 +2952,7 @@ static void gsp_g_rdphalf_0(unused u32 w0, unused u32 w1)
 
 void gsp_init(void)
 {
-#ifdef _GCN
+#ifdef GEKKO
     GX_ClearVtxDesc();
     GX_SetCurrentMtx(GX_PNMTX0);
     GX_SetVtxDesc(GX_VA_POS,  GX_INDEX16);
@@ -2984,13 +2984,13 @@ void gsp_init(void)
 #ifdef _3DS
     gsp_texture_buf = malloc(0x2000);
 #else
-#ifdef _GCN
+#ifdef GEKKO
     gsp_texture_buf = memalign(0x20, 0x8000);
 #else
     gsp_texture_buf = malloc(0x8000);
 #endif
 #endif
-    gsp_cache_flag = 1;
+    gsp_cache_flag = true;
 }
 
 void gsp_destroy(void)
@@ -3002,12 +3002,12 @@ void gsp_destroy(void)
 
 void gsp_cache(void)
 {
-    gsp_cache_flag = 1;
+    gsp_cache_flag = true;
 }
 
 static void gsp_draw(void *ucode, u32 *dl)
 {
-#ifdef _GCN
+#ifdef GEKKO
     GX_InvVtxCache();
     GX_InvalidateTexAll();
     GX_SetViewport(0.0F, 0.0F, lib_video_w, lib_video_h, 0.0F, 1.0F);
@@ -3046,7 +3046,7 @@ static void gsp_draw(void *ucode, u32 *dl)
 #ifdef _3DS
     pglSwapBuffers();
 #endif
-#ifdef _GCN
+#ifdef GEKKO
     GX_DrawDone();
 #endif
 }
@@ -3060,8 +3060,8 @@ void gsp_update(void *ucode, u32 *dl)
     if (gsp_cache_flag)
 #endif
     {
-        gsp_cache_flag = 0;
-    #ifndef _GCN
+        gsp_cache_flag = false;
+    #ifndef GEKKO
         if (gsp_texture > 0)
         {
             glDeleteTextures(gsp_texture, gsp_texture_name_table);

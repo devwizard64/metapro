@@ -22,8 +22,8 @@ void lib_osSpTaskStartGo(void)
     #ifdef _NATIVE
         SDL_GL_SwapWindow(lib_window);
     #endif
-    #ifdef _GCN
-        lib_video_draw = 1;
+    #ifdef GEKKO
+        lib_video_draw = true;
     #endif
     #endif
         lib_event(&lib_event_table[OS_EVENT_DP]);

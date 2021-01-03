@@ -7,5 +7,5 @@ static void gsp_g_popmtx(unused u32 w0, unused u32 w1)
     gsp_mtxf_modelview -= w1 / 0x40;
 #endif
     gsp_change |= CHANGE_MTXF_MODELVIEW;
-    gsp_light_new = 1;
+    gsp_light_new = true;
 }

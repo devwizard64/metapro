@@ -15,9 +15,11 @@ enum pm_index_t
 };
 
 extern void pm_cpu_start(void);
-extern void pm_rsp_start(void);
+extern void pm_gsp_start(void);
+extern void pm_asp_start(void);
 extern void pm_cpu_end(enum pm_index_t);
-extern void pm_rsp_end(enum pm_index_t);
+extern void pm_gsp_end(enum pm_index_t);
+extern void pm_asp_end(enum pm_index_t);
 extern void pm_update(void);
 extern void pm_draw(void);
 

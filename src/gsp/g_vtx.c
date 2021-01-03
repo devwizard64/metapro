@@ -17,7 +17,7 @@ static void gsp_g_vtx(u32 w0, u32 w1)
     if (gsp_light_new)
     {
         uint i;
-        gsp_light_new = 0;
+        gsp_light_new = false;
         for (i = gsp_lookat ? 0 : 2; i < gsp_light_no+1; i++)
         {
             struct light_t  *light;
@@ -166,7 +166,7 @@ static void gsp_g_vtx(u32 w0, u32 w1)
             nz = MDOT4(gsp_mtxf_mvp, 2);
             nw = MDOT4(gsp_mtxf_mvp, 3);
             z = nz/nw;
-        #ifdef _GCN
+        #ifdef GEKKO
             z = 1 + 2*z;
         #endif
             if (z > 1)

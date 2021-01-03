@@ -13,7 +13,7 @@
 #ifdef _NATIVE
 #include <SDL2/SDL.h>
 #endif
-#ifndef _GCN
+#ifndef GEKKO
 #include <GL/gl.h>
 #endif
 
@@ -36,7 +36,7 @@
 #define CONFIG_FLAG_AA_H        0x10
 #define CONFIG_FLAG_AA_V        0x20
 #endif
-#ifdef _GCN
+#ifdef GEKKO
 #define CONFIG_FLAG_AUDIO       0x01
 #endif
 
@@ -50,9 +50,9 @@ struct thread_t
     struct thread_t *qnext;
     jmp_buf jmp;
     u8     *stack;
-    u8      init;
-    u8      ready;
-    u8      qlink;
+    bool    init;
+    bool    ready;
+    bool    qlink;
     u32     addr;
     u32     entry;
     s32     id;
@@ -90,7 +90,7 @@ struct config_t
     u32 input_load;
     u32 flag;
 #endif
-#ifdef _GCN
+#ifdef GEKKO
     u16 input[20];
     u16 input_exit;
     u16 input_save;
@@ -138,7 +138,7 @@ static const struct config_t lib_config_default =
     KEY_ZR,
     CONFIG_FLAG_STICK_X | CONFIG_FLAG_STICK_Y | CONFIG_FLAG_AUDIO,
 #endif
-#ifdef _GCN
+#ifdef GEKKO
     {
         PAD_BUTTON_A,
         PAD_BUTTON_B | PAD_BUTTON_Y,
@@ -189,7 +189,7 @@ static void  *lib_gsp_ucode  = NULL;
 static u32   *lib_gsp_data   = NULL;
 static u32   *lib_asp_data   = NULL;
 static u32    lib_asp_size   = 0;
-static u8     lib_rsp_update = 1;
+static bool   lib_rsp_update = true;
 static f32 lib_audio_mix[12] =
 {
     1.0F, 1.0F, 0.0F, 0.0F,
@@ -199,10 +199,10 @@ static f32 lib_audio_mix[12] =
 static ndspWaveBuf lib_audio_bufs[2] = {0};
 static u8          lib_audio_buf     = 0;
 #endif
-#ifdef _GCN
+#ifdef GEKKO
 static GXRModeObj *lib_rmode       = NULL;
 static void       *lib_framebuffer = NULL;
-static u8          lib_video_draw  = 0;
+static bool        lib_video_draw  = false;
 #endif
 
 #ifndef APP_SEQ
@@ -224,10 +224,10 @@ f32 lib_viewport_r = 320.0F;
 #ifdef APP_UNK4
 static u32 lib_frame = 0;
 #endif
-static u8 lib_fast = 0;
+static bool lib_fast = false;
 #endif
-static u8 lib_save = 0;
-static u8 lib_load = 0;
+static bool lib_save = false;
+static bool lib_load = false;
 #endif
 
 static struct thread_t *lib_thread_list  = NULL;
@@ -253,7 +253,7 @@ void mtx_write(s16 *dst, const f32 *src)
     {
         s32 a = 0x10000 * src[0x00];
         s32 b = 0x10000 * src[0x01];
-    #ifdef _GCN
+    #ifdef _EB
         dst[0x00] = a >> 16;
         dst[0x01] = b >> 16;
         dst[0x10] = a >>  0;
@@ -343,7 +343,7 @@ static void mtxf_perspective(f32 mtxf[4][4], f32 fovy, f32 aspect, f32 n, f32 f)
     x = 1.0F / (n-f);
     mtxf[2][0] = 0.0F;
     mtxf[2][1] = 0.0F;
-#ifdef _GCN
+#ifdef GEKKO
     mtxf[2][2] = (n  )*x;
 #else
     mtxf[2][2] = (n+f)*x;
@@ -351,7 +351,7 @@ static void mtxf_perspective(f32 mtxf[4][4], f32 fovy, f32 aspect, f32 n, f32 f)
     mtxf[2][3] = -1.0F;
     mtxf[3][0] = 0.0F;
     mtxf[3][1] = 0.0F;
-#ifdef _GCN
+#ifdef GEKKO
     mtxf[3][2] =      n*f*x;
 #else
     mtxf[3][2] = 2.0F*n*f*x;
@@ -476,7 +476,7 @@ static void thread_qlink(struct thread_t *thread)
     *queue = thread;
     thread->qprev = prev;
     thread->qnext = NULL;
-    thread->qlink = 1;
+    thread->qlink = true;
 }
 
 static void thread_lunlink(struct thread_t *thread)
@@ -499,7 +499,7 @@ static void thread_qunlink(struct thread_t *thread)
 {
     if (thread->qlink)
     {
-        thread->qlink = 0;
+        thread->qlink = false;
         if (thread->qprev != NULL)
         {
             thread->qprev->qnext = thread->qnext;
@@ -570,9 +570,9 @@ static void thread_init(u32 addr, s32 id, u32 entry, s32 arg, s32 s, u32 pri)
 #else
     thread->stack        = memalign(0x20, THREAD_STACK_SIZE);
 #endif
-    thread->init         = 1;
-    thread->ready        = 1;
-    thread->qlink        = 0;
+    thread->init         = true;
+    thread->ready        = true;
+    thread->qlink        = false;
     thread->addr         = addr;
     thread->entry        = entry;
     thread->id           = id;
@@ -676,12 +676,12 @@ static void asp_main(unused void *arg)
 }
 #endif
 
-#ifdef _GCN
+#ifdef GEKKO
 static void video_draw(unused u32 count)
 {
     if (lib_video_draw)
     {
-        lib_video_draw = 0;
+        lib_video_draw = false;
         GX_SetZMode(GX_TRUE, GX_ALWAYS, GX_TRUE);
         GX_SetColorUpdate(GX_TRUE);
         GX_CopyDisp(lib_framebuffer, GX_TRUE);
@@ -727,12 +727,12 @@ static void video_init(void)
     gfxInitDefault();
     if (lib_config.flag & CONFIG_FLAG_HI_H)
     {
-        gfxSetWide(1);
+        gfxSetWide(true);
         video_update_size(800, 240);
     }
     else
     {
-        gfxSet3D(1);
+        gfxSet3D(true);
         video_update_size(400, 240);
     }
     consoleInit(GFX_BOTTOM, NULL);
@@ -743,7 +743,7 @@ static void video_init(void)
     lib_gsp_thread = threadCreate(gsp_main, NULL, 0x2000, 0x3F, -1, 1);
     lib_asp_thread = threadCreate(asp_main, NULL, 0x2000, 0x3F, -1, 1);
 #endif
-#ifdef _GCN
+#ifdef GEKKO
     void *fifo;
     VIDEO_Init();
     lib_rmode = VIDEO_GetPreferredMode(NULL);
@@ -751,7 +751,7 @@ static void video_init(void)
     lib_framebuffer = MEM_K0_TO_K1(SYS_AllocateFramebuffer(lib_rmode));
     VIDEO_SetNextFramebuffer(lib_framebuffer);
     VIDEO_SetPostRetraceCallback(video_draw);
-    VIDEO_SetBlack(0);
+    VIDEO_SetBlack(false);
     VIDEO_Flush();
     fifo = MEM_K0_TO_K1(memalign(0x20, 0x40000));
     GX_Init(fifo, 0x40000);
@@ -785,7 +785,7 @@ static void video_destroy(void)
     }
 #endif
 #ifdef _3DS
-    lib_rsp_update = 0;
+    lib_rsp_update = false;
     if (lib_gsp_thread != NULL)
     {
         lib_gsp_data = NULL;
@@ -812,7 +812,7 @@ void video_update(void)
 #ifdef APP_UNK4
     if (lib_frame++ == 60*53)
     {
-        lib_fast = 0;
+        lib_fast = false;
     }
 #endif
     if (!lib_fast)
@@ -836,7 +836,7 @@ void video_update(void)
 #ifdef _3DS
     gspWaitForVBlank();
 #endif
-#ifdef _GCN
+#ifdef GEKKO
     VIDEO_WaitVSync();
 #endif
 }
@@ -845,7 +845,7 @@ void video_update(void)
 static void input_init(void)
 {
     FILE *f;
-#ifdef _GCN
+#ifdef GEKKO
     PAD_Init();
 #endif
     f = fopen(PATH_INPUT, "rb");
@@ -903,13 +903,13 @@ static void input_update(void)
                 switch (event.key.keysym.scancode)
                 {
                     case SDL_SCANCODE_F4:
-                        lib_fast ^= 1;
+                        lib_fast ^= false^true;
                         break;
                     case SDL_SCANCODE_F5:
-                        lib_save = 1;
+                        lib_save = true;
                         break;
                     case SDL_SCANCODE_F7:
-                        lib_load = 1;
+                        lib_load = true;
                         break;
                     default:
                         break;
@@ -930,7 +930,7 @@ static void input_update(void)
     held = hidKeysHeld();
     down = hidKeysDown();
 #endif
-#ifdef _GCN
+#ifdef GEKKO
     uint held;
     uint down;
     PAD_ScanPads();
@@ -944,17 +944,17 @@ static void input_update(void)
     }
     if (INPUT_COMBO(down, held, lib_config.input_save))
     {
-        lib_save = 1;
+        lib_save = true;
     }
     if (INPUT_COMBO(down, held, lib_config.input_load))
     {
-        lib_load = 1;
+        lib_load = true;
     }
 #undef INPUT_COMBO
 #endif
     if (lib_input_size > 0)
     {
-    #ifdef _GCN
+    #ifdef GEKKO
         lib_pad.button  = lib_input->button;
     #else
         lib_pad.button  = lib_input->button >> 8 | lib_input->button << 8;
@@ -1068,7 +1068,7 @@ static void input_update(void)
     #endif
         for (mask = 0x8000, i = 0; i < 20; i++, mask >>= 1)
         {
-        #ifdef _GCN
+        #ifdef GEKKO
             if (lib_config.input[i] & 0x8000)
             {
                 s32 axis;
@@ -1133,7 +1133,7 @@ static s32 audio_size(void)
 #ifdef _3DS
     return 0x200;
 #endif
-#ifdef _GCN
+#ifdef GEKKO
     return AUDIO_GetDMABytesLeft();
 #endif
 }
@@ -1164,7 +1164,7 @@ static s32 audio_init(unused s32 freq)
     ndspChnSetMix(0, lib_audio_mix);
     return freq;
 #endif
-#ifdef _GCN
+#ifdef GEKKO
     AUDIO_Init(NULL);
     AUDIO_SetDSPSampleRate(AI_SAMPLERATE_32KHZ);
     return 32000;
@@ -1179,7 +1179,7 @@ static void audio_destroy(void)
 #ifdef _3DS
     ndspExit();
 #endif
-#ifdef _GCN
+#ifdef GEKKO
     AUDIO_StopDMA();
 #endif
 }
@@ -1214,7 +1214,7 @@ static void audio_update(void *src, size_t size)
         ndspChnWaveBufAdd(0, wb);
     }
 #endif
-#ifdef _GCN
+#ifdef GEKKO
     AUDIO_InitDMA((u32)src, size);
     AUDIO_StartDMA();
 #endif
@@ -1254,7 +1254,7 @@ static void lib_update(void)
     if (lib_save)
     {
         FILE *f;
-        lib_save = 0;
+        lib_save = false;
         f = fopen(PATH_DRAM, "wb");
         if (f != NULL)
         {
@@ -1273,7 +1273,7 @@ static void lib_update(void)
     if (lib_load)
     {
         FILE *f;
-        lib_load = 0;
+        lib_load = false;
         f = fopen(PATH_DRAM, "rb");
         if (f != NULL)
         {
@@ -1336,9 +1336,10 @@ static void lib_main(void)
         {
             register void *stack;
             register u32   entry;
-            thread->init = 0;
+            thread->init = false;
             stack = thread->stack + THREAD_STACK_SIZE;
             entry = thread->entry;
+        #ifdef __GNUC__
             asm volatile(
             #ifdef _NATIVE
             #ifdef WIN32
@@ -1350,11 +1351,14 @@ static void lib_main(void)
             #ifdef _3DS
                 "mov sp, %[stack]"
             #endif
-            #ifdef _GCN
+            #ifdef GEKKO
                 "mr 1, %[stack]"
             #endif
                 : [stack] "+r" (stack) ::
             );
+        #else
+        #error add asm here
+        #endif
             __call(entry);
             thread_destroy(thread);
         }
@@ -1681,7 +1685,7 @@ void lib_80248AF0(void)
         a1.i[IX] = 0x80000400;
         app_8031EB00();
     }
-    while (1)
+    while (true)
     {
         app_802494D8();
         a0.i[IX] = mq_app_vi;

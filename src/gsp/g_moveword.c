@@ -38,7 +38,7 @@ static void gsp_g_moveword(u32 w0, u32 w1)
     #ifdef GSP_F3DEX2
         case G_MW_LIGHTCOL:
             *(u32 *)((u8 *)gsp_light_buf + offset) = w1;
-            gsp_light_new = 1;
+            gsp_light_new = true;
             break;
     #endif
     #ifndef GSP_F3D_20D

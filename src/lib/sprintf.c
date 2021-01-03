@@ -1,4 +1,4 @@
-#ifdef _GCN
+#ifdef _EB
 #define __read_str(dst, src) strcpy(dst, __tlb(src))
 #define __write_str(dst, src) strcpy(__tlb(dst), src)
 #else

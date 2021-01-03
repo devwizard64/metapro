@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _GCN
+#ifdef GEKKO
 #include <fat.h>
 #endif
 
@@ -11,7 +11,7 @@
 #include "app.h"
 
 #define CPU_MODE_BYTESWAP   0x40123780
-#ifdef _GCN
+#ifdef _EB
 #define CPU_MODE_WORDSWAP   0x37804012
 #else
 #define CPU_MODE_WORDSWAP   0x12408037
@@ -100,7 +100,7 @@ void __byteswap(void *dst, const void *src, s32 size)
 
 void __wordswap(void *dst, const void *src, s32 size)
 {
-#ifdef _GCN
+#ifdef _EB
     u8 *_dst = dst;
     const u8 *_src = src;
     do
@@ -242,10 +242,10 @@ void cpu_init(void)
     uint  i;
 #endif
 #ifdef _3DS
-    osSetSpeedupEnable(1);
+    osSetSpeedupEnable(true);
     romfsInit();
 #endif
-#ifdef _GCN
+#ifdef GEKKO
     fatInitDefault();
 #endif
     f = fopen(PATH_APP, "rb");

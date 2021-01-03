@@ -1,6 +1,6 @@
 void lib_bzero(void)
 {
-#ifdef _GCN
+#ifdef _EB
     memset(__tlb(a0.i[IX]), 0x00, a1.i[IX]);
 #else
     while (a1.i[IX]-- != 0)

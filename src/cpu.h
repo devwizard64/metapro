@@ -23,7 +23,7 @@ struct cache_t
 #include "lib.h"
 #include "app.h"
 
-#ifdef _GCN
+#ifdef GEKKO
 #define PATH_START  "cardb:" SEP
 #elif defined(_3DS) && defined(_DEBUG)
 #define PATH_START  "sdmc:" SEP "3ds" SEP
@@ -43,7 +43,7 @@ struct cache_t
 #define PATH_INPUT  PATH_ROOT  "input.bin"
 #define PATH_CONFIG PATH_START "config.bin"
 
-#ifdef _GCN
+#ifdef _EB
 #define IX      1
 #define AX_B    0
 #define AX_H    0

@@ -70,7 +70,7 @@ static void gsp_g_mtx(u32 w0, u32 w1)
         mtx_write(gsp_mtx, &MM[0][0]);
     #endif
         gsp_change |= CHANGE_MTXF_MODELVIEW;
-        gsp_light_new = 1;
+        gsp_light_new = true;
     }
 #ifdef GSP_FOG
     mtxf_mul(gsp_mtxf_mvp, MM, MP);
