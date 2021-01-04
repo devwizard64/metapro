@@ -1,38 +1,6 @@
 #ifndef _TYPES_H_
 #define _TYPES_H_
 
-#define false   0
-#define true    1
-
-#ifdef __GNUC__
-#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-#define _EB
-#endif
-#define unused          __attribute__((unused))
-#define fallthrough     __attribute__((fallthrough))
-#define forceinline     __attribute__((always_inline))
-#else
-#define unused
-#define fallthrough
-#define forceinline
-#endif
-
-#ifdef WIN32
-#define SEP     "\\"
-#else
-#define SEP     "/"
-#endif
-
-#ifdef _3DS
-#define FMT_d   "ld"
-#define FMT_x   "lx"
-#define FMT_X   "lX"
-#else
-#define FMT_d   "d"
-#define FMT_x   "x"
-#define FMT_X   "X"
-#endif
-
 #ifndef __ASSEMBLER__
 
 #include <stddef.h>
@@ -66,5 +34,37 @@ typedef double          f64;
 #define lenof(x)        (sizeof((x)) / sizeof((x)[0]))
 
 #endif /* __ASSEMBLER__ */
+
+#define false   0
+#define true    1
+
+#ifdef __GNUC__
+#if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
+#define _EB
+#endif
+#define unused          __attribute__((unused))
+#define fallthrough     __attribute__((fallthrough))
+#define forceinline     __attribute__((always_inline))
+#else
+#define unused
+#define fallthrough
+#define forceinline
+#endif
+
+#ifdef WIN32
+#define SEP     "\\"
+#else
+#define SEP     "/"
+#endif
+
+#ifdef _3DS
+#define FMT_d   "ld"
+#define FMT_x   "lx"
+#define FMT_X   "lX"
+#else
+#define FMT_d   "d"
+#define FMT_x   "x"
+#define FMT_X   "X"
+#endif
 
 #endif /* _TYPES_H_ */
