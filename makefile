@@ -1,53 +1,11 @@
 APP     ?= UNSME0
 TARGET  ?= native
 
-ifeq ($(TARGET),native)
-	CC      := gcc
-	LD      := $(CC)
-	CC      += -ggdb3 -D _NATIVE -D _DEBUG
-	LIB     := -l m -l SDL2 -l GL
-else ifeq ($(TARGET),win32)
-	CC      := i686-w64-mingw32-gcc -mconsole
-	LD      := $(CC)
-	CC      += -ggdb3 -D _NATIVE -D _DEBUG
-	LIB     := -l mingw32 -l m -l SDL2main -l SDL2 -l opengl32
-else ifeq ($(TARGET),3ds)
-	LIBCTRU := $(DEVKITPRO)/libctru
-	PICAGL  := picaGL
-	CC      := arm-none-eabi-gcc -march=armv6k -mtune=mpcore
-	CC      += -mfloat-abi=hard -mtp=soft -mword-relocations
-	CC      += -fomit-frame-pointer -ffunction-sections
-	LD      := $(CC) -specs=3dsx.specs
-	CC      += -D ARM11 -D _3DS
-	CC      += -I $(LIBCTRU)/include -I $(PICAGL)/include
-	LD      += -L $(LIBCTRU)/lib -L $(PICAGL)/lib
-	LIB     := -l picaGL -l m -l ctru
-else ifeq ($(TARGET),gcn)
-	LIBOGC  := $(DEVKITPRO)/libogc
-	CC      := powerpc-eabi-gcc -mogc -mcpu=750 -meabi -mhard-float
-	CC      += -ffunction-sections -fwrapv
-	LD      := $(CC)
-	CC      += -D GEKKO -D _GCN
-	CC      += -I $(LIBOGC)/include
-	LD      += -L $(LIBOGC)/lib/cube
-	LIB     := -l fat -l m -l ogc
-else ifeq ($(TARGET),wii)
-	LIBOGC  := $(DEVKITPRO)/libogc
-	CC      := powerpc-eabi-gcc -mrvl -mcpu=750 -meabi -mhard-float
-	CC      += -ffunction-sections -fwrapv
-	LD      := $(CC)
-	CC      += -D GEKKO -D _WII
-	CC      += -I $(LIBOGC)/include
-	LD      += -L $(LIBOGC)/lib/wii
-	LIB     := -l fat -l m -l ogc
-endif
+LIBCTRU := $(DEVKITPRO)/libctru
+LIBOGC  := $(DEVKITPRO)/libogc
+PICAGL  := picaGL
 
-APP_SRC = build/$(APP)/app
-BUILD   = build/$(APP)/$(TARGET)
-
-CC      += -Wall -Wextra -Wpedantic -I src -I $(APP_SRC)
-$(BUILD)/src/%.o: CC += -Ofast
-$(BUILD)/app/%.o: CC += -Wno-maybe-uninitialized -Wno-uninitialized
+BUILD   := build/$(APP)/$(TARGET)
 
 SRC_OBJ := \
 	$(BUILD)/src/main.o \
@@ -59,38 +17,83 @@ SRC_OBJ := \
 	$(BUILD)/src/asp.o
 
 APP_OBJ := $(shell python3 main.py $(APP) $(BUILD))
-APP_LST := $(addprefix $(APP_SRC)/,$(notdir $(APP_OBJ:.o=.c)))
+APP_SRC := $(addprefix build/$(APP)/,$(notdir $(APP_OBJ:.o=.c)))
+
+CCFLAG  := -Wall -Wextra -Wpedantic
+LDFLAG  :=
+IFLAG   := -I src -I build/$(APP)
+LFLAG   :=
+
+ifeq ($(TARGET),$(filter $(TARGET),native win32))
+	ifeq ($(TARGET),native)
+		CC      := gcc
+		LIB     := -l m -l SDL2 -l GL
+	else
+		CC      := i686-w64-mingw32-gcc -mconsole
+		LIB     := -l mingw32 -l m -l SDL2main -l SDL2 -l opengl32
+	endif
+	LD      := $(CC)
+	CCFLAG  += -ggdb3 -D _NATIVE -D _DEBUG
+else ifeq ($(TARGET),3ds)
+	CC      := arm-none-eabi-gcc -march=armv6k -mtune=mpcore
+	CC      += -mfloat-abi=hard -mtp=soft
+	LD      := $(CC) -specs=3dsx.specs
+	CCFLAG  += -mword-relocations -fomit-frame-pointer -ffunction-sections
+	CCFLAG  += -D ARM11 -D _3DS
+	IFLAG   += -I $(LIBCTRU)/include -I $(PICAGL)/include
+	LFLAG   += -L $(LIBCTRU)/lib -L $(PICAGL)/lib
+	LIB     := -l picaGL -l m -l ctru
+else ifeq ($(TARGET),$(filter $(TARGET),gcn wii))
+	CC      := powerpc-eabi-gcc
+	CCFLAG  += -ffunction-sections -fwrapv -D GEKKO
+	IFLAG   += -I $(LIBOGC)/include
+	LIB     := -l fat -l m -l ogc
+	ifeq ($(TARGET),gcn)
+		CC      += -mogc
+		CCFLAG  += -D _GCN
+		LFLAG   += -L $(LIBOGC)/lib/cube
+	else
+		CC      += -mrvl
+		CCFLAG  += -D _WII
+		LFLAG   += -L $(LIBOGC)/lib/wii
+	endif
+	CC      += -mcpu=750 -meabi -mhard-float
+	LD      := $(CC)
+endif
+
+$(BUILD)/src/%.o: CCFLAG += -Ofast
+$(BUILD)/app/%.o: CCFLAG += -Wno-maybe-uninitialized -Wno-uninitialized
 
 all: $(TARGET)
 
 clean:
-	rm -rf build
+	@rm -rf build
 
-$(APP_SRC) $(BUILD)/src $(BUILD)/app:
-	mkdir -p $@
+print-%:
+	$(info $* = $(flavor $*): [$($*)]) @true
 
-$(APP_SRC)/app.h: main.py | $(APP_SRC)
-	python3 main.py $(APP)
+build/$(APP) $(BUILD)/src $(BUILD)/app:
+	@mkdir -p $@
 
-$(APP_LST): $(APP_SRC)/app.h
+build/$(APP)/app.h: main.py | build/$(APP)
+	@python3 main.py $(APP)
 
-$(BUILD)/src/%.o: src/%.c $(APP_SRC)/app.h | $(BUILD)/src
-	$(CC) -MMD -MF $(@:.o=.d) -c -o $@ $<
+$(APP_SRC): build/$(APP)/app.h
 
-$(BUILD)/app/%.o: $(APP_SRC)/%.c | $(BUILD)/app
-	$(CC) -MMD -MF $(@:.o=.d) -c -o $@ $<
+$(BUILD)/src/%.o: src/%.c build/$(APP)/app.h | $(BUILD)/src
+	@$(CC) $(CCFLAG) $(IFLAG) -MMD -MP -MF $(@:.o=.d) -c -o $@ $<
 
-$(BUILD)/app.elf: $(SRC_OBJ) $(APP_OBJ)
-	$(LD) -Wl,-Map,$(@:.elf=.map) -o $@ $^ $(LIB)
+$(BUILD)/app/%.o: build/$(APP)/%.c | $(BUILD)/app
+	@$(CC) $(CCFLAG) $(IFLAG) -MMD -MP -MF $(@:.o=.d) -c -o $@ $<
 
-$(BUILD)/app.exe: $(SRC_OBJ) $(APP_OBJ)
-	$(LD) -Wl,-Map,$(@:.elf=.map) -o $@ $^ $(LIB)
+$(BUILD)/app.elf $(BUILD)/app.exe: $(SRC_OBJ) $(APP_OBJ)
+	@$(LD) $(LDFLAG) $(LFLAG) -Wl,-Map,$(@:.elf=.map) -o $@ $^ $(LIB)
 
 $(BUILD)/%.3dsx: $(BUILD)/%.elf
-	3dsxtool $< $@
+	@3dsxtool $< $@
 
 $(BUILD)/%.dol: $(BUILD)/%.elf
-	elf2dol $< $@
+	@elf2dol $< $@
 
 native: $(BUILD)/app.elf
 win32: $(BUILD)/app.exe
@@ -100,8 +103,5 @@ wii: $(BUILD)/app.dol
 
 -include $(SRC_OBJ:.o=.d)
 -include $(APP_OBJ:.o=.d)
-
-print-%:
-	$(info $* = $(flavor $*): [$($*)]) @true
 
 .PHONY: all clean native win32 3ds gcn
