@@ -982,10 +982,10 @@ def main(argc, argv):
         app_src = ["app"] + [
             "%08X" % src for src, start, end, dst, pat, xpr, ins in app.segment
         ]
-        print(" ".join(["%s/app/%s.o" % (argv[2], app) for app in app_src]))
+        print(" ".join(["%s%s.o" % (argv[2], app) for app in app_src]))
         return 0
     path_app   = os.path.join("app", argv[1])
-    path_build = os.path.join("build", argv[1], "app")
+    path_build = os.path.join("build", argv[1])
     with open(os.path.join(path_app, "app.bin"), "rb") as f:
         data = f.read()
     data = app.patch(data)

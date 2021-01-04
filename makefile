@@ -16,7 +16,7 @@ SRC_OBJ := \
 	$(BUILD)/src/gsp.o  \
 	$(BUILD)/src/asp.o
 
-APP_OBJ := $(shell python3 main.py $(APP) $(BUILD))
+APP_OBJ := $(shell python3 main.py $(APP) $(BUILD)/app/)
 APP_SRC := $(addprefix build/$(APP)/,$(notdir $(APP_OBJ:.o=.c)))
 
 CCFLAG  := -Wall -Wextra -Wpedantic
