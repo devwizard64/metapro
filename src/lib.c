@@ -1399,6 +1399,11 @@ void lib_cache(void)
 #endif
 
 #define LIB_SV(f) void lib_##f(void) {}
+#ifdef _DEBUG
+#define LIB_SE(f) void lib_##f(void) {puts(#f); exit(EXIT_FAILURE);}
+#else
+#define LIB_SE(f) void lib_##f(void) {}
+#endif
 #define LIB_S0(f) void lib_##f(void) {v0.ll = (s32)0;}
 
 #ifdef APP_UNSM
@@ -1433,25 +1438,9 @@ LIB_SV(osViSwapBuffer)
 #include "lib/osContGetReadData.c"
 #include "lib/osContInit.c"
 #include "lib/osEepromProbe.c"
-
-void lib___ull_div(void)
-{
-#ifdef _DEBUG
-    puts("__ull_div");
-    exit(EXIT_FAILURE);
-#endif
-}
-
+LIB_SE(__ull_div)
 #include "lib/__ll_lshift.c"
-
-void lib___ll_mul(void)
-{
-#ifdef _DEBUG
-    puts("__ll_mul");
-    exit(EXIT_FAILURE);
-#endif
-}
-
+LIB_SE(__ll_mul)
 LIB_SV(osInvalDCache)
 #include "lib/osPiStartDma.c"
 #include "lib/bzero.c"
@@ -1462,23 +1451,8 @@ LIB_SV(osInvalICache)
 #include "lib/guOrtho.c"
 #include "lib/guPerspective.c"
 #include "lib/osGetTime.c"
-
-void lib___d_to_ull(void)
-{
-#ifdef _DEBUG
-    puts("__d_to_ull");
-    exit(EXIT_FAILURE);
-#endif
-}
-
-void lib___ull_to_d(void)
-{
-#ifdef _DEBUG
-    puts("__ull_to_d");
-    exit(EXIT_FAILURE);
-#endif
-}
-
+LIB_SE(__d_to_ull)
+LIB_SE(__ull_to_d)
 #include "lib/cosf.c"
 #include "lib/sinf.c"
 #include "lib/guTranslate.c"
@@ -1511,37 +1485,11 @@ LIB_SV(osWritebackDCacheAll)
 #include "lib/cosf.c"
 #include "lib/bcopy.c"
 #include "lib/bzero.c"
-
-void lib___ull_div(void)
-{
-#ifdef _DEBUG
-    puts("__ull_div");
-    exit(EXIT_FAILURE);
-#endif
-}
-
+LIB_SE(__ull_div)
 #include "lib/__ll_lshift.c"
-
-void lib___ll_mul(void)
-{
-#ifdef _DEBUG
-    puts("__ll_mul");
-    exit(EXIT_FAILURE);
-#endif
-}
-
-void lib_80304094(void)
-{
-    puts("80304094");
-    exit(EXIT_FAILURE);
-}
-
-void lib_803040C0(void)
-{
-    puts("803040C0");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(__ll_mul)
+LIB_SE(80304094)
+LIB_SE(803040C0)
 #include "lib/sprintf.c"
 /* stub */
 LIB_SV(80304B38)
@@ -1549,15 +1497,8 @@ LIB_SV(80304B38)
 #include "lib/osRecvMesg.c"
 #include "lib/osSendMesg.c"
 #include "lib/osSetEventMesg.c"
-
-void lib_80304F80(void)
-{
-    /*
-    puts("80304F80");
-    exit(EXIT_FAILURE);
-    */
-}
-
+/* LIB_SE(80304F80) */
+LIB_SV(80304F80)
 LIB_SV(osSpTaskLoad)
 #include "lib/osSpTaskStartGo.c"
 /* see osSpTaskStartGo */
@@ -1566,13 +1507,7 @@ LIB_S0(osSpTaskYielded)
 #include "lib/osCreateThread.c"
 #include "lib/osSetThreadPri.c"
 #include "lib/osStartThread.c"
-
-void lib___osGetCurrFaultedThread(void)
-{
-    puts("__osGetCurrFaultedThread");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(__osGetCurrFaultedThread)
 #include "lib/osGetTime.c"
 LIB_SV(osSetTime)
 LIB_SV(osMapTLB)
@@ -1593,15 +1528,8 @@ LIB_S0(__osDisableInt)
 LIB_SV(__osRestoreInt)
 LIB_SV(osCreatePiManager)
 #include "lib/osEPiStartDma.c"
-
-void lib_80308350(void)
-{
-    /*
-    puts("80308350");
-    exit(EXIT_FAILURE);
-    */
-}
-
+/* LIB_SE(80308350) */
+LIB_SV(80308350)
 #include "lib/osPiStartDma.c"
 
 void lib_80308D10(void)
@@ -1615,33 +1543,17 @@ void lib_80308D18(void)
 }
 
 /*
-void lib___d_to_ull(void)
-{
-#ifdef _DEBUG
-    puts("__d_to_ull");
-    exit(EXIT_FAILURE);
-#endif
-}
-
-void lib___ull_to_d(void)
-{
-#ifdef _DEBUG
-    puts("__ull_to_d");
-    exit(EXIT_FAILURE);
-#endif
-}
-
+LIB_SE(__d_to_ull)
+LIB_SE(__ull_to_d)
 #include "lib/guTranslate.c"
 #include "lib/guRotate.c"
 #include "lib/guScale.c"
 #include "lib/alSeqFileNew.c"
 LIB_SV(osWritebackDCache)
 */
-
 #endif
 
 #ifdef APP_E4
-
 struct meme_t
 {
     u8  type;
@@ -1745,31 +1657,13 @@ LIB_S0(osSetIntMask)
 LIB_SV(osSpTaskLoad)
 #include "lib/osSpTaskStartGo.c"
 #include "lib/osDestroyThread.c"
-
-void lib___ull_div(void)
-{
-    puts("__ull_div");
-    exit(EXIT_FAILURE);
-}
-
-void lib___ll_mul(void)
-{
-    puts("__ll_mul");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(__ull_div)
+LIB_SE(__ll_mul)
 #include "lib/bzero.c"
-
 LIB_S0(__osMotorAccess)
 LIB_S0(osMotorInit)
 LIB_S0(osContReset)
-
-void lib_osEepromWrite(void)
-{
-    puts("osEepromWrite");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(osEepromWrite)
 #include "lib/osCreateThread.c"
 #include "lib/osContStartReadData.c"
 #include "lib/osContGetReadData.c"
@@ -1780,62 +1674,22 @@ LIB_SV(osWritebackDCache)
 LIB_S0(osViGetNextFramebuffer)
 LIB_S0(osEPiLinkHandle)
 LIB_SV(osViBlack)
-
 /* see osSpTaskStartGo */
-void lib_osSpTaskYield(void)
-{
-    puts("osSpTaskYield");
-    exit(EXIT_FAILURE);
-}
-
-void lib_80030794(void)
-{
-    puts("80030794");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(osSpTaskYield)
+LIB_SE(80030794)
 #include "lib/guMtxIdentF.c"
 LIB_SV(osViSetMode)
-
-void lib_osPfsAllocateFile(void)
-{
-    puts("osPfsAllocateFile");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(osPfsAllocateFile)
 LIB_S0(osGetCount)
-
-void lib_osEepromProbe(void)
-{
-    puts("osEepromProbe");
-    exit(EXIT_FAILURE);
-}
-
-void lib_osPfsFindFile(void)
-{
-    puts("osPfsFindFile");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(osEepromProbe)
+LIB_SE(osPfsFindFile)
 LIB_SV(osCreatePiManager)
 #include "lib/osSetEventMesg.c"
 #include "lib/sqrtf.c"
-
-void lib_osAfterPreNMI(void)
-{
-    puts("osAfterPreNMI");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(osAfterPreNMI)
 #include "lib/osContStartQuery.c"
 #include "lib/osContGetQuery.c"
-
-void lib__Printf(void)
-{
-    puts("_Printf");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(_Printf)
 #include "lib/osEPiStartDma.c"
 #include "lib/memcpy.c"
 #include "lib/osCreateMesgQueue.c"
@@ -1843,80 +1697,31 @@ LIB_SV(osInvalICache)
 LIB_SV(osInvalDCache)
 #include "lib/osEepromLongWrite.c"
 #include "lib/osSetThreadPri.c"
-
-void lib_osGetThreadPri(void)
-{
-    puts("osGetThreadPri");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(osGetThreadPri)
 LIB_SV(osViSwapBuffer)
 #include "lib/guMtxXFMF.c"
 #include "lib/guMtxCatF.c"
-
-void lib_osSpTaskYielded(void)
-{
-    puts("osSpTaskYielded");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(osSpTaskYielded)
 #include "lib/osGetTime.c"
 #include "lib/osAiSetFrequency.c"
 #include "lib/guNormalize.c"
-
-void lib___osGetActiveQueue(void)
-{
-    puts("__osGetActiveQueue");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(__osGetActiveQueue)
 #include "lib/alCopy.c"
-
-void lib_osPfsDeleteFile(void)
-{
-    puts("osPfsDeleteFile");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(osPfsDeleteFile)
 #include "lib/cosf.c"
-
-void lib_osSetTime(void)
-{
-    puts("osSetTime");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(osSetTime)
 #include "lib/osViSetEvent.c"
-
 LIB_S0(osCartRomInit)
 LIB_SV(guS2DInitBg)
-
-void lib_80035D30(void)
-{
-    puts("80035D30");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(80035D30)
 #include "lib/alCents2Ratio.c"
-
-void lib_osDpSetNextBuffer(void)
-{
-    puts("osDpSetNextBuffer");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(osDpSetNextBuffer)
 LIB_SV(osCreateViManager)
 LIB_SV(osWritebackDCacheAll)
 #include "lib/osStartThread.c"
 LIB_SV(osViSetYScale)
 #include "lib/osAiSetNextBuffer.c"
-
-void lib_osEepromRead(void)
-{
-    puts("osEepromRead");
-    exit(EXIT_FAILURE);
-}
-
+LIB_SE(osEepromRead)
 LIB_S0(osViGetCurrentFramebuffer)
 /* ext */
 #include "lib/osAiGetLength.c"
