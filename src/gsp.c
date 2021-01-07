@@ -325,6 +325,9 @@ static void gsp_g_setothermode_h(u32, u32);
 static void gsp_g_texture(u32, u32);
 static void gsp_g_moveword(u32, u32);
 static void gsp_g_popmtx(u32, u32);
+#if 0
+static void gsp_g_culldl(u32, u32);
+#endif
 static void gsp_g_tri1(u32, u32);
 #if 0
 static void gsp_g_noop(u32, u32);
@@ -712,7 +715,11 @@ static void (*gsp_table[])(u32, u32) =
     /* 0xBB */  gsp_g_texture,
     /* 0xBC */  gsp_g_moveword,
     /* 0xBD */  gsp_g_popmtx,
+#if 0
+    /* 0xBE */  gsp_g_culldl,
+#else
     /* 0xBE */  NULL,
+#endif
     /* 0xBF */  gsp_g_tri1,
 #if 0
     /* 0xC0 */  gsp_g_noop,
@@ -2186,6 +2193,7 @@ static void gsp_g_spnoop(unused u32 w0, unused u32 w1)
 #include "gsp/g_dl.c"
 
 #ifdef GSP_F3D_20D
+
 #if 0
 /* 0xB1 G_RDPHALF_CONT */
 static void gsp_g_rdphalf_cont(unused u32 w0, unused u32 w1)
@@ -2205,7 +2213,9 @@ static void gsp_g_perspnorm(unused u32 w0, unused u32 w1)
 {
 }
 #endif
+
 #else
+
 #if 0
 /* 0xB2 G_RDPHALF_CONT */
 static void gsp_g_rdphalf_cont(unused u32 w0, unused u32 w1)
@@ -2218,6 +2228,7 @@ static void gsp_g_rdphalf_cont(unused u32 w0, unused u32 w1)
 
 /* 0xB4 G_RDPHALF_1 */
 #include "gsp/g_rdphalf_1.c"
+
 #endif
 
 /* 0xB6 G_CLEARGEOMETRYMODE */
@@ -2244,6 +2255,11 @@ static void gsp_g_rdphalf_cont(unused u32 w0, unused u32 w1)
 /* 0xBD G_POPMTX */
 #include "gsp/g_popmtx.c"
 
+#if 0
+/* 0xBE G_CULLDL */
+#include "gsp/g_culldl.c"
+#endif
+
 /* 0xBF G_TRI1 */
 #include "gsp/g_tri1.c"
 
@@ -2263,10 +2279,7 @@ static void gsp_g_noop(unused u32 w0, unused u32 w1)
 #include "gsp/g_modifyvtx.c"
 
 /* 0x03 G_CULLDL */
-static void gsp_g_culldl(unused u32 w0, unused u32 w1)
-{
-    /* todo: culldl */
-}
+#include "gsp/g_culldl.c"
 
 /* 0x04 G_BRANCH_Z */
 static void gsp_g_branch_z(unused u32 w0, unused u32 w1)

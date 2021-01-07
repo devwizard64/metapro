@@ -28,6 +28,7 @@
 #define G_TEXTURE               0xBB
 #define G_MOVEWORD              0xBC
 #define G_POPMTX                0xBD
+#define G_CULLDL                0xBE
 #define G_TRI1                  0xBF
 #define G_NOOP                  0xC0
 #endif
