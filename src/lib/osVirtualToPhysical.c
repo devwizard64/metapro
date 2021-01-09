@@ -13,7 +13,7 @@ void lib_osVirtualToPhysical(void)
     else
     {
     #ifdef _DEBUG
-        fprintf(stderr, "error: vaddr 0x%08XU\n", a0.iu[IX]);
+        fprintf(stderr, "error: vaddr 0x%08" FMT_X "U\n", a0.iu[IX]);
     #endif
     }
 }

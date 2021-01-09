@@ -49,7 +49,7 @@ void __call(u32 addr)
     #ifdef _DEBUG
         if (addr < start->addr)
         {
-            fprintf(stderr, "error: __call(0x%08XU)\n", addr);
+            fprintf(stderr, "error: __call(0x%08" FMT_X "U)\n", addr);
             exit(EXIT_FAILURE);
         }
     #endif

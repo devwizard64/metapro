@@ -19,7 +19,7 @@ SRC_OBJ := \
 APP_OBJ := $(shell python3 main.py $(APP) $(BUILD)/app/)
 APP_SRC := $(addprefix build/$(APP)/,$(notdir $(APP_OBJ:.o=.c)))
 
-CCFLAG  := -Wall -Wextra -Wpedantic
+CCFLAG  := -Wall -Wextra -Wpedantic -D _DEBUG
 LDFLAG  :=
 IFLAG   := -I src -I build/$(APP)
 LFLAG   :=
@@ -33,7 +33,7 @@ ifeq ($(TARGET),$(filter $(TARGET),native win32))
 		LIB     := -l mingw32 -l m -l SDL2main -l SDL2 -l opengl32
 	endif
 	LD      := $(CC)
-	CCFLAG  += -ggdb3 -D _NATIVE -D _DEBUG
+	CCFLAG  += -ggdb3 -D _NATIVE
 else ifeq ($(TARGET),3ds)
 	CC      := arm-none-eabi-gcc -march=armv6k -mtune=mpcore
 	CC      += -mfloat-abi=hard -mtp=soft
@@ -71,6 +71,11 @@ clean:
 
 print-%:
 	$(info $* = $(flavor $*): [$($*)]) @true
+
+$(PICAGL)/lib/libpicaGL.a:
+	@make -j1 -C picaGL
+
+build/$(APP)/3ds/app.elf: $(PICAGL)/lib/libpicaGL.a
 
 build/$(APP) $(BUILD)/src $(BUILD)/app:
 	@mkdir -p $@

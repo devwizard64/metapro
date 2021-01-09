@@ -1579,12 +1579,12 @@ static void gsp_flush_texture(void)
         else
         {
         #ifdef _DEBUG
-            /*
+        #ifndef APP_UNK4
             fprintf(
                 stderr, "warning: unknown texture fmt %02X / %db\n",
                 gsp_texture_fmt >> 2, 4 << (gsp_texture_fmt & 0x03)
             );
-            */
+        #endif
         #endif
         }
     }
@@ -2900,7 +2900,7 @@ static void gsp_g_bg_1cyc(unused u32 w0, unused u32 w1)
         "image_h     = %f\n"
         "frame_y     = %f\n"
         "frame_h     = %f\n"
-        "image_ptr   = 0x%08X\n"
+        "image_ptr   = 0x%08" FMT_X "\n"
         "image_load  = 0x%04X\n"
         "image_fmt   = G_IM_FMT_%s\n"
         "image_siz   = G_IM_SIZ_%db\n"
@@ -3095,7 +3095,11 @@ void gsp_update(void *ucode, u32 *dl)
     {
         pglSwapBuffers();
         pglSelectScreen(GFX_TOP, GFX_RIGHT);
+    #ifdef _DEBUG
+        gsp_table[G_VTX] = gsp_g_vtx_stub;
+    #else
         gsp_table[G_VTX] = NULL;
+    #endif
         gsp_write_triangle = gsp_write_triangle_stub;
         gsp_depth = -depth;
         gsp_draw(ucode, dl);

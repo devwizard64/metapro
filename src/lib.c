@@ -548,7 +548,7 @@ static void thread_print(void)
     while (queue != NULL)
     {
         printf(
-            "entry=%08X  pri=%3d  r=%d  id=%d\n",
+            "entry=%08" FMT_X "  pri=%3d  r=%d  id=%d\n",
             queue->entry, queue->pri, queue->ready, queue->id
         );
         queue = queue->qnext;

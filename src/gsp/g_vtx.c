@@ -199,3 +199,9 @@ static void gsp_g_vtx(u32 w0, u32 w1)
     while (--count > 0);
 #endif
 }
+
+#if defined(_3DS) && defined(_DEBUG)
+static void gsp_g_vtx_stub(unused u32 w0, unused u32 w1)
+{
+}
+#endif
