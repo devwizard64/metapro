@@ -176,7 +176,7 @@ static SDL_GLContext    *lib_context      = NULL;
 static SDL_Joystick     *lib_joystick     = NULL;
 #endif
 static SDL_AudioDeviceID lib_audio_device = 0;
-static clock_t           lib_clock        = 0;
+static u64               lib_time         = 0;
 #endif
 #ifdef _3DS
 static Thread lib_gsp_thread = NULL;
@@ -805,6 +805,15 @@ static void video_destroy(void)
 }
 #endif
 
+#ifdef _NATIVE
+static u64 video_time(void)
+{
+    struct timespec timespec;
+    clock_gettime(CLOCK_MONOTONIC, &timespec);
+    return 1000000000*timespec.tv_sec + timespec.tv_nsec;
+}
+#endif
+
 void video_update(void)
 {
 #ifdef _NATIVE
@@ -818,18 +827,16 @@ void video_update(void)
     if (!lib_fast)
 #endif
     {
-        clock_t time = clock();
-        s32 delay;
-        if (lib_clock == 0)
+        u64 time = video_time();
+        if (lib_time == 0)
         {
-            lib_clock = time;
+            lib_time = time;
         }
-        lib_clock += 16667;
-        delay = (lib_clock-clock()+500) / 1000;
-        if (delay > 0)
+        lib_time += 16666667;
+        while (lib_time > time)
         {
-            lib_clock -= 1000*delay;
-            SDL_Delay(delay);
+            SDL_Delay(1);
+            time = video_time();
         }
     }
 #endif
