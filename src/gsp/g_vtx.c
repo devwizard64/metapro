@@ -200,8 +200,12 @@ static void gsp_g_vtx(u32 w0, u32 w1)
 #endif
 }
 
-#if defined(_3DS) && defined(_DEBUG)
+#ifdef _3DS
+#ifdef _DEBUG
 static void gsp_g_vtx_stub(unused u32 w0, unused u32 w1)
 {
 }
+#else
+#define gsp_g_vtx_stub  NULL
+#endif
 #endif

@@ -3095,11 +3095,7 @@ void gsp_update(void *ucode, u32 *dl)
     {
         pglSwapBuffers();
         pglSelectScreen(GFX_TOP, GFX_RIGHT);
-    #ifdef _DEBUG
         gsp_table[G_VTX] = gsp_g_vtx_stub;
-    #else
-        gsp_table[G_VTX] = NULL;
-    #endif
         gsp_write_triangle = gsp_write_triangle_stub;
         gsp_depth = -depth;
         gsp_draw(ucode, dl);
