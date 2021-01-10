@@ -19,7 +19,7 @@ SRC_OBJ := \
 APP_OBJ := $(shell python3 main.py $(APP) $(BUILD)/app/)
 APP_SRC := $(addprefix build/$(APP)/,$(notdir $(APP_OBJ:.o=.c)))
 
-CCFLAG  := -Wall -Wextra -Wpedantic -D _DEBUG
+CCFLAG  := -Wall -Wextra -Wpedantic -ggdb3 -D _DEBUG
 LDFLAG  :=
 IFLAG   := -I src -I build/$(APP)
 LFLAG   :=
@@ -29,11 +29,11 @@ ifeq ($(TARGET),$(filter $(TARGET),native win32))
 		CC      := gcc
 		LIB     := -l m -l SDL2 -l GL
 	else
-		CC      := i686-w64-mingw32-gcc -mconsole
+		CC      := i686-w64-mingw32-gcc -mwindows
 		LIB     := -l mingw32 -l m -l SDL2main -l SDL2 -l opengl32
 	endif
 	LD      := $(CC)
-	CCFLAG  += -ggdb3 -D _NATIVE
+	CCFLAG  += -D _NATIVE
 else ifeq ($(TARGET),3ds)
 	CC      := arm-none-eabi-gcc -march=armv6k -mtune=mpcore
 	CC      += -mfloat-abi=hard -mtp=soft
@@ -61,7 +61,7 @@ else ifeq ($(TARGET),$(filter $(TARGET),gcn wii))
 	LD      := $(CC)
 endif
 
-$(BUILD)/src/%.o: CCFLAG += -Ofast
+# $(BUILD)/src/%.o: CCFLAG += -Ofast
 $(BUILD)/app/%.o: CCFLAG += -Wno-maybe-uninitialized -Wno-uninitialized
 
 all: $(TARGET)

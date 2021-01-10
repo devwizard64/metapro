@@ -41,6 +41,11 @@
 #endif
 
 #define THREAD_STACK_SIZE       0x4000
+#ifdef GEKKO
+#define THREAD_STACK_END        0x10
+#else
+#define THREAD_STACK_END        0
+#endif
 
 struct thread_t
 {
@@ -803,9 +808,17 @@ static void video_destroy(void)
 #ifdef _NATIVE
 static u64 video_time(void)
 {
+#ifdef WIN32
+    LARGE_INTEGER count;
+    LARGE_INTEGER freq;
+    QueryPerformanceCounter(&count);
+    QueryPerformanceFrequency(&freq);
+    return 1000000000*count.QuadPart/freq.QuadPart;
+#else
     struct timespec timespec;
     clock_gettime(CLOCK_MONOTONIC, &timespec);
     return 1000000000*timespec.tv_sec + timespec.tv_nsec;
+#endif
 }
 #endif
 
@@ -1081,7 +1094,7 @@ static void input_update(void)
                     case 0x82: axis = PAD_SubStickX(0); break;
                     case 0x83: axis = PAD_SubStickY(0); break;
                 }
-                axis = axis*(s8)lib_config.input[i]/(0x100*100);
+                axis = axis*(s8)lib_config.input[i]/100;
                 switch (mask)
                 {
                     case 0x0080:
@@ -1339,7 +1352,7 @@ static void lib_main(void)
             register void *stack;
             register u32   entry;
             thread->init = false;
-            stack = thread->stack + THREAD_STACK_SIZE;
+            stack = thread->stack + THREAD_STACK_SIZE-THREAD_STACK_END;
             entry = thread->entry;
         #ifdef __GNUC__
             asm volatile(

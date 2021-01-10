@@ -288,19 +288,33 @@ static void gsp_texture_read_rgba16(void *, const void *, uint);
 #if 0
 static void gsp_texture_read_rgba32(void *, const void *, uint);
 static void gsp_texture_read_yuv16(void *, const void *, uint);
+#else
+#define gsp_texture_read_rgba32 NULL
+#define gsp_texture_read_yuv16  NULL
 #endif
-#ifndef APP_UNSM
+#ifdef APP_UNSM
+#define gsp_texture_read_ci4    NULL
+#define gsp_texture_read_ci8    NULL
+#else
+/* todo: CI */
+#define gsp_texture_read_ci4    NULL
+#define gsp_texture_read_ci8    NULL
 #endif
 static void gsp_texture_read_ia4(void *, const void *, uint);
 static void gsp_texture_read_ia8(void *, const void *, uint);
 static void gsp_texture_read_ia16(void *, const void *, uint);
-#ifndef APP_UNSM
+#ifdef APP_UNSM
+#define gsp_texture_read_i4     NULL
+#define gsp_texture_read_i8     NULL
+#else
 static void gsp_texture_read_i4(void *, const void *, uint);
 static void gsp_texture_read_i8(void *, const void *, uint);
 #endif
 
 #if 0
 static void gsp_g_spnoop(u32, u32);
+#else
+#define gsp_g_spnoop            NULL
 #endif
 #ifdef GSP_F3D
 static void gsp_g_mtx(u32, u32);
@@ -309,12 +323,16 @@ static void gsp_g_vtx(u32, u32);
 static void gsp_g_dl(u32, u32);
 #if 0
 static void gsp_g_rdphalf_cont(u32, u32);
+#else
+#define gsp_g_rdphalf_cont      NULL
 #endif
 static void gsp_g_rdphalf_2(u32, u32);
 static void gsp_g_rdphalf_1(u32, u32);
 #ifdef GSP_F3D_20D
 #ifdef _DEBUG
 static void gsp_g_perspnorm(u32, u32);
+#else
+#define gsp_g_perspnorm         NULL
 #endif
 #endif
 static void gsp_g_cleargeometrymode(u32, u32);
@@ -327,10 +345,14 @@ static void gsp_g_moveword(u32, u32);
 static void gsp_g_popmtx(u32, u32);
 #if 0
 static void gsp_g_culldl(u32, u32);
+#else
+#define gsp_g_culldl            NULL
 #endif
 static void gsp_g_tri1(u32, u32);
 #if 0
 static void gsp_g_noop(u32, u32);
+#else
+#define gsp_g_noop              NULL
 #endif
 #endif
 #ifdef GSP_F3DEX2
@@ -356,6 +378,8 @@ static void gsp_g_dl(u32, u32);
 static void gsp_g_enddl(u32, u32);
 #if 0
 static void gsp_g_noop(u32, u32);
+#else
+#define gsp_g_noop              NULL
 #endif
 static void gsp_g_rdphalf_1(u32, u32);
 static void gsp_g_setothermode_l(u32, u32);
@@ -373,17 +397,31 @@ static void gsp_g_rdpfullsync(u32, u32);
 static void gsp_g_setkeygb(u32, u32);
 static void gsp_g_setkeyr(u32, u32);
 static void gsp_g_setconvert(u32, u32);
+#else
+#define gsp_g_setkeygb          NULL
+#define gsp_g_setkeyr           NULL
+#define gsp_g_setconvert        NULL
 #endif
 static void gsp_g_setscissor(u32, u32);
 #ifdef APP_UNK4
 static void gsp_g_setprimdepth(u32, u32);
+#else
+#define gsp_g_setprimdepth      NULL
 #endif
 #if 0
 static void gsp_g_rdpsetothermode(u32, u32);
+#else
+#define gsp_g_rdpsetothermode   NULL
 #endif
 #ifdef APP_UNK4
 static void gsp_g_loadtlut(u32, u32);
+#else
+#define gsp_g_loadtlut          NULL
+#endif
+#ifdef GSP_F3DEX2
 static void gsp_g_rdphalf_2(u32, u32);
+#else
+#define gsp_g_rdphalf_2         NULL
 #endif
 static void gsp_g_settilesize(u32, u32);
 static void gsp_g_loadblock(u32, u32);
@@ -400,6 +438,9 @@ static void gsp_g_settimg(u32, u32);
 #ifdef _DEBUG
 static void gsp_g_setzimg(u32, u32);
 static void gsp_g_setcimg(u32, u32);
+#else
+#define gsp_g_setzimg           NULL
+#define gsp_g_setcimg           NULL
 #endif
 #ifdef GSP_F3DEX2
 static void gsp_g_obj_rectangle(u32, u32);
@@ -425,34 +466,21 @@ static void (*gsp_texture_read_table[])(void *, const void *, uint) =
     /* RGBA  4 */ NULL,
     /* RGBA  8 */ NULL,
     /* RGBA 16 */ gsp_texture_read_rgba16,
-#if 0
     /* RGBA 32 */ gsp_texture_read_rgba32,
-#else
-    /* RGBA 32 */ NULL,
-#endif
     /* YUV   4 */ NULL,
     /* YUV   8 */ NULL,
-#if 0
     /* YUV  16 */ gsp_texture_read_yuv16,
-#else
-    /* YUV  16 */ NULL,
-#endif
     /* YUV  32 */ NULL,
-    /* CI    4 */ NULL,
-    /* CI    8 */ NULL,
+    /* CI    4 */ gsp_texture_read_ci4,
+    /* CI    8 */ gsp_texture_read_ci8,
     /* CI   16 */ NULL,
     /* CI   32 */ NULL,
     /* IA    4 */ gsp_texture_read_ia4,
     /* IA    8 */ gsp_texture_read_ia8,
     /* IA   16 */ gsp_texture_read_ia16,
     /* IA   32 */ NULL,
-#ifdef APP_UNSM
-    /* I     4 */ NULL,
-    /* I     8 */ NULL,
-#else
     /* I     4 */ gsp_texture_read_i4,
     /* I     8 */ gsp_texture_read_i8,
-#endif
     /* I    16 */ NULL,
     /* I    32 */ NULL,
 };
@@ -491,11 +519,7 @@ static void (*const gsp_table_2d[])(u32, u32) =
 
 static void (*gsp_table[])(u32, u32) =
 {
-#if 0
     /* 0x00 */  gsp_g_spnoop,
-#else
-    /* 0x00 */  NULL,
-#endif
 #ifdef GSP_F3D
     /* 0x01 */  gsp_g_mtx,
     /* 0x02 */  NULL,
@@ -684,25 +708,13 @@ static void (*gsp_table[])(u32, u32) =
     /* 0xB0 */  NULL,
 #ifdef GSP_F3D
 #ifdef GSP_F3D_20D
-#if 0
     /* 0xB1 */  gsp_g_rdphalf_cont,
-#else
-    /* 0xB1 */  NULL,
-#endif
     /* 0xB2 */  gsp_g_rdphalf_2,
     /* 0xB3 */  gsp_g_rdphalf_1,
-#ifdef _DEBUG
     /* 0xB4 */  gsp_g_perspnorm,
 #else
-    /* 0xB4 */  NULL,
-#endif
-#else
     /* 0xB1 */  NULL,
-#if 0
     /* 0xB2 */  gsp_g_rdphalf_cont,
-#else
-    /* 0xB2 */  NULL,
-#endif
     /* 0xB3 */  gsp_g_rdphalf_2,
     /* 0xB4 */  gsp_g_rdphalf_1,
 #endif
@@ -715,17 +727,9 @@ static void (*gsp_table[])(u32, u32) =
     /* 0xBB */  gsp_g_texture,
     /* 0xBC */  gsp_g_moveword,
     /* 0xBD */  gsp_g_popmtx,
-#if 0
     /* 0xBE */  gsp_g_culldl,
-#else
-    /* 0xBE */  NULL,
-#endif
     /* 0xBF */  gsp_g_tri1,
-#if 0
     /* 0xC0 */  gsp_g_noop,
-#else
-    /* 0xC0 */  NULL,
-#endif
 #endif
 #ifdef GSP_F3DEX2
     /* 0xB1 */  NULL,
@@ -796,55 +800,28 @@ static void (*gsp_table[])(u32, u32) =
     /* 0xDD */  gsp_g_load_ucode,
     /* 0xDE */  gsp_g_dl,
     /* 0xDF */  gsp_g_enddl,
-#if 0
     /* 0xE0 */  gsp_g_noop,
-#else
-    /* 0xE0 */  NULL,
-#endif
     /* 0xE1 */  gsp_g_rdphalf_1,
     /* 0xE2 */  gsp_g_setothermode_l,
     /* 0xE3 */  gsp_g_setothermode_h,
 #endif
     /* 0xE4 */  gsp_g_texrect,
     /* 0xE5 */  gsp_g_texrectflip,
-#ifdef _DEBUG
     /* 0xE6 */  gsp_g_rdploadsync,
     /* 0xE7 */  gsp_g_rdppipesync,
     /* 0xE8 */  gsp_g_rdptilesync,
     /* 0xE9 */  gsp_g_rdpfullsync,
-#else
-    /* 0xE6 */  NULL,
-    /* 0xE7 */  NULL,
-    /* 0xE8 */  NULL,
-    /* 0xE9 */  NULL,
-#endif
-#if 0
     /* 0xEA */  gsp_g_setkeygb,
     /* 0xEB */  gsp_g_setkeyr,
     /* 0xEC */  gsp_g_setconvert,
-#else
-    /* 0xEA */  NULL,
-    /* 0xEB */  NULL,
-    /* 0xEC */  NULL,
-#endif
     /* 0xED */  gsp_g_setscissor,
-#ifdef APP_UNK4
     /* 0xEE */  gsp_g_setprimdepth,
-#else
-    /* 0xEF */  NULL,
-#endif
-#if 0
     /* 0xEF */  gsp_g_rdpsetothermode,
-#else
-    /* 0xEE */  NULL,
-#endif
-#ifdef APP_UNSM
-    /* 0xF0 */  NULL,
-    /* 0xF1 */  NULL,
-#endif
-#ifdef APP_UNK4
     /* 0xF0 */  gsp_g_loadtlut,
+#ifdef GSP_F3DEX2
     /* 0xF1 */  gsp_g_rdphalf_2,
+#else
+    /* 0xF1 */  NULL,
 #endif
     /* 0xF2 */  gsp_g_settilesize,
     /* 0xF3 */  gsp_g_loadblock,
@@ -858,13 +835,8 @@ static void (*gsp_table[])(u32, u32) =
     /* 0xFB */  gsp_g_setenvcolor,
     /* 0xFC */  gsp_g_setcombine,
     /* 0xFD */  gsp_g_settimg,
-#ifdef _DEBUG
     /* 0xFE */  gsp_g_setzimg,
     /* 0xFF */  gsp_g_setcimg,
-#else
-    /* 0xFE */  NULL,
-    /* 0xFF */  NULL,
-#endif
 };
 
 static void (*gsp_combine_cc)(u8 *, struct vtxf_t *);
@@ -900,8 +872,13 @@ static const GLint gsp_texture_fmt_table[] =
     /* YUV   8 */ 0,
     /* YUV  16 */ 0,
     /* YUV  32 */ 0,
+#ifdef APP_UNSM
     /* CI    4 */ 0,
     /* CI    8 */ 0,
+#else
+    /* CI    4 */ 0,
+    /* CI    8 */ 0,
+#endif
     /* CI   16 */ 0,
     /* CI   32 */ 0,
     /* IA    4 */ GPU_LA4,
@@ -1512,7 +1489,7 @@ static void gsp_flush_scissor(void)
 static void gsp_flush_texture_enabled(void)
 {
 #ifdef GEKKO
-    GX_SetTevOp(GX_TEVSTAGE0, EN_TX ? GX_MODULATE : GX_PASSCLR);
+    GX_SetTevOp(GX_TEVSTAGE0, /* EN_TX ? GX_MODULATE : */ GX_PASSCLR);
 #else
     if (EN_TX)
     {
