@@ -190,12 +190,7 @@ static u32   *lib_gsp_data   = NULL;
 static u32   *lib_asp_data   = NULL;
 static u32    lib_asp_size   = 0;
 static bool   lib_rsp_update = true;
-static f32 lib_audio_mix[12] =
-{
-    1.0F, 1.0F, 0.0F, 0.0F,
-    0.0F, 0.0F, 0.0F, 0.0F,
-    0.0F, 0.0F, 0.0F, 0.0F,
-};
+static f32 lib_audio_mix[12] = {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static ndspWaveBuf lib_audio_bufs[2] = {0};
 static u8          lib_audio_buf     = 0;
 #endif
@@ -211,13 +206,13 @@ static struct config_t lib_config;
 #ifdef _NATIVE
 u16 lib_video_w = VIDEO_SCALE*320; /* 400 */
 u16 lib_video_h = VIDEO_SCALE*240;
-f32 lib_viewport_l =   0.0F; /* -40.0F */
-f32 lib_viewport_r = 320.0F; /* 360.0F */
+f32 lib_viewport_l =   0; /* -40 */
+f32 lib_viewport_r = 320; /* 360 */
 #else
 u16 lib_video_w    = 320;
 u16 lib_video_h    = 240;
-f32 lib_viewport_l =   0.0F;
-f32 lib_viewport_r = 320.0F;
+f32 lib_viewport_l =   0;
+f32 lib_viewport_r = 320;
 #endif
 
 #ifdef _NATIVE
@@ -288,42 +283,42 @@ void mtxf_mul(f32 mtxf[4][4], f32 a[4][4], f32 b[4][4])
 
 void mtxf_identity(f32 mtxf[4][4])
 {
-    mtxf[0][0] = 1.0F;
-    mtxf[0][1] = 0.0F;
-    mtxf[0][2] = 0.0F;
-    mtxf[0][3] = 0.0F;
-    mtxf[1][0] = 0.0F;
-    mtxf[1][1] = 1.0F;
-    mtxf[1][2] = 0.0F;
-    mtxf[1][3] = 0.0F;
-    mtxf[2][0] = 0.0F;
-    mtxf[2][1] = 0.0F;
-    mtxf[2][2] = 1.0F;
-    mtxf[2][3] = 0.0F;
-    mtxf[3][0] = 0.0F;
-    mtxf[3][1] = 0.0F;
-    mtxf[3][2] = 0.0F;
-    mtxf[3][3] = 1.0F;
+    mtxf[0][0] = 1;
+    mtxf[0][1] = 0;
+    mtxf[0][2] = 0;
+    mtxf[0][3] = 0;
+    mtxf[1][0] = 0;
+    mtxf[1][1] = 1;
+    mtxf[1][2] = 0;
+    mtxf[1][3] = 0;
+    mtxf[2][0] = 0;
+    mtxf[2][1] = 0;
+    mtxf[2][2] = 1;
+    mtxf[2][3] = 0;
+    mtxf[3][0] = 0;
+    mtxf[3][1] = 0;
+    mtxf[3][2] = 0;
+    mtxf[3][3] = 1;
 }
 
 void mtxf_ortho(f32 mtxf[4][4], f32 l, f32 r, f32 b, f32 t, f32 n, f32 f)
 {
-    mtxf[0][0] = 2.0F / (r-l);
-    mtxf[0][1] = 0.0F;
-    mtxf[0][2] = 0.0F;
-    mtxf[0][3] = 0.0F;
-    mtxf[1][0] = 0.0F;
-    mtxf[1][1] = 2.0F / (t-b);
-    mtxf[1][2] = 0.0F;
-    mtxf[1][3] = 0.0F;
-    mtxf[2][0] = 0.0F;
-    mtxf[2][1] = 0.0F;
-    mtxf[2][2] = 2.0F / (n-f);
-    mtxf[2][3] = 0.0F;
+    mtxf[0][0] = 2 / (r-l);
+    mtxf[0][1] = 0;
+    mtxf[0][2] = 0;
+    mtxf[0][3] = 0;
+    mtxf[1][0] = 0;
+    mtxf[1][1] = 2 / (t-b);
+    mtxf[1][2] = 0;
+    mtxf[1][3] = 0;
+    mtxf[2][0] = 0;
+    mtxf[2][1] = 0;
+    mtxf[2][2] = 2 / (n-f);
+    mtxf[2][3] = 0;
     mtxf[3][0] = (l+r) / (l-r);
     mtxf[3][1] = (b+t) / (b-t);
     mtxf[3][2] = (n+f) / (n-f);
-    mtxf[3][3] = 1.0F;
+    mtxf[3][3] = 1;
 }
 
 #ifndef APP_UNK4
@@ -333,50 +328,50 @@ static void mtxf_perspective(f32 mtxf[4][4], f32 fovy, f32 aspect, f32 n, f32 f)
     fovy *= (f32)(M_PI / 360.0);
     x = cosf(fovy) / sinf(fovy);
     mtxf[0][0] = x/aspect;
-    mtxf[0][1] = 0.0F;
-    mtxf[0][2] = 0.0F;
-    mtxf[0][3] = 0.0F;
-    mtxf[1][0] = 0.0F;
+    mtxf[0][1] = 0;
+    mtxf[0][2] = 0;
+    mtxf[0][3] = 0;
+    mtxf[1][0] = 0;
     mtxf[1][1] = x;
-    mtxf[1][2] = 0.0F;
-    mtxf[1][3] = 0.0F;
-    x = 1.0F / (n-f);
-    mtxf[2][0] = 0.0F;
-    mtxf[2][1] = 0.0F;
+    mtxf[1][2] = 0;
+    mtxf[1][3] = 0;
+    x = 1 / (n-f);
+    mtxf[2][0] = 0;
+    mtxf[2][1] = 0;
 #ifdef GEKKO
     mtxf[2][2] = (n  )*x;
 #else
     mtxf[2][2] = (n+f)*x;
 #endif
-    mtxf[2][3] = -1.0F;
-    mtxf[3][0] = 0.0F;
-    mtxf[3][1] = 0.0F;
+    mtxf[2][3] = -1;
+    mtxf[3][0] = 0;
+    mtxf[3][1] = 0;
 #ifdef GEKKO
     mtxf[3][2] =      n*f*x;
 #else
-    mtxf[3][2] = 2.0F*n*f*x;
+    mtxf[3][2] = 2*n*f*x;
 #endif
-    mtxf[3][3] = 0.0F;
+    mtxf[3][3] = 0;
 }
 
 static void mtxf_translate(f32 mtxf[4][4], f32 x, f32 y, f32 z)
 {
-    mtxf[0][0] = 1.0F;
-    mtxf[0][1] = 0.0F;
-    mtxf[0][2] = 0.0F;
-    mtxf[0][3] = 0.0F;
-    mtxf[1][0] = 0.0F;
-    mtxf[1][1] = 1.0F;
-    mtxf[1][2] = 0.0F;
-    mtxf[1][3] = 0.0F;
-    mtxf[2][0] = 0.0F;
-    mtxf[2][1] = 0.0F;
-    mtxf[2][2] = 1.0F;
-    mtxf[2][3] = 0.0F;
+    mtxf[0][0] = 1;
+    mtxf[0][1] = 0;
+    mtxf[0][2] = 0;
+    mtxf[0][3] = 0;
+    mtxf[1][0] = 0;
+    mtxf[1][1] = 1;
+    mtxf[1][2] = 0;
+    mtxf[1][3] = 0;
+    mtxf[2][0] = 0;
+    mtxf[2][1] = 0;
+    mtxf[2][2] = 1;
+    mtxf[2][3] = 0;
     mtxf[3][0] = x;
     mtxf[3][1] = y;
     mtxf[3][2] = z;
-    mtxf[3][3] = 1.0F;
+    mtxf[3][3] = 1;
 }
 
 static void mtxf_rotate(f32 mtxf[4][4], f32 a, f32 x, f32 y, f32 z)
@@ -392,52 +387,52 @@ static void mtxf_rotate(f32 mtxf[4][4], f32 a, f32 x, f32 y, f32 z)
     xx = x*x;
     yy = y*y;
     zz = z*z;
-    s = 1.0F / sqrtf(xx + yy + zz);
+    s = 1 / sqrtf(xx + yy + zz);
     x *= s;
     y *= s;
     z *= s;
     a *= (f32)(M_PI / 180.0);
     s = sinf(a);
     c = cosf(a);
-    xyc = x*y*(1.0F-c);
-    yzc = y*z*(1.0F-c);
-    zxc = z*x*(1.0F-c);
-    mtxf[0][0] = (1.0F-xx)*c + xx;
+    xyc = x*y*(1-c);
+    yzc = y*z*(1-c);
+    zxc = z*x*(1-c);
+    mtxf[0][0] = (1-xx)*c + xx;
     mtxf[0][1] = xyc + z*s;
     mtxf[0][2] = zxc - y*s;
-    mtxf[0][3] = 0.0F;
+    mtxf[0][3] = 0;
     mtxf[1][0] = xyc - z*s;
-    mtxf[1][1] = (1.0F-yy)*c + yy;
+    mtxf[1][1] = (1-yy)*c + yy;
     mtxf[1][2] = yzc + x*s;
-    mtxf[1][3] = 0.0F;
+    mtxf[1][3] = 0;
     mtxf[2][0] = zxc + y*s;
     mtxf[2][1] = yzc - x*s;
-    mtxf[2][2] = (1.0F-zz)*c + zz;
-    mtxf[2][3] = 0.0F;
-    mtxf[3][0] = 0.0F;
-    mtxf[3][1] = 0.0F;
-    mtxf[3][2] = 0.0F;
-    mtxf[3][3] = 1.0F;
+    mtxf[2][2] = (1-zz)*c + zz;
+    mtxf[2][3] = 0;
+    mtxf[3][0] = 0;
+    mtxf[3][1] = 0;
+    mtxf[3][2] = 0;
+    mtxf[3][3] = 1;
 }
 
 static void mtxf_scale(f32 mtxf[4][4], f32 x, f32 y, f32 z)
 {
     mtxf[0][0] = x;
-    mtxf[0][1] = 0.0F;
-    mtxf[0][2] = 0.0F;
-    mtxf[0][3] = 0.0F;
-    mtxf[1][0] = 0.0F;
+    mtxf[0][1] = 0;
+    mtxf[0][2] = 0;
+    mtxf[0][3] = 0;
+    mtxf[1][0] = 0;
     mtxf[1][1] = y;
-    mtxf[1][2] = 0.0F;
-    mtxf[1][3] = 0.0F;
-    mtxf[2][0] = 0.0F;
-    mtxf[2][1] = 0.0F;
+    mtxf[1][2] = 0;
+    mtxf[1][3] = 0;
+    mtxf[2][0] = 0;
+    mtxf[2][1] = 0;
     mtxf[2][2] = z;
-    mtxf[2][3] = 0.0F;
-    mtxf[3][0] = 0.0F;
-    mtxf[3][1] = 0.0F;
-    mtxf[3][2] = 0.0F;
-    mtxf[3][3] = 1.0F;
+    mtxf[2][3] = 0;
+    mtxf[3][0] = 0;
+    mtxf[3][1] = 0;
+    mtxf[3][2] = 0;
+    mtxf[3][3] = 1;
 }
 #endif
 #endif
@@ -637,8 +632,8 @@ static void video_update_size(s32 w, s32 h)
     lib_video_w = w;
     lib_video_h = h;
     x = 120.0F * w/h;
-    lib_viewport_l = 160.0F - x;
-    lib_viewport_r = 160.0F + x;
+    lib_viewport_l = 160 - x;
+    lib_viewport_r = 160 + x;
 }
 #endif
 

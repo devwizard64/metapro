@@ -1299,7 +1299,7 @@ static void gsp_flush_mtxf_projection(void)
     mtx[1][1] = MP[1][1];
     mtx[2][2] = MP[2][2];
     mtx[2][3] = MP[3][2];
-    if (MP[3][3] != 0.0F)
+    if (MP[3][3] != 0)
     {
         mtx[0][3] = MP[3][0];
         mtx[1][3] = MP[3][1];
@@ -1316,7 +1316,7 @@ static void gsp_flush_mtxf_projection(void)
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(&MP[0][0]);
 #ifdef _3DS
-    glTranslatef(gsp_depth, 0.0F, 0.0F);
+    glTranslatef(gsp_depth, 0, 0);
 #endif
 #endif
 }
@@ -1370,8 +1370,8 @@ static void gsp_flush_viewport(void)
         (  t) * lib_video_h/ 960.0F,
         (r-l) * lib_video_w/1280.0F,
         (b-t) * lib_video_h/ 960.0F,
-        0.0F,
-        1.0F
+        0,
+        1
     );
 #else
     glViewport(
@@ -1463,11 +1463,11 @@ static void gsp_flush_rendermode(void)
     }
     if (EN_DE)
     {
-        glPolygonOffset(-1.0F, -2.0F);
+        glPolygonOffset(-1, -2);
     }
     else
     {
-        glPolygonOffset(0.0F, 0.0F);
+        glPolygonOffset(0, 0);
     }
     if (EN_AC)
     {
@@ -2041,11 +2041,11 @@ static void gsp_flush_texrect(void)
         mtxf_ortho(
             MP,
         #ifdef LIB_DYNRES
-            4.0F*lib_viewport_l, 4.0F*lib_viewport_r,
+            4*lib_viewport_l, 4*lib_viewport_r,
         #else
-            0.0F, 1280.0F,
+            0, 1280,
         #endif
-            960.0F, 0.0F, -1.0F, 1.0F
+            960, 0, -1, 1
         );
         gsp_change |= CHANGE_MTXF_PROJECTION;
     }
@@ -2055,12 +2055,12 @@ static void gsp_flush_texrect(void)
         gsp_texrect_yh &= ~3;
         gsp_texrect_xh += 4;
         gsp_texrect_yh += 4;
-        gsp_texrect_dsdx = 32.0F/4.0F;
+        gsp_texrect_dsdx = 32/4.0F;
     }
     else if (gsp_texture_filter != GL_NEAREST)
     {
-        gsp_texrect_ul += 32.0F*0.5F;
-        gsp_texrect_vl += 32.0F*0.5F;
+        gsp_texrect_ul += 32*0.5F;
+        gsp_texrect_vl += 32*0.5F;
     }
     uh = gsp_texrect_ul + gsp_texrect_dsdx*(gsp_texrect_xh-gsp_texrect_xl);
     vh = gsp_texrect_vl + gsp_texrect_dtdy*(gsp_texrect_yh-gsp_texrect_yl);
@@ -2480,8 +2480,8 @@ static void gsp_g_settilesize(u32 w0, u32 w1)
     {
         gsp_texture_size[0] = (w1 >> 14 & 0x03FF) + 1;
         gsp_texture_size[1] = (w1 >>  2 & 0x03FF) + 1;
-        gsp_texture_tscale[0] = (1.0F/32.0F) / gsp_texture_size[0];
-        gsp_texture_tscale[1] = (1.0F/32.0F) / gsp_texture_size[1];
+        gsp_texture_tscale[0] = (1.0F/32) / gsp_texture_size[0];
+        gsp_texture_tscale[1] = (1.0F/32) / gsp_texture_size[1];
     }
     gsp_change |= CHANGE_TEXTURE;
 }
@@ -2541,7 +2541,7 @@ static void gsp_g_fillrect(u32 w0, u32 w1)
         if (gsp_rect != 2)
         {
             gsp_rect = 2;
-            mtxf_ortho(MP, 0.0F, 320.0F, 240.0F, 0.0F, -1.0F, 1.0F);
+            mtxf_ortho(MP, 0, 320, 240, 0, -1, 1);
             gsp_change |= CHANGE_MTXF_PROJECTION;
         }
         xh = w0 >> 14 & 0x03FF;
@@ -2908,14 +2908,14 @@ static void gsp_g_bg_1cyc(unused u32 w0, unused u32 w1)
         "image_flip  = 0x%04X\n"
         "scale_w     = %f\n"
         "scale_h     = %f\n",
-        (1.0F/32.0F) * bg->image_x,
-        (1.0F/ 4.0F) * bg->image_w,
-        (1.0F/ 4.0F) * bg->frame_x,
-        (1.0F/ 4.0F) * bg->frame_w,
-        (1.0F/32.0F) * bg->image_y,
-        (1.0F/ 4.0F) * bg->image_h,
-        (1.0F/ 4.0F) * bg->frame_y,
-        (1.0F/ 4.0F) * bg->frame_h,
+        (1.0F/32) * bg->image_x,
+        (1.0F/ 4) * bg->image_w,
+        (1.0F/ 4) * bg->frame_x,
+        (1.0F/ 4) * bg->frame_w,
+        (1.0F/32) * bg->image_y,
+        (1.0F/ 4) * bg->image_h,
+        (1.0F/ 4) * bg->frame_y,
+        (1.0F/ 4) * bg->frame_h,
         bg->image_ptr,
         bg->image_load,
         str_im_fmt[bg->image_fmt],
@@ -3023,7 +3023,7 @@ static void gsp_draw(void *ucode, u32 *dl)
 #ifdef GEKKO
     GX_InvVtxCache();
     GX_InvalidateTexAll();
-    GX_SetViewport(0.0F, 0.0F, lib_video_w, lib_video_h, 0.0F, 1.0F);
+    GX_SetViewport(0, 0, lib_video_w, lib_video_h, 0, 1);
 #else
     glViewport(0, 0, lib_video_w, lib_video_h);
     glScissor(0, 0, lib_video_w, lib_video_h);
@@ -3083,7 +3083,7 @@ void gsp_update(void *ucode, u32 *dl)
     #endif
     }
 #ifdef _3DS
-    depth = gfxIsWide() ? 0.0F : (1.0F/3.0F)*osGet3DSliderState();
+    depth = gfxIsWide() ? 0 : (1.0F/3)*osGet3DSliderState();
     pglSelectScreen(GFX_TOP, GFX_LEFT);
     gsp_table[G_VTX] = gsp_g_vtx;
     gsp_write_triangle = gsp_write_triangle_init;
@@ -3091,7 +3091,7 @@ void gsp_update(void *ucode, u32 *dl)
 #endif
     gsp_draw(ucode, dl);
 #ifdef _3DS
-    if (depth > 0.0F)
+    if (depth > 0)
     {
         pglSwapBuffers();
         pglSelectScreen(GFX_TOP, GFX_RIGHT);

@@ -8,18 +8,18 @@ void lib_guOrtho(void)
     f32 n = __read_f32(sp.i[IX] + 0x0014);
     f32 f = __read_f32(sp.i[IX] + 0x0018);
 #ifdef LIB_DYNRES
-    if (n == 0.0F && f == 3.0F)
+    if (n == 0 && f == 3)
     {
         /* scale y */
-        f32 y = (1.0F/2.0F) * (t+b);
-        f32 h = (1.0F/2.0F) * (t-b) * (4.0F/3.0F) * lib_video_h/lib_video_w;
+        f32 y =          (1/2.0F) * (t+b);
+        f32 h = (4/3.0F)*(1/2.0F) * (t-b) * lib_video_h/lib_video_w;
         mtxf_ortho(mtxf, l, r, y-h, y+h, n, f);
     }
     else
     {
         /* scale x */
-        f32 x = (1.0F/2.0F) * (r+l);
-        f32 w = (1.0F/2.0F) * (r-l) * (3.0F/4.0F) * lib_video_w/lib_video_h;
+        f32 x =          (1/2.0F) * (r+l);
+        f32 w = (3/4.0F)*(1/2.0F) * (r-l) * lib_video_w/lib_video_h;
         mtxf_ortho(mtxf, x-w, x+w, b, t, n, f);
     }
 #else

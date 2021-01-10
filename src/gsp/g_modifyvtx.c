@@ -16,8 +16,8 @@ static void gsp_g_modifyvtx(u32 w0, u32 w1)
             vtxf->v = (s16)(w1 >>  0);
             if (gsp_texture_filter != GL_NEAREST)
             {
-                vtxf->u += 32.0F*0.5F;
-                vtxf->v += 32.0F*0.5F;
+                vtxf->u += 32*0.5F;
+                vtxf->v += 32*0.5F;
             }
             break;
         default:

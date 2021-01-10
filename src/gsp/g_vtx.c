@@ -41,7 +41,7 @@ static void gsp_g_vtx(u32 w0, u32 w1)
             ny = IDOT3(MM, 1);
             nz = IDOT3(MM, 2);
             d = sqrtf(nx*nx + ny*ny + nz*nz);
-            if (d > 0.0F)
+            if (d > 0)
             {
                 d = (1.0F/0x80) / d;
                 nx *= d;
@@ -70,8 +70,8 @@ static void gsp_g_vtx(u32 w0, u32 w1)
                     gsp_lightf_buf[1].x*x +
                     gsp_lightf_buf[1].y*y +
                     gsp_lightf_buf[1].z*z;
-                vtxf->u = 0x4000 * (1.0F+vtxf->u);
-                vtxf->v = 0x4000 * (1.0F+vtxf->v);
+                vtxf->u = 0x4000 * (1+vtxf->u);
+                vtxf->v = 0x4000 * (1+vtxf->v);
             }
             else
             {
@@ -79,7 +79,7 @@ static void gsp_g_vtx(u32 w0, u32 w1)
                 f32 ny = MDOT3(MM, 1);
                 f32 nz = MDOT3(MM, 2);
                 f32 d = sqrtf(nx*nx + ny*ny + nz*nz);
-                if (d > 0.0F)
+                if (d > 0)
                 {
                     d = 0x4000 / d;
                     nx *= d;
@@ -98,8 +98,8 @@ static void gsp_g_vtx(u32 w0, u32 w1)
         vtxf->v *= gsp_texture_vscale[1];
         if (gsp_texture_filter != GL_NEAREST)
         {
-            vtxf->u += 32.0F*0.5F;
-            vtxf->v += 32.0F*0.5F;
+            vtxf->u += 32*0.5F;
+            vtxf->v += 32*0.5F;
         }
         if (gsp_geometry_mode & G_LIGHTING)
         {
@@ -122,7 +122,7 @@ static void gsp_g_vtx(u32 w0, u32 w1)
             {
                 struct lightf_t *lightf = &gsp_lightf_buf[i];
                 f32 d = lightf->x*x + lightf->y*y + lightf->z*z;
-                if (d > 0.0F)
+                if (d > 0)
                 {
                     r += d*lightf->r;
                     g += d*lightf->g;

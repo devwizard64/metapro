@@ -1,7 +1,7 @@
 void lib_alCents2Ratio(void)
 {
     s32 c = a0.i[IX];
-    f32 x = 1.0F;
+    f32 x = 1;
     f32 m;
     if (c < 0)
     {

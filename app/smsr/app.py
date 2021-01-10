@@ -239,7 +239,7 @@ _04_ins = {
     # pause
     0x802DB3C8: "    a1.f[IX] = lib_viewport_l;\n",
     0x802DB3E4:
-        "    a1.f[IX] = (1.0F/128.0F) * (lib_viewport_r-lib_viewport_l);\n",
+        "    a1.f[IX] = (1.0F/128) * (lib_viewport_r-lib_viewport_l);\n",
     # hud draw power
     0x802E3254: "    t8.i[IX] += 8;\n",
 }
