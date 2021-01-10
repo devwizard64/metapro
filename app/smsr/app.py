@@ -1,4 +1,4 @@
-(int)def patch(data):
+def patch(data):
     return data
 
 entry = 0x80246000
