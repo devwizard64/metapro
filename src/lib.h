@@ -4,6 +4,12 @@
 #include "types.h"
 #include "app.h"
 
+#ifdef _GCN
+#define LIB_BORDER              8
+#else
+#define LIB_BORDER              0
+#endif
+
 #ifdef APP_UNSM
 
 #define LIB_DYNRES
