@@ -626,7 +626,7 @@ static void lib_event(struct os_event_t *event)
 }
 
 #ifndef APP_SEQ
-static void video_update_size(s32 w, s32 h)
+static void video_update_size(int w, int h)
 {
     f32 x;
     lib_video_w = w;
@@ -994,7 +994,7 @@ static void input_update(void)
                 {
                     if (mul != 0)
                     {
-                        s32 axis =
+                        int axis =
                             SDL_JoystickGetAxis(lib_joystick, id) *
                             mul/(0x100*100);
                         switch (mask)
@@ -1073,7 +1073,7 @@ static void input_update(void)
         #ifdef GEKKO
             if (lib_config.input[i] & 0x8000)
             {
-                s32 axis;
+                int axis;
                 switch (lib_config.input[i] >> 8)
                 {
                     case 0x80: axis = PAD_StickX(0);    break;

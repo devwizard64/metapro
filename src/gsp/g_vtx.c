@@ -173,7 +173,7 @@ static void gsp_g_vtx(u32 w0, u32 w1)
             {
                 z = -1;
             }
-            a = gsp_fog_o + (s32)(gsp_fog_m*z);
+            a = gsp_fog_o + (int)(gsp_fog_m*z);
             if (a < 0x00)
             {
                 a = 0x00;

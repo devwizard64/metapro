@@ -952,7 +952,7 @@ static f32  MP[4][4];
 static f32  MM[4][4];
 static u8  *gsp_addr_table[16];
 static u32 *gsp_dl_stack[10];
-static s32  gsp_dl_index;
+static s8   gsp_dl_index;
 
 #ifdef GSP_F3D
 static void *const gsp_movemem_table[] =
@@ -1346,10 +1346,10 @@ static void gsp_flush_mtxf_modelview(void)
 
 static void gsp_flush_viewport(void)
 {
-    s32 l;
-    s32 r;
-    s32 t;
-    s32 b;
+    int l;
+    int r;
+    int t;
+    int b;
     if (gsp_rect == 0)
     {
         l = gsp_viewport.x - gsp_viewport.w;
@@ -1487,10 +1487,10 @@ static void gsp_flush_rendermode(void)
 
 static void gsp_flush_scissor(void)
 {
-    s32 l = gsp_scissor_l;
-    s32 r = gsp_scissor_r;
-    s32 t = gsp_scissor_t;
-    s32 b = gsp_scissor_b;
+    int l = gsp_scissor_l;
+    int r = gsp_scissor_r;
+    int t = gsp_scissor_t;
+    int b = gsp_scissor_b;
 #ifdef GEKKO
     GX_SetScissor(
         (  l) * lib_video_w/1280,
