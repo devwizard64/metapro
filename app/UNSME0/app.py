@@ -65,7 +65,7 @@ lib = {
     0x80327EB0: "osVirtualToPhysical",
 }
 
-_00_pat = {
+a00_pat = {
     # video_colour_buf_init
     0x80247490: [0x35CE0000],
     0x802474A0: [0x371803C0],
@@ -86,7 +86,7 @@ _00_pat = {
     0x8027C9A8: [0x24180000],
 }
 
-_00_xpr = {
+a00_xpr = {
     0x80256F2C: "(int)lib_viewport_l + 28", # credits str l
     0x80256F68: "(int)lib_viewport_l + 28", # credits str l
     0x80256FA0: "(int)lib_viewport_l + 28", # credits str l
@@ -101,24 +101,24 @@ _00_xpr = {
         "(int)(lib_viewport_r - lib_viewport_l)",
 }
 
-_00_ins = {
+a00_ins = {
     # obj cull
     0x8027D5C8: "    f18.f[IX] *= (f32)lib_video_w/(f32)lib_video_h;\n",
     # mio0_decompress
     0x8027F57C: "    lib_cache();\n",
 }
 
-_02_pat = {
+a02_pat = {
     # object spawn
     0x802C9C44: [0x3C018036, 0x24210C28, 0x1000000D, 0xAFA1001C],
 }
 
-_03_pat = {
+a03_pat = {
     # hud clamp pos
     0x802D6B80: [0x00000000],
 }
 
-_03_xpr = {
+a03_xpr = {
     0x802CB900: "(int)lib_viewport_l", # transition v0 x
     0x802CB944: "(int)lib_viewport_r", # transition v1 x
     0x802CB988: "(int)lib_viewport_r", # transition v2 x
@@ -138,7 +138,7 @@ _03_xpr = {
     0x802CCEF0: "(int)lib_viewport_l", # reticle v3 x
 }
 
-_03_ins = {
+a03_ins = {
     # reticle border
     0x802CD19C:
         "    at.i[IX] = __read_s32((s16)0x007C + sp.i[IX]);\n"
@@ -155,7 +155,7 @@ _03_ins = {
         "    __write_u32((s16)0x0024 + at.i[IX], 0x00000000);\n",
 }
 
-_04_xpr = {
+a04_xpr = {
     0x802DB708: "(int)lib_viewport_r - 30", # pause red coin
     0x802E3754: "(int)lib_viewport_l + 22 + 16*0", # lives "," x
     0x802E375C: "240 - LIB_BORDER - 7 - 16", # lives "," y
@@ -198,7 +198,7 @@ _04_xpr = {
     0x802E3B60: "240 - LIB_BORDER - 7 - 20", # camera y
 }
 
-_04_ins = {
+a04_ins = {
     # pause
     0x802DB3C8: "    a1.f[IX] = lib_viewport_l;\n",
     0x802DB3E4:
@@ -207,20 +207,20 @@ _04_ins = {
     0x802E3254: "    t8.i[IX] += 8;\n",
 }
 
-_06_ins = {
+a06_ins = {
     # audio sleep
     0x80317938: "    thread_yield(THREAD_YIELD_BREAK);\n",
 }
 
 segment = [
-    [0x00001050, 0x80246050, 0x8027F590, [], _00_pat, _00_xpr, _00_ins],
+    [0x00001050, 0x80246050, 0x8027F590, [], a00_pat, a00_xpr, a00_ins],
     [0x0003A590, 0x8027F590, 0x8029C770, [], {}, {}, {}],
-    [0x00057770, 0x8029C770, 0x802CB5C0, [], _02_pat, {}, {}],
-    [0x000865C0, 0x802CB5C0, 0x802D5E00, [], _03_pat, _03_xpr, _03_ins],
-    [0x00090E00, 0x802D5E00, 0x802F9730, [], {}, _04_xpr, _04_ins],
+    [0x00057770, 0x8029C770, 0x802CB5C0, [], a02_pat, {}, {}],
+    [0x000865C0, 0x802CB5C0, 0x802D5E00, [], a03_pat, a03_xpr, a03_ins],
+    [0x00090E00, 0x802D5E00, 0x802F9730, [], {}, a04_xpr, a04_ins],
     [0x000B4730, 0x802F9730, 0x80314A30, [], {}, {}, {}],
     # 0x8032B260
-    [0x000CFA30, 0x80314A30, 0x803223B0, [], {}, {}, _06_ins],
+    [0x000CFA30, 0x80314A30, 0x803223B0, [], {}, {}, a06_ins],
     [0x000F5580, 0x80378800, 0x80385F90, [], {}, {}, {}],
     [0x0021F4C0, 0x8016F000, 0x801A7830, [], {}, {}, {}],
 ]
