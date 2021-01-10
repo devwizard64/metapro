@@ -420,8 +420,6 @@ static void gsp_g_loadtlut(u32, u32);
 #endif
 #ifdef GSP_F3DEX2
 static void gsp_g_rdphalf_2(u32, u32);
-#else
-#define gsp_g_rdphalf_2         NULL
 #endif
 static void gsp_g_settilesize(u32, u32);
 static void gsp_g_loadblock(u32, u32);
