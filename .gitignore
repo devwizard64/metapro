@@ -1,5 +1,6 @@
-build/
-__pycache__
+/build/
+__pycache__/
+*.pyc
 *.dll
 app.bin
 eeprom.bin
