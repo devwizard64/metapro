@@ -1416,7 +1416,7 @@ static void gsp_flush_rendermode(void)
     );
     GX_SetCoPlanar(EN_DE);
     GX_SetAlphaCompare(
-        EN_AC ? GX_GEQUAL : GX_ALWAYS, 0x80, GX_AOP_AND, GX_ALWAYS, 0x00
+        EN_AC ? GX_GEQUAL : GX_ALWAYS, 0x20, GX_AOP_AND, GX_ALWAYS, 0x00
     );
 #else
     if (EN_ZR)
@@ -2961,7 +2961,7 @@ void gsp_init(void)
 #ifdef _3DS
     glDepthFunc(GL_LESS);
 #endif
-    glAlphaFunc(GL_GEQUAL, 0.25F);
+    glAlphaFunc(GL_GEQUAL, 1.0F/8);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 #ifndef GSP_LEGACY
     glEnableClientState(GL_VERTEX_ARRAY);
