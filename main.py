@@ -25,60 +25,62 @@ cop1_fmt = {
     0x14: "i[IX]",
 }
 
+cpu_reg = [
+    # (0x0000000000000001, "r0"),
+    (0x0000000000000002, "at"),
+    (0x0000000000000004, "v0"),
+    (0x0000000000000008, "v1"),
+    (0x0000000000000010, "a0"),
+    (0x0000000000000020, "a1"),
+    (0x0000000000000040, "a2"),
+    (0x0000000000000080, "a3"),
+    (0x0000000000000100, "t0"),
+    (0x0000000000000200, "t1"),
+    (0x0000000000000400, "t2"),
+    (0x0000000000000800, "t3"),
+    (0x0000000000001000, "t4"),
+    (0x0000000000002000, "t5"),
+    (0x0000000000004000, "t6"),
+    (0x0000000000008000, "t7"),
+    (0x0000000000010000, "s0"),
+    (0x0000000000020000, "s1"),
+    (0x0000000000040000, "s2"),
+    (0x0000000000080000, "s3"),
+    (0x0000000000100000, "s4"),
+    (0x0000000000200000, "s5"),
+    (0x0000000000400000, "s6"),
+    (0x0000000000800000, "s7"),
+    (0x0000000001000000, "t8"),
+    (0x0000000002000000, "t9"),
+    # (0x0000000004000000, "k0"),
+    # (0x0000000008000000, "k1"),
+    (0x0000000010000000, "gp"), # [C]
+    (0x0000000020000000, "sp"),
+    (0x0000000040000000, "fp"),
+    (0x0000000080000000, "ra"),
+    (0x0001000000000000, "lo"),
+    (0x0001000000000000, "hi"),
+    (0x0000000100000000, "f0"),
+    (0x0000000200000000, "f2"),
+    (0x0000000400000000, "f4"),
+    (0x0000000800000000, "f6"),
+    (0x0000001000000000, "f8"),
+    (0x0000002000000000, "f10"),
+    (0x0000004000000000, "f12"),
+    (0x0000008000000000, "f14"),
+    (0x0000010000000000, "f16"),
+    (0x0000020000000000, "f18"),
+    (0x0000040000000000, "f20"),
+    (0x0000080000000000, "f22"),
+    (0x0000100000000000, "f24"),
+    (0x0000200000000000, "f26"),
+    (0x0000400000000000, "f28"),
+    (0x0000800000000000, "f30"),
+]
+
 stack_reg = [
-    ["reg_t", [
-        # (0x0000000000000001, "r0"),
-        (0x0000000000000002, "at"),
-        # (0x0000000000000004, "v0"),
-        # (0x0000000000000008, "v1"),
-        # (0x0000000000000010, "a0"),
-        # (0x0000000000000020, "a1"),
-        # (0x0000000000000040, "a2"),
-        # (0x0000000000000080, "a3"),
-        (0x0000000000000100, "t0"),
-        (0x0000000000000200, "t1"),
-        (0x0000000000000400, "t2"),
-        (0x0000000000000800, "t3"),
-        (0x0000000000001000, "t4"),
-        (0x0000000000002000, "t5"),
-        (0x0000000000004000, "t6"),
-        (0x0000000000008000, "t7"),
-        (0x0000000000010000, "s0"),
-        (0x0000000000020000, "s1"),
-        (0x0000000000040000, "s2"),
-        (0x0000000000080000, "s3"),
-        (0x0000000000100000, "s4"),
-        (0x0000000000200000, "s5"),
-        (0x0000000000400000, "s6"),
-        (0x0000000000800000, "s7"),
-        (0x0000000001000000, "t8"),
-        (0x0000000002000000, "t9"),
-        # (0x0000000004000000, "k0"),
-        # (0x0000000008000000, "k1"),
-        (0x0000000010000000, "gp"), # [C]
-        # (0x0000000020000000, "sp"),
-        (0x0000000040000000, "fp"),
-        (0x0000000080000000, "ra"),
-        (0x0001000000000000, "lo"),
-        (0x0001000000000000, "hi"),
-        # (0x0000000100000000, "f0"),
-        (0x0000000200000000, "f2"),
-        (0x0000000400000000, "f4"),
-        (0x0000000800000000, "f6"),
-        (0x0000001000000000, "f8"),
-        (0x0000002000000000, "f10"),
-        # (0x0000004000000000, "f12"),
-        # (0x0000008000000000, "f14"),
-        (0x0000010000000000, "f16"),
-        (0x0000020000000000, "f18"),
-        (0x0000040000000000, "f20"),
-        (0x0000080000000000, "f22"),
-        (0x0000100000000000, "f24"),
-        (0x0000200000000000, "f26"),
-        (0x0000400000000000, "f28"),
-        (0x0000800000000000, "f30"),
-    ]],
-    ["u8   ", [
+    ["reg_t", cpu_reg],
+    ["uint ", [
         (0x0002000000000000, "c1c"),
     ]],
 ]
@@ -186,26 +188,26 @@ def op_jt():
     #     if inst_func == 0x08:
     #         return op_maxb(1)
     if inst_op == 0x01:
-        if inst_rt in (0x00, 0x01):
+        if inst_rt in {0x00, 0x01}:
             return op_maxb(2)
-        if inst_rt in (0x02, 0x03):
+        if inst_rt in {0x02, 0x03}:
             return op_maxb(3)
     if inst_op == 0x11:
         if inst_rs == 0x08:
-            if inst_rt in (0x00, 0x01):
+            if inst_rt in {0x00, 0x01}:
                 return op_maxb(2)
-            if inst_rt in (0x02, 0x03):
+            if inst_rt in {0x02, 0x03}:
                 return op_maxb(3)
     if inst_op == 0x02:
         return op_maxb(1)
-    if inst_op in (0x04, 0x05, 0x06, 0x07):
+    if inst_op in {0x04, 0x05, 0x06, 0x07}:
         return op_maxb(2)
-    if inst_op in (0x14, 0x15, 0x16, 0x17):
+    if inst_op in {0x14, 0x15, 0x16, 0x17}:
         return op_maxb(3)
     return 0
 
 def op_end():
-    return inst == 0x03E00008 or (inst_op == 0x02 and wret)
+    return inst == 0x03E00008 # or (inst_op == 0x02 and wret)
 
 def op_null():
     raise RuntimeError("null 0x%08X:0x%08X 0x%02X" % (addr, inst, inst_func))
@@ -215,7 +217,7 @@ def op_shift():
     reg_flag |= 0x0000000000000001 << inst_rd
     if inst == 0x00000000:
         return [(addr, "")], False
-    if inst_func in (0x04, 0x06, 0x07):
+    if inst_func in {0x04, 0x06, 0x07}:
         mask = {
             0x04: 0x1F,
             0x06: 0x1F,
@@ -224,7 +226,7 @@ def op_shift():
         rs = "(%s & 0x%02X)" % (gpr_i[inst_rs], mask)
     else:
         sa = inst_sa
-        if inst_func in (0x3C, 0x3E, 0x3F):
+        if inst_func in {0x3C, 0x3E, 0x3F}:
             sa += 32
         rs = "%d" % sa
     op, gpr_rd, gpr_rt = {
@@ -253,8 +255,10 @@ def op_jr():
         line = "    return;\n"
         end = addr-4 >= inst_maxb
     else:
-        line  = "    switch (%s)\n" % gpr_iu[rs]
-        line += "    {\n"
+        line = (
+            "    switch (%s)\n"
+            "    {\n"
+        ) % gpr_iu[rs]
         a = addr
         addr = addr_s
         wret = False
@@ -297,19 +301,21 @@ def op_multdiv():
     global reg_flag
     reg_flag |= 0x0001000000000000
     line = ""
-    if inst_func in (0x18, 0x19):
+    if inst_func in {0x18, 0x19}:
         x, gpr_t = {
             0x18: ("s64", gpr_i),
             0x19: ("u64", gpr_iu),
         }[inst_func]
         rs = gpr_t[inst_rs]
         rt = gpr_t[inst_rt]
-        line += "    {\n"
-        line += "        %s x = %s * %s;\n" % (x, rs, rt)
-        line += "        lo.ll = (s32)(x >>  0);\n"
-        line += "        hi.ll = (s32)(x >> 32);\n"
-        line += "    }\n"
-    if inst_func in (0x1A, 0x1B, 0x1E, 0x1F):
+        line += (
+            "    {\n"
+            "        %s x = %s * %s;\n"
+            "        lo.ll = (s32)(x >>  0);\n"
+            "        hi.ll = (s32)(x >> 32);\n"
+            "    }\n"
+        ) % (x, rs, rt)
+    if inst_func in {0x1A, 0x1B, 0x1E, 0x1F}:
         gpr_t = {
             0x1A: gpr_i,
             0x1B: gpr_iu,
@@ -318,11 +324,13 @@ def op_multdiv():
         }[inst_func]
         rs = gpr_t[inst_rs]
         rt = gpr_t[inst_rt]
-        line += "    if (%s != 0)\n" % rt
-        line += "    {\n"
-        line += "        lo.ll = (s32)(%s / %s);\n" % (rs, rt)
-        line += "        hi.ll = (s32)(%s %% %s);\n" % (rs, rt)
-        line += "    }\n"
+        line += (
+            "    if (%s != 0)\n"
+            "    {\n"
+            "        lo.ll = (s32)(%s / %s);\n"
+            "        hi.ll = (s32)(%s %% %s);\n"
+            "    }\n"
+        ) % (rt, rs, rt, rs, rt)
     return [(addr, line)], False
 
 def op_arith():
@@ -393,7 +401,7 @@ def op_b():
     else:
         rs = gpr_i[inst_rs]
         rt = gpr_i[inst_rt]
-        if inst_op in (0x01, 0x06, 0x07, 0x16, 0x17):
+        if inst_op in {0x01, 0x06, 0x07, 0x16, 0x17}:
             rt = "0"
         if inst_op == 0x11:
             bc = {
@@ -431,31 +439,38 @@ def op_b():
     addr += 4
     next, end = op_process()
     lines = []
-    line  = "    if (%s)\n" % bc
-    line += "    {\n"
+    line = (
+        "    if (%s)\n"
+        "    {\n"
+    ) % bc
     l = next[0][1] if len(next) > 0 else ""
     if l != "":
         line += "    " + l
-    line += "        goto _%08X;\n" % bdst
-    line += "    }\n"
+    line += (
+        "        goto _%08X;\n"
+        "    }\n"
+    ) % bdst
     if l != "" and (jt & 2):
-        line += "    else\n"
-        line += "    {\n"
+        line += (
+            "    else\n"
+            "    {\n"
+        )
         # b
         if jt == 2:
             lines.append((addr-4, line))
-            line = ""
-            line += "    " + l
-            line += "    }\n"
+            line = (
+                "    " + l +
+                "    }\n"
+            )
             lines.append((addr, line))
         # bl
         if jt == 3:
-            line += "        goto b_%08X;\n" % (addr+4)
-            line += "    }\n"
+            line += (
+                "        goto b_%08X;\n"
+                "    }\n"
+            ) % (addr+4)
             lines.append((addr-4, line))
-            line = ""
-            line += l
-            line += "b_%08X:;\n" % (addr+4)
+            line = l + ("b_%08X:;\n" % (addr+4))
             lines.append((addr, line))
     else:
         lines.append((addr-4, line))
@@ -474,7 +489,7 @@ def op_arithi():
     if inst_op == 0x0B:
         imm = "0x%04XU" % (inst_imms & 0xFFFFFFFF)
     # andi, ori, xori
-    elif inst_op in (0x0C, 0x0D, 0x0E):
+    elif inst_op in {0x0C, 0x0D, 0x0E}:
         imm = "0x%04XU" % inst_immu
     else:
         if inst_imms < 0:
@@ -542,12 +557,14 @@ def op_arithf():
     ft = "f%d.%s" % (inst_ft & ~1, fmt)
     fs = "f%d.%s" % (inst_fs & ~1, fmt)
     fd = "f%d.%s" % (inst_fd & ~1, fmt)
-    if inst_func in (0x06, 0x07):
-        op = {
-            0x06: "",
-            0x07: "-",
+    if inst_func in {0x04, 0x05, 0x06, 0x07}:
+        start, end = {
+            0x04: ("sqrtf(", ")"),
+            0x05: ("absf(", ")"),
+            0x06: ("", ""),
+            0x07: ("-", ""),
         }[inst_func]
-        return [(addr, "    %s = %s%s;\n" % (fd, op, fs))], False
+        return [(addr, "    %s = %s%s%s;\n" % (fd, start, fs, end))], False
     else:
         op = {
             0x00: "+",
@@ -606,7 +623,7 @@ def op_load():
         if inst_rt == 0x00:
             return [(addr, "")], False
         reg_flag |= 0x0000000000000001 << inst_rt
-        if inst_op in (0x22, 0x26):
+        if inst_op in {0x22, 0x26}:
             rs += ", &%s" % gpr_iu[inst_rt]
             rt = ""
         else:
@@ -793,8 +810,8 @@ op_cop1_func_table = [
     op_arithf,  # 0x01 sub
     op_arithf,  # 0x02 mul
     op_arithf,  # 0x03 div
-    op_null,    # 0x04 sqrt
-    op_null,    # 0x05 abs
+    op_arithf,  # 0x04 sqrt
+    op_arithf,  # 0x05 abs
     op_arithf,  # 0x06 mov
     op_arithf,  # 0x07 neg
     op_null,    # 0x08 round.l
@@ -989,26 +1006,62 @@ def main(argc, argv):
     with open(os.path.join(path_app, "app.bin"), "rb") as f:
         data = f.read()
     data = app.patch(data)
-    app_h  = "#ifndef _APP_H_\n"
-    app_h += "#define _APP_H_\n"
-    app_h += "\n"
-    app_h += "#include \"types.h\"\n"
-    app_h += "\n"
-    m, a, b, r, n = struct.unpack(">59xBBBBB", data[:0x40])
-    app_h += "#define APP_U%c%c%c\n" % (m, a, b)
-    app_h += "#define APP_%c%d\n"    % (r, n)
+    app_h = (
+        "#ifndef _APP_H_\n"
+        "#define _APP_H_\n"
+        "\n"
+        "#include \"types.h\"\n"
+        "\n"
+        "#define APP_U%c%c%c\n"
+        "#define APP_%c%d\n"
+    ) % struct.unpack(">59xBBBBB", data[:0x40])
     if len(app.dcall) > 0:
         app_h += "#define APP_DCALL\n"
     if len(app.cache) > 0:
         app_h += "#define APP_CACHE\n"
-    app_h += "\n"
-    app_h += "#define APP_PATH        \"%s\"\n" % argv[1]
-    app_h += "#define APP_ENTRY       0x%08X\n" % app.entry
-    app_h += "#define APP_BSS_ADDR    0x%08X\n" % app.bss[0]
-    app_h += "#define APP_BSS_SIZE    0x%08X\n" % app.bss[1]
-    app_h += "#define APP_STACK       0x%08X\n" % app.sp
-    app_h += "#define app_main        app_%08X\n" % app.main
-    app_h += "\n"
+    a = ""
+    b = ""
+    i = 0
+    for flag, reg in cpu_reg:
+        if app.reg & flag:
+            m = "R_" + reg.upper()
+            a += "#define %s 0x%02X\n" % (m.ljust(15), i)
+            b += "#define %s cpu_reg[%s]\n" % (reg, m)
+            i += 1
+    app_h += (
+        "%s"
+        "\n"
+        "#define APP_PATH        \"%s\"\n"
+        "#define APP_ENTRY       0x%08X\n"
+        "#define APP_BSS_ADDR    0x%08X\n"
+        "#define APP_BSS_SIZE    0x%08X\n"
+        "#define APP_STACK       0x%08X\n"
+        "#define app_main        app_%08X\n"
+        "\n"
+        "%s"
+        "%s"
+        "#define CPU_REG_LEN     0x%02X\n"
+        "\n"
+        "struct app_call_t\n"
+        "{\n"
+        "    u32    addr;\n"
+        "    void (*call)(void);\n"
+        "};\n"
+        "\n"
+    ) % (
+        app.header,
+        argv[1], app.entry, app.bss[0], app.bss[1], app.sp, app.main,
+        a, b, i
+    )
+    if len(app.cache) > 0:
+        app_h += (
+            "struct app_cache_t\n"
+            "{\n"
+            "    u32 addr;\n"
+            "    u32 size;\n"
+            "};\n"
+            "\n"
+        )
     g_addr = set()
     d_addr = set()
     for src, start, end, dst, pat, xpr, ins in app.segment:
@@ -1045,52 +1098,63 @@ def main(argc, argv):
         g_addr |= dst
     g_addr = sorted(g_addr)
     d_addr = sorted(d_addr)
-    app_h += "extern const struct call_t app_call_table[%d];\n" % len(g_addr)
+    app_h += "extern const struct app_call_t app_call_table[%d];\n" % \
+        len(g_addr)
     if len(app.dcall) > 0:
         app_h += "extern const u32 app_dcall_table[%d];\n" % len(app.dcall)
     if len(app.cache) > 0:
-        app_h += "extern const struct cache_t app_cache_table[%d];\n" % \
+        app_h += "extern const struct app_cache_t app_cache_table[%d];\n" % \
             len(app.cache)
     app_h += "\n"
-    app_c  = "#include \"types.h\"\n"
-    app_c += "#include \"cpu.h\"\n"
-    app_c += "#include \"lib.h\"\n"
-    app_c += "#include \"app.h\"\n"
-    app_c += "\n"
-    app_c += "const struct call_t app_call_table[%d] =\n" % len(g_addr)
-    app_c += "{\n"
+    app_c = (
+        "#include \"types.h\"\n"
+        "#include \"app.h\"\n"
+        "#include \"cpu.h\"\n"
+        "#include \"lib.h\"\n"
+        "\n"
+        "const struct app_call_t app_call_table[%d] =\n"
+        "{\n"
+    ) % len(g_addr)
     for addr in g_addr:
         app_c += "    {0x%08XU, app_%08X},\n" % (addr, addr)
     app_c += "};\n"
     if len(app.dcall) > 0:
-        app_c += "\n"
-        app_c += "const u32 app_dcall_table[%d] =\n" % len(app.dcall)
-        app_c += "{\n"
+        app_c += (
+            "\n"
+            "const u32 app_dcall_table[%d] =\n"
+            "{\n"
+        ) % len(app.dcall)
         for addr in app.dcall:
             app_c += "    0x%08XU,\n" % (addr & 0x1FFFFFFF)
         app_c += "};\n"
     app_c += "\n"
     if len(app.cache) > 0:
-        app_c += "const struct cache_t app_cache_table[%d] =\n" % len(app.cache)
-        app_c += "{\n"
+        app_c += (
+            "const struct app_cache_t app_cache_table[%d] =\n"
+            "{\n"
+        ) % len(app.cache)
         for start, end in app.cache:
             app_c += "    {0x%08XU, 0x%08XU},\n" % (start, end-start)
         app_c += "};\n"
     for addr in d_addr:
         name = "void app_%08X(void)" % addr
         app_h += "extern %s;\n" % name
-        app_c += "\n"
-        app_c += "%s\n" % name
-        app_c += "{\n"
-        app_c += "    switch (__dcall(0x%08XU))\n" % addr
-        app_c += "    {\n"
+        app_c += (
+            "\n"
+            "%s\n"
+            "{\n"
+            "    switch (__dcall(0x%08XU))\n"
+            "    {\n"
+        ) % (name, addr)
         for src, start, end, dst, pat, xpr, ins in app.segment:
             if addr in dst:
                 app_c += "        case 0x%08XU: app_%08X_%08X(); break;\n" % (
                     src, addr, src
                 )
-        app_c += "    }\n"
-        app_c += "}\n"
+        app_c += (
+            "    }\n"
+            "}\n"
+        )
     with open(os.path.join(path_build, "app.c"), "w") as f:
         f.write(app_c)
     jtbl = set()
@@ -1099,11 +1163,15 @@ def main(argc, argv):
         for addr in pat:
             patch = B"".join([struct.pack(">I", x) for x in pat[addr]])
             data = data[:addr-offs] + patch + data[addr-offs + len(patch):]
-        app_c  = "#define _%s_%08X_C_\n" % (argv[1], src)
-        app_c += "#include \"types.h\"\n"
-        app_c += "#include \"cpu.h\"\n"
-        app_c += "#include \"lib.h\"\n"
-        app_c += "#include \"app.h\"\n"
+        app_c = (
+            "#include <math.h>\n"
+            "\n"
+            "#define _%s_%08X_C_\n"
+            "#include \"types.h\"\n"
+            "#include \"app.h\"\n"
+            "#include \"cpu.h\"\n"
+            "#include \"lib.h\"\n"
+        ) % (argv[1], src)
         for addr in dst:
             addr_s = addr
             if addr in d_addr:
@@ -1111,9 +1179,11 @@ def main(argc, argv):
             else:
                 name = "void app_%08X(void)" % addr
             app_h += "extern %s;\n" % name
-            app_c += "\n"
-            app_c += "%s\n" % name
-            app_c += "{\n"
+            app_c += (
+                "\n"
+                "%s\n"
+                "{\n"
+            ) % name
             inst_maxb = 0
             reg_flag = app.reg
             chk_flag = 0
@@ -1148,8 +1218,10 @@ def main(argc, argv):
             app_c += "}\n"
         with open(os.path.join(path_build, "%08X.c" % src), "w") as f:
             f.write(app_c)
-    app_h += "\n"
-    app_h += "#endif /* _APP_H_ */\n"
+    app_h += (
+        "\n"
+        "#endif /* _APP_H_ */\n"
+    )
     with open(os.path.join(path_build, "app.h"), "w") as f:
         f.write(app_h)
     for addr in sorted(jtbl):
@@ -1158,7 +1230,7 @@ def main(argc, argv):
                 break
         else:
             if addr not in app.lib:
-                print("    # 0x%08X: \"%08X\"," % (addr, addr))
+                print("    0x%08X: \"%08X\"," % (addr, addr))
     return 0
 
 if __name__ == "__main__":

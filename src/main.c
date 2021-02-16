@@ -2,10 +2,10 @@
 #include <string.h>
 
 #include "types.h"
+#include "app.h"
 #include "demo.h"
 #include "cpu.h"
 #include "lib.h"
-#include "app.h"
 
 #include "ultra64.h"
 

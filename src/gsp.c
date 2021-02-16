@@ -27,9 +27,9 @@
 #endif
 
 #include "types.h"
+#include "app.h"
 #include "cpu.h"
 #include "lib.h"
-#include "app.h"
 
 #ifndef APP_SEQ
 
@@ -47,8 +47,7 @@
 #ifdef APP_UNSM
 #define GSP_OUTPUT_LEN  (3*0x1800)
 #define GSP_TEXTURE_LEN 0x100
-#endif
-#ifdef APP_UNK4
+#else
 #define GSP_OUTPUT_LEN  (3*0x4000)
 #define GSP_TEXTURE_LEN 0x200
 #endif

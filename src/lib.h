@@ -10,35 +10,6 @@
 #define LIB_BORDER              0
 #endif
 
-#ifdef APP_UNSM
-
-#define LIB_DYNRES
-
-#define GSP_F3D
-#if defined(APP_J0) || defined(APP_E0)
-#define GSP_F3D_20D
-#endif
-#define GSP_FOG
-
-#if !(defined(APP_J3) || defined(APP_C3))
-#define ASP_MAIN1
-#else
-#define ASP_MAIN2
-#endif
-
-#ifdef APP_E4
-#define APP_SEQ
-#endif
-
-#endif
-
-#ifdef APP_UNK4
-
-#define GSP_F3DEX2
-#define ASP_NAUDIO
-
-#endif
-
 #define THREAD_YIELD_NULL       0
 #define THREAD_YIELD_QUEUE      1
 #define THREAD_YIELD_BREAK      2

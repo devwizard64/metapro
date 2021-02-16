@@ -18,11 +18,11 @@
 #endif
 
 #include "types.h"
+#include "app.h"
 #include "cpu.h"
 #include "gsp.h"
 #include "asp.h"
 #include "lib.h"
-#include "app.h"
 
 #include "ultra64.h"
 

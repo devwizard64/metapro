@@ -7,8 +7,8 @@
 #endif
 
 #include "types.h"
-#include "cpu.h"
 #include "app.h"
+#include "cpu.h"
 
 #define CPU_MODE_BYTESWAP   0x40123780
 #ifdef _EB
@@ -41,11 +41,11 @@ reg_t cpu_reg[CPU_REG_LEN];
 
 void __call(u32 addr)
 {
-    const struct call_t *start = app_call_table;
+    const struct app_call_t *start = app_call_table;
     uint len = lenof(app_call_table);
     do
     {
-        const struct call_t *call;
+        const struct app_call_t *call;
     #ifdef _DEBUG
         if (addr < start->addr)
         {
@@ -183,7 +183,7 @@ void __dma(void *dst, u32 src, u32 size)
 #ifdef APP_CACHE
     for (i = 0; i < lenof(app_cache_table); i++)
     {
-        const struct cache_t *cache = &app_cache_table[i];
+        const struct app_cache_t *cache = &app_cache_table[i];
         if (src >= cache->addr && src+size <= cache->addr+cache->size)
         {
             memcpy(dst, &cpu_cache_table[i][src-cache->addr], size);
@@ -266,7 +266,7 @@ void cpu_init(void)
 #ifdef APP_CACHE
     for (i = 0; i < lenof(app_cache_table); i++)
     {
-        const struct cache_t *cache = &app_cache_table[i];
+        const struct app_cache_t *cache = &app_cache_table[i];
         fseek(f, cache->addr, SEEK_SET);
         cpu_cache_table[i] = malloc(cache->size);
         cpu_read(f, cpu_cache_table[i], cache->size);

@@ -5,7 +5,28 @@ entry = 0x80246000
 bss   = [0x8033A580, 0x0002CEE0]
 sp    = 0x80200600
 main  = 0x80246DF8
-reg   = 0x0000000000000000
+reg   = (
+    0x0000000000000004 | # v0
+    0x0000000000000008 | # v1
+    0x0000000000000010 | # a0
+    0x0000000000000020 | # a1
+    0x0000000000000040 | # a2
+    0x0000000000000080 | # a3
+    0x0000000020000000 | # sp
+    0x0000000100000000 | # f0
+    0x0000004000000000 | # f12
+    0x0000008000000000   # f14
+)
+
+header = (
+    "#define LIB_DYNRES\n"
+    "#define GSP_F3D\n"
+    "#define GSP_F3D_20D\n"
+    "#define GSP_FOG\n"
+    "#define ASP_MAIN1\n"
+    "\n"
+    "#define __osExceptionPreamble   0x80327640\n"
+)
 
 lib = {
     0x803223B0: "osSetTime",
