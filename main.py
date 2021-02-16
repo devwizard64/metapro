@@ -560,7 +560,7 @@ def op_arithf():
     if inst_func in {0x04, 0x05, 0x06, 0x07}:
         start, end = {
             0x04: ("sqrtf(", ")"),
-            0x05: ("absf(", ")"),
+            0x05: ("fabsf(", ")"),
             0x06: ("", ""),
             0x07: ("-", ""),
         }[inst_func]
