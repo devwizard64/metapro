@@ -220,23 +220,30 @@ f32 lib_viewport_l =   0;
 f32 lib_viewport_r = 320;
 #endif
 
+#if 0
+static bool lib_reset = false;
+#endif
 #ifdef _NATIVE
+static bool lib_fast  = false;
 #ifdef APP_UNK4
-static u32 lib_frame = 0;
+static u32 lib_frame  = 0;
 #endif
-static bool lib_fast = false;
 #endif
-static bool lib_save = false;
-static bool lib_load = false;
+static bool lib_save  = false;
+static bool lib_load  = false;
 #endif
 
 static struct thread_t *lib_thread_list  = NULL;
 static struct thread_t *lib_thread_queue = NULL;
 static struct thread_t *lib_thread       = NULL;
 static jmp_buf lib_jmp;
+#if 0
+static jmp_buf lib_nmi;
+static u8      lib_prenmi = 0;
+#endif
 
 static struct os_event_t lib_event_table[OS_NUM_EVENTS] = {0};
-static struct os_event_t lib_vi_event = {0};
+static struct os_event_t lib_event_vi = {0};
 
 #ifndef APP_SEQ
 static struct os_pad_t *lib_input_data = NULL;
@@ -541,7 +548,7 @@ static struct thread_t *thread_find(u32 addr)
     return thread;
 }
 
-/*
+#if 0
 static void thread_print(void)
 {
     struct thread_t *queue = lib_thread_queue;
@@ -554,7 +561,7 @@ static void thread_print(void)
         queue = queue->qnext;
     }
 }
-*/
+#endif
 
 s32 thread_id(void)
 {
@@ -597,13 +604,19 @@ static void thread_stop(struct thread_t *thread)
 
 static void thread_destroy(struct thread_t *thread)
 {
-    thread_lunlink(thread);
-    thread_qunlink(thread);
-    free(thread->stack);
-    free(thread);
     if (thread == lib_thread)
     {
-        longjmp(lib_jmp, THREAD_YIELD_QUEUE);
+        longjmp(lib_jmp, THREAD_YIELD_DESTROY);
+    }
+    else
+    {
+        /* thread_print(); */
+        thread_qunlink(thread);
+        thread_lunlink(thread);
+        /* printf("free thread->stack %p\n", (void *)thread->stack); */
+        free(thread->stack);
+        /* printf("free thread %p\n", (void *)thread); */
+        free(thread);
     }
 }
 
@@ -694,8 +707,7 @@ static void video_draw(unused u32 count)
 static void video_init(void)
 {
 #ifdef _NATIVE
-    SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
-    SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK);
+    SDL_Init(SDL_INIT_VIDEO);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,       1);
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE,           8);
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,         8);
@@ -874,6 +886,8 @@ static void input_init(void)
         fclose(f);
     }
 #ifdef _NATIVE
+    SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+    SDL_Init(SDL_INIT_JOYSTICK);
     lib_joystick = SDL_JoystickOpen(0);
 #endif
 }
@@ -917,6 +931,11 @@ static void input_update(void)
             case SDL_KEYDOWN:
                 switch (event.key.keysym.scancode)
                 {
+                #if 0
+                    case SDL_SCANCODE_F1:
+                        lib_reset = true;
+                        break;
+                #endif
                     case SDL_SCANCODE_F4:
                         lib_fast ^= false^true;
                         break;
@@ -1140,6 +1159,11 @@ static void input_update(void)
 }
 #endif
 
+static s32 audio_freq(unused s32 freq)
+{
+    return 32000;
+}
+
 static s32 audio_size(void)
 {
 #ifdef _NATIVE
@@ -1153,14 +1177,12 @@ static s32 audio_size(void)
 #endif
 }
 
-static s32 audio_init(unused s32 freq)
+static void audio_init(void)
 {
 #ifdef _NATIVE
     SDL_AudioSpec spec;
-#ifdef APP_SEQ
     SDL_Init(SDL_INIT_AUDIO);
-#endif
-    spec.freq     = freq;
+    spec.freq     = 32000;
     spec.format   = AUDIO_S16;
     spec.channels = 2;
     spec.samples  = 0;
@@ -1168,28 +1190,28 @@ static s32 audio_init(unused s32 freq)
     spec.userdata = NULL;
     lib_audio_device = SDL_OpenAudioDevice(NULL, 0, &spec, NULL, 0);
     SDL_PauseAudioDevice(lib_audio_device, 0);
-    return freq;
 #endif
 #ifdef _3DS
     ndspInit();
     ndspSetOutputMode(NDSP_OUTPUT_STEREO);
     ndspChnSetInterp(0, NDSP_INTERP_LINEAR);
-    ndspChnSetRate(0, freq);
     ndspChnSetFormat(0, NDSP_FORMAT_STEREO_PCM16);
     ndspChnSetMix(0, lib_audio_mix);
-    return freq;
+    ndspChnSetRate(0, 32000);
 #endif
 #ifdef GEKKO
     AUDIO_Init(NULL);
     AUDIO_SetDSPSampleRate(AI_SAMPLERATE_32KHZ);
-    return 32000;
 #endif
 }
 
 static void audio_destroy(void)
 {
 #ifdef _NATIVE
-    SDL_CloseAudio();
+    if (lib_audio_device != 0)
+    {
+        SDL_CloseAudioDevice(lib_audio_device);
+    }
 #endif
 #ifdef _3DS
     ndspExit();
@@ -1307,11 +1329,26 @@ static void lib_update(void)
     }
 #endif
     video_update();
-    lib_event(&lib_vi_event);
+#if 0
+    if (lib_prenmi > 0)
+    {
+        if (--lib_prenmi == 0)
+        {
+            longjmp(lib_nmi, 1);
+        }
+    }
+    else if (lib_reset)
+    {
+        lib_reset  = false;
+        lib_prenmi = 30;
+        lib_event(&lib_event_table[OS_EVENT_PRENMI]);
+    }
+#endif
+    lib_event(&lib_event_vi);
     longjmp(lib_jmp, THREAD_YIELD_QUEUE);
 }
 
-static void lib_main(void)
+void lib_main(void (*start)(void))
 {
     int arg = setjmp(lib_jmp);
     if (arg != THREAD_YIELD_NULL)
@@ -1321,6 +1358,11 @@ static void lib_main(void)
         s32 pri;
         thread = lib_thread;
         lib_thread = NULL;
+        if (arg == THREAD_YIELD_DESTROY)
+        {
+            thread_destroy(thread);
+            thread = NULL;
+        }
         if (thread != NULL)
         {
             memcpy(thread->reg, cpu_reg, sizeof(cpu_reg));
@@ -1350,10 +1392,8 @@ static void lib_main(void)
         if (thread->init)
         {
             register void *stack;
-            register u32   entry;
             thread->init = false;
             stack = thread->stack + THREAD_STACK_SIZE-THREAD_STACK_END;
-            entry = thread->entry;
         #ifdef __GNUC__
             asm volatile(
             #ifdef _NATIVE
@@ -1374,14 +1414,25 @@ static void lib_main(void)
         #else
         #error add asm here
         #endif
-            __call(entry);
-            thread_destroy(thread);
+            __call(lib_thread->entry);
+            thread_destroy(lib_thread);
         }
         else
         {
             longjmp(thread->jmp, 1);
         }
     }
+#if 0
+    if (setjmp(lib_nmi) != 0)
+    {
+        lib_thread = NULL;
+        while (lib_thread_list != NULL)
+        {
+            thread_destroy(lib_thread_list);
+        }
+    }
+#endif
+    start();
 }
 
 static void lib_destroy(void)
@@ -1400,10 +1451,10 @@ void lib_init(void)
 #ifndef APP_SEQ
     video_init();
     input_init();
+    audio_init();
     config_init();
 #endif
     cpu_init();
-    lib_main();
 }
 
 #ifndef APP_SEQ

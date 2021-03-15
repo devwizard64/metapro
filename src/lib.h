@@ -13,6 +13,7 @@
 #define THREAD_YIELD_NULL       0
 #define THREAD_YIELD_QUEUE      1
 #define THREAD_YIELD_BREAK      2
+#define THREAD_YIELD_DESTROY    3
 
 #ifndef __ASSEMBLER__
 
@@ -32,6 +33,7 @@ extern void mtxf_ortho(f32[4][4], f32, f32, f32, f32, f32, f32);
 extern void thread_yield(int);
 extern void thread_fault(void);
 extern void video_update(void);
+extern void lib_main(void (*)(void));
 extern void lib_init(void);
 extern void lib_cache(void);
 
