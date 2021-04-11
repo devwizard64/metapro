@@ -106,4 +106,4 @@ print-%:
 -include $(SRC_OBJ:.o=.d)
 -include $(APP_OBJ:.o=.d)
 
-.PHONY: default clean native win32 3ds gcn wii
+.PHONY: default native win32 3ds gcn wii clean

@@ -4,12 +4,6 @@
 #include "types.h"
 #include "app.h"
 
-#ifdef _GCN
-#define LIB_BORDER              8
-#else
-#define LIB_BORDER              0
-#endif
-
 #define THREAD_YIELD_NULL       0
 #define THREAD_YIELD_QUEUE      1
 #define THREAD_YIELD_BREAK      2

@@ -24,6 +24,11 @@ header = (
     "#define GSP_F3D_20D\n"
     "#define GSP_FOG\n"
     "#define ASP_MAIN1\n"
+    "#ifdef _GCN\n"
+    "#define APP_BORDER 8\n"
+    "#else\n"
+    "#define APP_BORDER 0\n"
+    "#endif\n"
     "\n"
     "#define __osExceptionPreamble   0x80327640\n"
 )
@@ -87,13 +92,13 @@ lib = {
 }
 
 a00_pat = {
-    # video_colour_buf_init
+    # video_draw_cimg
     0x80247490: [0x35CE0000],
     0x802474A0: [0x371803C0],
-    # video_colour_buf_clear
+    # video_cimg_clear
     0x802475A0: [0x3508C3BC],
     0x802475AC: [0x240A0000],
-    # video_draw_borders
+    # video_draw_border
     0x80247948: [0x1000001A, 0x00000000],
     # world_draw
     0x8027B46C: [0x37180000],
@@ -113,9 +118,9 @@ a00_xpr = {
     0x80256FA0: "(int)lib_viewport_l + 28", # credits str l
     0x80256FF0: "(int)lib_viewport_r - 28", # credits str r
     0x8027A904: "(int)lib_viewport_l + 30 + 6*5", # "press" x
-    0x8027A90C: "LIB_BORDER + 12 + 18", # "press" y
+    0x8027A90C: "APP_BORDER + 12 + 18", # "press" y
     0x8027A918: "(int)lib_viewport_l + 30 + 6*5", # "start" x
-    0x8027A920: "LIB_BORDER + 12", # "start" y
+    0x8027A920: "APP_BORDER + 12", # "start" y
     0x8027B2D4: # transition fadeout radius
         "(int)(lib_viewport_r - lib_viewport_l)",
     0x8027B338: # transition fadein radius
@@ -125,7 +130,7 @@ a00_xpr = {
 a00_ins = {
     # obj cull
     0x8027D5C8: "    f18.f[IX] *= (f32)lib_video_w/(f32)lib_video_h;\n",
-    # mio0_decompress
+    # szp_decode
     0x8027F57C: "    lib_cache();\n",
 }
 
@@ -179,44 +184,44 @@ a03_ins = {
 a04_xpr = {
     0x802DB708: "(int)lib_viewport_r - 30", # pause red coin
     0x802E3754: "(int)lib_viewport_l + 22 + 16*0", # lives "," x
-    0x802E375C: "240 - LIB_BORDER - 7 - 16", # lives "," y
-    0x802E3768: "(int)lib_viewport_l + 22 + 16*1", # lives "*" x
-    0x802E3770: "240 - LIB_BORDER - 7 - 16", # lives "*" y
-    0x802E3784: "(int)lib_viewport_l + 22 + 16*2", # lives "%d" x
-    0x802E378C: "240 - LIB_BORDER - 7 - 16", # lives "%d" y
-    # 0x802E37B8: "(int)(320)/2 + 8 + 16*0", # coins "+" x
-    0x802E37C0: "240 - LIB_BORDER - 7 - 16", # coins "+" y
-    # 0x802E37CC: "(int)(320)/2 + 8 + 16*1", # coins "*" x
-    0x802E37D4: "240 - LIB_BORDER - 7 - 16", # coins "*" y
-    # 0x802E37E8: "(int)(320)/2 + 8 + 16*2", # coins "%d" x
-    0x802E37F0: "240 - LIB_BORDER - 7 - 16", # coins "%d" y
+    0x802E375C: "240 - APP_BORDER - 7 - 16", # life "," y
+    0x802E3768: "(int)lib_viewport_l + 22 + 16*1", # life "*" x
+    0x802E3770: "240 - APP_BORDER - 7 - 16", # life "*" y
+    0x802E3784: "(int)lib_viewport_l + 22 + 16*2", # life "%d" x
+    0x802E378C: "240 - APP_BORDER - 7 - 16", # life "%d" y
+    # 0x802E37B8: "(int)(320)/2 + 8 + 16*0", # coin "+" x
+    0x802E37C0: "240 - APP_BORDER - 7 - 16", # coin "+" y
+    # 0x802E37CC: "(int)(320)/2 + 8 + 16*1", # coin "*" x
+    0x802E37D4: "240 - APP_BORDER - 7 - 16", # coin "*" y
+    # 0x802E37E8: "(int)(320)/2 + 8 + 16*2", # coin "%d" x
+    0x802E37F0: "240 - APP_BORDER - 7 - 16", # coin "%d" y
     0x802E386C: "(int)lib_viewport_r - (22 + 16+16+12*2) + 16*0", # stars "-" x
-    0x802E3874: "240 - LIB_BORDER - 7 - 16", # stars "-" y
+    0x802E3874: "240 - APP_BORDER - 7 - 16", # star "-" y
     0x802E3890: "(int)lib_viewport_r - (22 + 16+16+12*2) + 16*1", # stars "*" x
-    0x802E3898: "240 - LIB_BORDER - 7 - 16", # stars "*" y
+    0x802E3898: "240 - APP_BORDER - 7 - 16", # star "*" y
     0x802E38B8: # stars "%d" x
         "a0.i[IX] + (int)lib_viewport_r - (22 + 16+16+12*2) + 16*1",
-    0x802E38C8: "240 - LIB_BORDER - 7 - 16", # stars "%d" y
-    0x802E3914: "(int)lib_viewport_r - (22 + 78)", # keys "/" x
-    # 0x802E391C: "", # keys "/" y
+    0x802E38C8: "240 - APP_BORDER - 7 - 16", # star "%d" y
+    0x802E3914: "(int)lib_viewport_r - (22 + 78)", # key "/" x
+    # 0x802E391C: "", # key "/" y
     0x802E3A20: # time "time" x
         "(int)lib_viewport_r - (22 + 12*1+3 + 9 + 12*2+1 + 10 + 10 + 12*5-1)",
-    0x802E3A28: "240 - LIB_BORDER - 7 - 16 - 8 - 16", # time "time" y
+    0x802E3A28: "240 - APP_BORDER - 7 - 16 - 8 - 16", # time "time" y
     0x802E3A34: # time "%0d" x
         "(int)lib_viewport_r - (22 + 12*1+3 + 9 + 12*2+1 + 10 + 10)",
-    0x802E3A38: "240 - LIB_BORDER - 7 - 16 - 8 - 16", # time "%0d" y
+    0x802E3A38: "240 - APP_BORDER - 7 - 16 - 8 - 16", # time "%0d" y
     0x802E3A4C: # time "%02d" x
         "(int)lib_viewport_r - (22 + 12*1+3 + 9 + 12*2+1)",
-    0x802E3A50: "240 - LIB_BORDER - 7 - 16 - 8 - 16", # time "%02d" y
+    0x802E3A50: "240 - APP_BORDER - 7 - 16 - 8 - 16", # time "%02d" y
     0x802E3A64: "(int)lib_viewport_r - (22 + 12*1+3)", # time "%d" x
-    0x802E3A68: "240 - LIB_BORDER - 7 - 16 - 8 - 16", # time "%d" y
+    0x802E3A68: "240 - APP_BORDER - 7 - 16 - 8 - 16", # time "%d" y
     0x802E3AAC: # time ' x
         "(int)lib_viewport_r - (22 + 12*1+3 + 9 + 12*2+1 + 10)",
-    0x802E3AB0: "LIB_BORDER + 7 + 16 + 1", # time ' y
+    0x802E3AB0: "APP_BORDER + 7 + 16 + 1", # time ' y
     0x802E3AC0: "(int)lib_viewport_r - (22 + 12*1+3 + 9)", # time " x
-    0x802E3AC4: "LIB_BORDER + 7 + 16 + 1", # time " y
+    0x802E3AC4: "APP_BORDER + 7 + 16 + 1", # time " y
     0x802E3B58: "(int)lib_viewport_r - (22 + 16+16)", # camera x
-    0x802E3B60: "240 - LIB_BORDER - 7 - 20", # camera y
+    0x802E3B60: "240 - APP_BORDER - 7 - 20", # camera y
 }
 
 a04_ins = {
@@ -250,6 +255,6 @@ dcall = [
 ]
 
 cache = [
-    [0x004EC000, 0x00579C20], # player_motion
+    [0x004EC000, 0x00579C20], # motion_player
     [0x00593560, 0x007B0860], # audio_sample
 ]
