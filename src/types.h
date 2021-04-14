@@ -67,4 +67,20 @@ typedef double          f64;
 #define FMT_X   "X"
 #endif
 
+#ifdef _3DS
+#define eexit() {svcSleepThread(3000000000LL); exit(EXIT_FAILURE);}
+#else
+#define eexit() exit(EXIT_FAILURE)
+#endif
+
+#define wprint(...) fprintf(stderr, "warning: " __VA_ARGS__)
+#define eprint(...) {fprintf(stderr, "error: " __VA_ARGS__); eexit();}
+#ifdef _DEBUG
+#define wdebug wprint
+#define edebug eprint
+#else
+#define wdebug(...)
+#define edebug(...)
+#endif
+
 #endif /* _TYPES_H_ */

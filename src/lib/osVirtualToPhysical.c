@@ -12,8 +12,6 @@ void lib_osVirtualToPhysical(void)
 #endif
     else
     {
-    #ifdef _DEBUG
-        fprintf(stderr, "error: vaddr 0x%08" FMT_X "U\n", a0.iu[IX]);
-    #endif
+        wdebug("vaddr 0x%08" FMT_X "U\n", a0.iu[IX]);
     }
 }

@@ -28,6 +28,8 @@
 
 #define VIDEO_SCALE             4
 
+/* #define INPUT_WRITE */
+
 #ifdef _3DS
 #define CONFIG_FLAG_STICK_X     0x01
 #define CONFIG_FLAG_STICK_Y     0x02
@@ -719,18 +721,12 @@ static void video_init(void)
     );
     if (lib_window == NULL)
     {
-        fprintf(
-            stderr, "error: could not create window (%s)\n", SDL_GetError()
-        );
-        exit(EXIT_FAILURE);
+        eprint("could not create window (%s)\n", SDL_GetError());
     }
     lib_context = SDL_GL_CreateContext(lib_window);
     if (lib_context == NULL)
     {
-        fprintf(
-            stderr, "error: could not create context (%s)\n", SDL_GetError()
-        );
-        exit(EXIT_FAILURE);
+        eprint("could not create context (%s)\n", SDL_GetError());
     }
     SDL_GL_SetSwapInterval(1);
     gsp_init();
@@ -844,7 +840,11 @@ void video_update(void)
         lib_fast = false;
     }
 #endif
-    if (!lib_fast)
+    if (lib_fast)
+    {
+        lib_time = video_time();
+    }
+    else
 #endif
     {
         u64 time = video_time();
@@ -871,10 +871,15 @@ void video_update(void)
 #ifndef APP_SEQ
 static void input_init(void)
 {
+#ifndef INPUT_WRITE
     FILE *f;
+#endif
 #ifdef GEKKO
     PAD_Init();
 #endif
+#ifdef INPUT_WRITE
+    lib_input_data = lib_input = malloc(sizeof(*lib_input)*30*60*60*2);
+#else
     f = fopen(PATH_INPUT, "rb");
     if (f != NULL)
     {
@@ -885,6 +890,7 @@ static void input_init(void)
         fread(lib_input_data, 1, lib_input_size, f);
         fclose(f);
     }
+#endif
 #ifdef _NATIVE
     SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
     SDL_Init(SDL_INIT_JOYSTICK);
@@ -1155,6 +1161,16 @@ static void input_update(void)
             }
         }
     #endif
+    #ifdef INPUT_WRITE
+    #ifdef GEKKO
+        lib_input->button  = lib_pad.button;
+    #else
+        lib_input->button  = lib_pad.button >> 8 | lib_pad.button << 8;
+    #endif
+        lib_input->stick_x = lib_pad.stick_x;
+        lib_input->stick_y = lib_pad.stick_y;
+        lib_input++;
+    #endif
     }
 }
 #endif
@@ -1277,9 +1293,7 @@ static void config_init(void)
         }
         else
         {
-        #ifdef _DEBUG
-            fprintf(stderr, "warning: could not write '" PATH_CONFIG "'\n");
-        #endif
+            wdebug("could not write '" PATH_CONFIG "'\n");
         }
     }
 }
@@ -1300,12 +1314,20 @@ static void lib_update(void)
         }
         else
         {
-        #ifdef _DEBUG
-            fprintf(
-                stderr, "warning: could not write '" PATH_DRAM "'\n"
-            );
-        #endif
+            wdebug("could not write '" PATH_DRAM "'\n");
         }
+    #ifdef INPUT_WRITE
+        f = fopen(PATH_INPUT, "wb");
+        if (f != NULL)
+        {
+            fwrite(lib_input_data, 1, (u8 *)lib_input-(u8 *)lib_input_data, f);
+            fclose(f);
+        }
+        else
+        {
+            wdebug("could not write '" PATH_INPUT "'\n");
+        }
+    #endif
     }
     if (lib_load)
     {
@@ -1320,12 +1342,25 @@ static void lib_update(void)
         }
         else
         {
-        #ifdef _DEBUG
-            fprintf(
-                stderr, "warning: could not read '" PATH_DRAM "'\n"
-            );
-        #endif
+            wdebug("could not read '" PATH_DRAM "'\n");
         }
+    #ifdef INPUT_WRITE
+        f = fopen(PATH_INPUT, "rb");
+        if (f != NULL)
+        {
+            size_t size;
+            fseek(f, 0, SEEK_END);
+            size = ftell(f);
+            fseek(f, 0, SEEK_SET);
+            fread(lib_input_data, 1, size, f);
+            fclose(f);
+            lib_input = (struct os_pad_t *)((u8 *)lib_input_data + size);
+        }
+        else
+        {
+            wdebug("could not read '" PATH_INPUT "'\n");
+        }
+    #endif
     }
 #endif
     video_update();
@@ -1456,13 +1491,6 @@ void lib_init(void)
 #endif
     cpu_init();
 }
-
-#ifndef APP_SEQ
-void lib_cache(void)
-{
-    gsp_cache();
-}
-#endif
 
 #define LIB_SV(f) void lib_##f(void) {}
 #ifdef _DEBUG

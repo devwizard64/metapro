@@ -60,10 +60,7 @@ void lib_sprintf(void)
                     dst += sprintf(dst, "%" FMT_x, *arg++);
                     break;
                 default:
-                #ifdef _DEBUG
-                    fprintf(stderr, "error: invalid fmt %c\n", *fmt);
-                    exit(EXIT_FAILURE);
-                #endif
+                    edebug("invalid fmt %c\n", *fmt);
                     break;
             }
             fmt++;

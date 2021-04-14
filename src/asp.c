@@ -346,14 +346,7 @@ void asp_update(u32 *al, uint size)
         }
         else
         {
-        #ifdef _DEBUG
-            fprintf(
-                stderr,
-                "error: invalid Acmd {{0x%08" FMT_X ", 0x%08" FMT_X "}}\n",
-                w0, w1
-            );
-            exit(EXIT_FAILURE);
-        #endif
+            edebug("invalid Acmd {{0x%08" FMT_X ", 0x%08" FMT_X "}}\n", w0, w1);
         }
         size -= 8;
     }

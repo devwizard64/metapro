@@ -492,10 +492,7 @@ def op_arithi():
     elif inst_op in {0x0C, 0x0D, 0x0E}:
         imm = "0x%04XU" % inst_immu
     else:
-        if inst_imms < 0:
-            imm = "-0x%04X" % -inst_imms
-        else:
-            imm = "0x%04X" % inst_imms
+        imm = "(s16)0x%04X" % inst_immu
     op, gpr_rt, gpr_rs = {
         0x08: ("+", gpr_i, gpr_i),
         0x09: ("+", gpr_i, gpr_i),
@@ -520,7 +517,7 @@ def op_lui():
     global reg_flag
     reg_flag |= 0x0000000000000001 << inst_rt
     rt = gpr_i[inst_rt]
-    return [(addr, "    %s = 0x%04X0000;\n" % (rt, inst_immu))], False
+    return [(addr, "    %s = (s32)0x%04X0000;\n" % (rt, inst_immu))], False
 
 def op_mfc1():
     global reg_flag
@@ -994,7 +991,7 @@ def main(argc, argv):
     if argc < 2:
         print("usage: %s <app>" % argv[0])
         return 1
-    app = importlib.import_module("app.%s.app" % argv[1])
+    app = importlib.import_module("app." + argv[1])
     if argc > 2:
         app_src = ["app"] + [
             "%08X" % src for src, start, end, dst, pat, xpr, ins in app.segment

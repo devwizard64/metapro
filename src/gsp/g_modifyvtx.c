@@ -21,10 +21,7 @@ static void gsp_g_modifyvtx(u32 w0, u32 w1)
             }
             break;
         default:
-        #ifdef _DEBUG
-            fprintf(stderr, "error: modifyvtx %02X\n", offset);
-            exit(EXIT_FAILURE);
-        #endif
+            edebug("modifyvtx %02X\n", offset);
             break;
     }
 }

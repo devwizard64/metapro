@@ -29,7 +29,6 @@ extern void thread_fault(void);
 extern void video_update(void);
 extern void lib_main(void (*)(void));
 extern void lib_init(void);
-extern void lib_cache(void);
 
 #ifdef APP_UNSM
 #ifdef APP_E0

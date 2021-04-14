@@ -1552,21 +1552,17 @@ static void gsp_flush_texture(void)
         }
         else
         {
-        #ifdef _DEBUG
         #ifndef APP_UNK4
-            fprintf(
-                stderr, "warning: unknown texture fmt %02X / %db\n",
+            wdebug(
+                "unknown texture fmt %02X / %db\n",
                 gsp_texture_fmt >> 2, 4 << (gsp_texture_fmt & 0x03)
             );
-        #endif
         #endif
         }
     }
     else
     {
-    #ifdef _DEBUG
-        fprintf(stderr, "warning: texture over\n");
-    #endif
+        wdebug("texture over\n");
     }
 #endif
 }
@@ -1905,9 +1901,7 @@ static void gsp_triangle_default(u8 *t)
 #ifndef GSP_LEGACY
     else
     {
-    #ifdef _DEBUG
-        fprintf(stderr, "warning: output over\n");
-    #endif
+        wdebug("output over\n");
     }
 #endif
 }
@@ -1954,9 +1948,7 @@ static void gsp_triangle_fog(u8 *t)
 #ifndef GSP_LEGACY
     else
     {
-    #ifdef _DEBUG
-        fprintf(stderr, "warning: output over\n");
-    #endif
+        wdebug("output over\n");
     }
 #endif
 }
@@ -1987,9 +1979,7 @@ static void gsp_triangle_special(u8 *t)
 #ifndef GSP_LEGACY
     else
     {
-    #ifdef _DEBUG
-        fprintf(stderr, "warning: output over\n");
-    #endif
+        wdebug("warning: output over\n");
     }
 #endif
 }
@@ -2120,8 +2110,7 @@ static void gsp_start(void *ucode, u32 *dl)
             gsp_table[G_RDPHALF_0]       = gsp_g_rdphalf_0;
             break;
         default:
-            fprintf(stderr, "error: unknown ucode 0x%08" FMT_X "\n", i);
-            exit(EXIT_FAILURE);
+            eprint("unknown ucode 0x%08" FMT_X "\n", i);
             break;
     }
 #endif
@@ -2727,11 +2716,7 @@ static void gsp_g_setcombine(u32 w0, u32 w1)
     #endif
         default:
             gsp_combine_cc = gsp_combine_cc_0;
-        #ifdef _DEBUG
-            fprintf(
-                stderr, "warning: unknown cc %08" FMT_X "%08" FMT_X "\n", w0, w1
-            );
-        #endif
+            wdebug("unknown cc %08" FMT_X "%08" FMT_X "\n", w0, w1);
             break;
     }
     switch (ac)
@@ -2784,11 +2769,7 @@ static void gsp_g_setcombine(u32 w0, u32 w1)
     #endif
         default:
             gsp_combine_ac = gsp_combine_ac_0;
-        #ifdef _DEBUG
-            fprintf(
-                stderr, "warning: unknown ac %08" FMT_X "%08" FMT_X "\n", w0, w1
-            );
-        #endif
+            wdebug("unknown ac %08" FMT_X "%08" FMT_X "\n", w0, w1);
             break;
     }
 }
@@ -2989,6 +2970,7 @@ void gsp_destroy(void)
 
 void gsp_cache(void)
 {
+    if (!gsp_cache_flag) puts("cache");
     gsp_cache_flag = true;
 }
 
@@ -3018,14 +3000,7 @@ static void gsp_draw(void *ucode, u32 *dl)
         }
         else
         {
-        #ifdef _DEBUG
-            fprintf(
-                stderr,
-                "error: invalid Gfx {{0x%08" FMT_X ", 0x%08" FMT_X "}}\n",
-                w0, w1
-            );
-            exit(EXIT_FAILURE);
-        #endif
+            edebug("invalid Gfx {{0x%08" FMT_X ", 0x%08" FMT_X "}}\n", w0, w1);
         }
     }
     while (gsp_dl_index >= 0);

@@ -130,8 +130,6 @@ a00_xpr = {
 a00_ins = {
     # obj cull
     0x8027D5C8: "    f18.f[IX] *= (f32)lib_video_w/(f32)lib_video_h;\n",
-    # szp_decode
-    0x8027F57C: "    lib_cache();\n",
 }
 
 a02_pat = {

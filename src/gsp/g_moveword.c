@@ -46,7 +46,7 @@ static void gsp_g_moveword(u32 w0, u32 w1)
     #endif
         default:
         #if 0
-            fprintf(stderr, "error: moveword of %02X:%04X\n", index, offset);
+            wdebug("moveword of %02X:%04X\n", index, offset);
         #endif
             break;
     }

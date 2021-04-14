@@ -9,6 +9,7 @@
 #include "types.h"
 #include "app.h"
 #include "cpu.h"
+#include "gsp.h"
 
 #define CPU_MODE_BYTESWAP   0x40123780
 #ifdef _EB
@@ -46,13 +47,10 @@ void __call(u32 addr)
     do
     {
         const struct app_call_t *call;
-    #ifdef _DEBUG
         if (addr < start->addr)
         {
-            fprintf(stderr, "error: __call(0x%08" FMT_X "U)\n", addr);
-            exit(EXIT_FAILURE);
+            edebug("__call(0x%08" FMT_X "U)\n", addr);
         }
-    #endif
         len = (len+1) / 2;
         call = start + len;
         if (addr >= call->addr)
@@ -195,6 +193,7 @@ void __dma(void *dst, u32 src, u32 size)
     fseek(f, src, SEEK_SET);
     cpu_read(f, dst, size);
     fclose(f);
+    gsp_cache();
     /* $ */
     /*
     if (src == 0x007CC620)
@@ -228,9 +227,7 @@ void __eeprom_write(const void *data, uint size)
     }
     else
     {
-    #ifdef _DEBUG
-        fprintf(stderr, "warning: could not write '" PATH_EEPROM "'\n");
-    #endif
+        wdebug("could not write '" PATH_EEPROM "'\n");
     }
 }
 
@@ -251,11 +248,7 @@ void cpu_init(void)
     f = fopen(PATH_APP, "rb");
     if (f == NULL)
     {
-        fprintf(stderr, "error: could not read '" PATH_APP "'\n");
-    #ifdef _3DS
-        svcSleepThread(3000000000LL);
-    #endif
-        exit(EXIT_FAILURE);
+        eprint("could not read '" PATH_APP "'\n");
     }
     fread(&mode, 1, sizeof(mode), f);
     switch (mode)

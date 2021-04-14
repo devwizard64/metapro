@@ -1,4 +1,4 @@
-from app.UNSME0.app import *
+from app.UNSME0 import *
 
 reg   = (
     0x0000000000000100 | # t0
