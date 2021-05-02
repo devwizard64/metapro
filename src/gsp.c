@@ -2970,7 +2970,6 @@ void gsp_destroy(void)
 
 void gsp_cache(void)
 {
-    if (!gsp_cache_flag) puts("cache");
     gsp_cache_flag = true;
 }
 
