@@ -72,33 +72,33 @@ gcn:    $(BUILD)/app.dol
 wii:    $(BUILD)/app.dol
 
 $(BUILD)/%.3dsx: $(BUILD)/%.elf
-	@3dsxtool $< $@
+	3dsxtool $< $@
 
 $(BUILD)/%.dol: $(BUILD)/%.elf
-	@elf2dol $< $@
+	elf2dol $< $@
 
 $(BUILD)/app.elf $(BUILD)/app.exe: $(SRC_OBJ) $(APP_OBJ)
-	@$(LD) $(LDFLAG) $(LFLAG) -Wl,-Map,$(@:.elf=.map) -o $@ $^ $(LIB)
+	$(LD) $(LDFLAG) $(LFLAG) -Wl,-Map,$(@:.elf=.map) -o $@ $^ $(LIB)
 
 $(BUILD)/src/%.o: src/%.c build/$(APP)/app.h | $(BUILD)/src
-	@$(CC) $(CCFLAG) $(IFLAG) -MMD -MP -MF $(@:.o=.d) -c -o $@ $<
+	$(CC) $(CCFLAG) $(IFLAG) -MMD -MP -MF $(@:.o=.d) -c -o $@ $<
 
 $(BUILD)/app/%.o: build/$(APP)/%.c | $(BUILD)/app
-	@$(CC) $(CCFLAG) $(IFLAG) -MMD -MP -MF $(@:.o=.d) -c -o $@ $<
+	$(CC) $(CCFLAG) $(IFLAG) -MMD -MP -MF $(@:.o=.d) -c -o $@ $<
 
 $(APP_SRC): build/$(APP)/app.h
 build/$(APP)/app.h: main.py | build/$(APP)
-	@python3 main.py $(APP)
+	python3 main.py $(APP)
 
 build/$(APP) $(BUILD)/src $(BUILD)/app:
-	@mkdir -p $@
+	mkdir -p $@
 
 build/$(APP)/3ds/app.elf: $(PICAGL)/lib/libpicaGL.a
 $(PICAGL)/lib/libpicaGL.a:
-	@make -j1 -C picaGL
+	make -j1 -C picaGL
 
 clean:
-	@rm -rf build
+	rm -rf build
 
 print-%:
 	$(info $* = $(flavor $*): [$($*)]) @true
