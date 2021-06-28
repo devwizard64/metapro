@@ -83,11 +83,11 @@ $(BUILD)/app.elf $(BUILD)/app.exe: $(SRC_OBJ) $(APP_OBJ)
 
 -include $(SRC_OBJ:.o=.d)
 $(BUILD)/src/%.o: src/%.c build/$(APP)/app.h | $(BUILD)/src
-	$(CC) $(CCFLAG) $(IFLAG) -MMD -MP -MF $(@:.o=.d) -c -o $@ $<
+	$(CC) $(CCFLAG) $(IFLAG) -MMD -MP -c -o $@ $<
 
 -include $(APP_OBJ:.o=.d)
 $(BUILD)/app/%.o: build/$(APP)/%.c | $(BUILD)/app
-	$(CC) $(CCFLAG) $(IFLAG) -MMD -MP -MF $(@:.o=.d) -c -o $@ $<
+	$(CC) $(CCFLAG) $(IFLAG) -MMD -MP -c -o $@ $<
 
 $(APP_SRC): build/$(APP)/app.h
 build/$(APP)/app.h: main.py | build/$(APP)
