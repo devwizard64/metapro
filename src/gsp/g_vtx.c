@@ -85,8 +85,8 @@ static void gsp_g_vtx(u32 w0, u32 w1)
                     nx *= d;
                     ny *= d;
                 }
-                vtxf->u = 0x4000 + nx;
-                vtxf->v = 0x4000 + ny;
+                vtxf->u = 0x4000 + ny;
+                vtxf->v = 0x4000 + nx;
             }
         }
         else
