@@ -76,19 +76,19 @@
 #define I4_IH           IA8_I
 #define I4_IL           IA8_A
 
-#define CC(a, b, c, d)                                                         \
-(                                                                              \
-    ((G_CCMUX_##a) << 12 & 0xF000U) |                                          \
-    ((G_CCMUX_##b) <<  8 & 0x0F00U) |                                          \
-    ((G_CCMUX_##c) <<  3 & 0x00F8U) |                                          \
-    ((G_CCMUX_##d) <<  0 & 0x0007U)                                            \
+#define CC(a, b, c, d)                  \
+(                                       \
+    ((G_CCMUX_##a) << 12 & 0xF000U) |   \
+    ((G_CCMUX_##b) <<  8 & 0x0F00U) |   \
+    ((G_CCMUX_##c) <<  3 & 0x00F8U) |   \
+    ((G_CCMUX_##d) <<  0 & 0x0007U)     \
 )
-#define AC(a, b, c, d)                                                         \
-(                                                                              \
-    ((G_ACMUX_##a) <<  9 & 0x0E00U) |                                          \
-    ((G_ACMUX_##b) <<  6 & 0x01C0U) |                                          \
-    ((G_ACMUX_##c) <<  3 & 0x0038U) |                                          \
-    ((G_ACMUX_##d) <<  0 & 0x0007U)                                            \
+#define AC(a, b, c, d)                  \
+(                                       \
+    ((G_ACMUX_##a) <<  9 & 0x0E00U) |   \
+    ((G_ACMUX_##b) <<  6 & 0x01C0U) |   \
+    ((G_ACMUX_##c) <<  3 & 0x0038U) |   \
+    ((G_ACMUX_##d) <<  0 & 0x0007U)     \
 )
 #define CC1(a, b, c, d) ((u32)CC(a, b, c, d) << 16 | (u32)CC(a, b, c, d))
 #define AC1(a, b, c, d) ((u32)AC(a, b, c, d) << 12 | (u32)AC(a, b, c, d))

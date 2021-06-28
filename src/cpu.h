@@ -97,48 +97,48 @@ static inline void *__tlb(u32 addr)
 #define __write_u16(addr, val) {*(u16 *)__tlb((addr) ^ AX_H) = (u16)(val);}
 #define __write_u32(addr, val) {*(u32 *)__tlb((addr) ^ AX_W) = (u32)(val);}
 #define __write_f32(addr, val) {*(f32 *)__tlb((addr) ^ AX_W) = (f32)(val);}
-#define __write_u64(addr, val)                                                 \
-{                                                                              \
-    __write_u32((addr)+0x00, (u64)(val) >> 32);                                \
-    __write_u32((addr)+0x04, (u64)(val) >>  0);                                \
+#define __write_u64(addr, val)                  \
+{                                               \
+    __write_u32((addr)+0x00, (u64)(val) >> 32); \
+    __write_u32((addr)+0x04, (u64)(val) >>  0); \
 }
-#define __read_u32_l(addr, val)                                                \
-{                                                                              \
-    u32  _addr = addr;                                                         \
-    u32 *_val  = val;                                                          \
-    uint _i    = _addr & 0x03;                                                 \
-    _addr &= ~0x03;                                                            \
-    *_val &= cpu_lwl_mask[_i];                                                 \
-    *_val |= __read_u32(_addr) << cpu_l_shift[_i];                             \
+#define __read_u32_l(addr, val)                     \
+{                                                   \
+    u32  _addr = addr;                              \
+    u32 *_val  = val;                               \
+    uint _i    = _addr & 0x03;                      \
+    _addr &= ~0x03;                                 \
+    *_val &= cpu_lwl_mask[_i];                      \
+    *_val |= __read_u32(_addr) << cpu_l_shift[_i];  \
 }
-#define __read_u32_r(addr, val)                                                \
-{                                                                              \
-    u32  _addr = addr;                                                         \
-    u32 *_val  = val;                                                          \
-    uint _i    = _addr & 0x03;                                                 \
-    _addr &= ~0x03;                                                            \
-    *_val &= cpu_lwr_mask[_i];                                                 \
-    *_val |= __read_u32(_addr) >> cpu_r_shift[_i];                             \
+#define __read_u32_r(addr, val)                     \
+{                                                   \
+    u32  _addr = addr;                              \
+    u32 *_val  = val;                               \
+    uint _i    = _addr & 0x03;                      \
+    _addr &= ~0x03;                                 \
+    *_val &= cpu_lwr_mask[_i];                      \
+    *_val |= __read_u32(_addr) >> cpu_r_shift[_i];  \
 }
-#define __write_u32_l(addr, val)                                               \
-{                                                                              \
-    u32  _addr = addr;                                                         \
-    u32  _val  = val;                                                          \
-    uint _i    = _addr & 0x03;                                                 \
-    _addr &= ~0x03;                                                            \
-    _val <<= cpu_l_shift[_i];                                                  \
-    _val |= __read_u32(_addr) & cpu_swl_mask[_i];                              \
-    __write_u32(_addr, _val);                                                  \
+#define __write_u32_l(addr, val)                    \
+{                                                   \
+    u32  _addr = addr;                              \
+    u32  _val  = val;                               \
+    uint _i    = _addr & 0x03;                      \
+    _addr &= ~0x03;                                 \
+    _val <<= cpu_l_shift[_i];                       \
+    _val |= __read_u32(_addr) & cpu_swl_mask[_i];   \
+    __write_u32(_addr, _val);                       \
 }
-#define __write_u32_r(addr, val)                                               \
-{                                                                              \
-    u32  _addr = addr;                                                         \
-    u32  _val  = val;                                                          \
-    uint _i    = _addr & 0x03;                                                 \
-    _addr &= ~0x03;                                                            \
-    _val <<= cpu_r_shift[_i];                                                  \
-    _val |= __read_u32(_addr) & cpu_swr_mask[_i];                              \
-    __write_u32(_addr, _val);                                                  \
+#define __write_u32_r(addr, val)                    \
+{                                                   \
+    u32  _addr = addr;                              \
+    u32  _val  = val;                               \
+    uint _i    = _addr & 0x03;                      \
+    _addr &= ~0x03;                                 \
+    _val <<= cpu_r_shift[_i];                       \
+    _val |= __read_u32(_addr) & cpu_swr_mask[_i];   \
+    __write_u32(_addr, _val);                       \
 }
 
 #ifdef APP_UNK4
