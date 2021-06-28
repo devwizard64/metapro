@@ -64,6 +64,7 @@ endif
 # $(BUILD)/src/%.o: CCFLAG += -Ofast
 $(BUILD)/app/%.o: CCFLAG += -Wno-maybe-uninitialized -Wno-uninitialized
 
+.PHONY: default native win32 3ds gcn wii
 default: $(TARGET)
 native: $(BUILD)/app.elf
 win32:  $(BUILD)/app.exe
@@ -80,9 +81,11 @@ $(BUILD)/%.dol: $(BUILD)/%.elf
 $(BUILD)/app.elf $(BUILD)/app.exe: $(SRC_OBJ) $(APP_OBJ)
 	$(LD) $(LDFLAG) $(LFLAG) -Wl,-Map,$(@:.elf=.map) -o $@ $^ $(LIB)
 
+-include $(SRC_OBJ:.o=.d)
 $(BUILD)/src/%.o: src/%.c build/$(APP)/app.h | $(BUILD)/src
 	$(CC) $(CCFLAG) $(IFLAG) -MMD -MP -MF $(@:.o=.d) -c -o $@ $<
 
+-include $(APP_OBJ:.o=.d)
 $(BUILD)/app/%.o: build/$(APP)/%.c | $(BUILD)/app
 	$(CC) $(CCFLAG) $(IFLAG) -MMD -MP -MF $(@:.o=.d) -c -o $@ $<
 
@@ -97,13 +100,9 @@ build/$(APP)/3ds/app.elf: $(PICAGL)/lib/libpicaGL.a
 $(PICAGL)/lib/libpicaGL.a:
 	make -j1 -C picaGL
 
+.PHONY: clean
 clean:
 	rm -rf build
 
 print-%:
 	$(info $* = $(flavor $*): [$($*)]) @true
-
--include $(SRC_OBJ:.o=.d)
--include $(APP_OBJ:.o=.d)
-
-.PHONY: default native win32 3ds gcn wii clean
