@@ -1431,17 +1431,16 @@ void lib_main(void (*start)(void))
             stack = thread->stack + THREAD_STACK_SIZE-THREAD_STACK_END;
         #ifdef __GNUC__
             asm volatile(
-            #ifdef _NATIVE
-            #ifdef WIN32
-                "mov %[stack], %%esp"
-            #else
+            #ifdef __x86_64__
                 "mov %[stack], %%rsp"
             #endif
+            #ifdef __i386__
+                "mov %[stack], %%esp"
             #endif
-            #ifdef _3DS
+            #ifdef __arm__
                 "mov sp, %[stack]"
             #endif
-            #ifdef GEKKO
+            #ifdef __PPC__
                 "mr 1, %[stack]"
             #endif
                 : [stack] "+r" (stack) ::
