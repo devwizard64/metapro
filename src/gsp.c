@@ -391,6 +391,11 @@ static void gsp_g_rdploadsync(u32, u32);
 static void gsp_g_rdppipesync(u32, u32);
 static void gsp_g_rdptilesync(u32, u32);
 static void gsp_g_rdpfullsync(u32, u32);
+#else
+#define gsp_g_rdploadsync       NULL
+#define gsp_g_rdppipesync       NULL
+#define gsp_g_rdptilesync       NULL
+#define gsp_g_rdpfullsync       NULL
 #endif
 #if 0
 static void gsp_g_setkeygb(u32, u32);
