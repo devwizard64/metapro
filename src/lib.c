@@ -210,17 +210,10 @@ static bool        lib_video_draw  = false;
 #ifndef APP_SEQ
 static struct config lib_config;
 
-#ifdef __NATIVE__
-u16 lib_video_w = VIDEO_SCALE*320; /* 400 */
-u16 lib_video_h = VIDEO_SCALE*240;
-f32 lib_viewport_l =   0; /* -40 */
-f32 lib_viewport_r = 320; /* 360 */
-#else
 u16 lib_video_w    = 320;
 u16 lib_video_h    = 240;
 f32 lib_viewport_l =   0;
 f32 lib_viewport_r = 320;
-#endif
 
 #if 0
 static bool lib_reset = false;
@@ -715,6 +708,7 @@ static void video_init(void)
     SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE,         8);
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,          8);
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
+    video_update_size(VIDEO_SCALE*320 /*400*/, VIDEO_SCALE*240);
     lib_window = SDL_CreateWindow(
         "app", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         lib_video_w, lib_video_h, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL
