@@ -1,11 +1,11 @@
 void lib_osRecvMesg(void)
 {
-    u32 mq = a0.i[IX];
-    u32 thread;
+    PTR mq = a0.i[IX];
+    PTR thread;
     s32 count;
     s32 index;
     s32 len;
-    s32 msg;
+    PTR msg;
     if (__read_s32(MQ_COUNT) == 0)
     {
         if (a2.i[IX] == OS_MESG_NOBLOCK)
@@ -21,11 +21,11 @@ void lib_osRecvMesg(void)
     count  = __read_s32(MQ_COUNT);
     index  = __read_s32(MQ_INDEX);
     len    = __read_s32(MQ_LEN);
-    msg    = __read_s32(MQ_MSG);
+    msg    = __read_u32(MQ_MSG);
     __write_u32(MQ_SEND, 0);
     if (a1.i[IX] != 0)
     {
-        __write_u32(a1.i[IX], __read_s32(msg + 4*index));
+        __write_u32(a1.i[IX], __read_u32(msg + 4*index));
     }
     __write_u32(MQ_INDEX, (index+1) % len);
     __write_u32(MQ_COUNT, count-1);

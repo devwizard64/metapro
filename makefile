@@ -19,7 +19,7 @@ SRC_OBJ := \
 APP_OBJ := $(shell python3 main.py $(APP) $(BUILD)/app/)
 APP_SRC := $(addprefix build/$(APP)/,$(notdir $(APP_OBJ:.o=.c)))
 
-CCFLAG  := -Wall -Wextra -Wpedantic -ggdb3 -D _DEBUG
+CCFLAG  := -Wall -Wextra -Wpedantic -ggdb3 -D __DEBUG__
 LDFLAG  :=
 IFLAG   := -I src -I build/$(APP)
 LFLAG   :=
@@ -33,13 +33,13 @@ ifeq ($(TARGET),$(filter $(TARGET),native win32))
 		LIB     := -l mingw32 -l m -l SDL2main -l SDL2 -l opengl32
 	endif
 	LD      := $(CC)
-	CCFLAG  += -D _NATIVE
+	CCFLAG  += -D __NATIVE__
 else ifeq ($(TARGET),3ds)
 	CC      := arm-none-eabi-gcc -march=armv6k -mtune=mpcore
 	CC      += -mfloat-abi=hard -mtp=soft
 	LD      := $(CC) -specs=3dsx.specs
 	CCFLAG  += -mword-relocations -fomit-frame-pointer -ffunction-sections
-	CCFLAG  += -D ARM11 -D _3DS
+	CCFLAG  += -D ARM11 -D _3DS -D __3DS__
 	IFLAG   += -I $(LIBCTRU)/include -I $(PICAGL)/include
 	LFLAG   += -L $(LIBCTRU)/lib -L $(PICAGL)/lib
 	LIB     := -l picaGL -l m -l ctru
@@ -50,11 +50,11 @@ else ifeq ($(TARGET),$(filter $(TARGET),gcn wii))
 	LIB     := -l fat -l m -l ogc
 	ifeq ($(TARGET),gcn)
 		CC      += -mogc
-		CCFLAG  += -D _GCN
+		CCFLAG  += -D __GCN__
 		LFLAG   += -L $(LIBOGC)/lib/cube
 	else
 		CC      += -mrvl
-		CCFLAG  += -D _WII
+		CCFLAG  += -D __WII__
 		LFLAG   += -L $(LIBOGC)/lib/wii
 	endif
 	CC      += -mcpu=750 -meabi -mhard-float

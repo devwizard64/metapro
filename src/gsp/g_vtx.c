@@ -11,17 +11,17 @@ static void gsp_g_vtx(u32 w0, u32 w1)
     uint end   = w0 >>  1 & 0x7F;
     uint index = end-count;
 #endif
-    struct vtx_t  *vtx  = &gsp_vtx_buf[index];
-    struct vtxf_t *vtxf = &gsp_vtxf_buf[index];
-    memcpy(vtx, gsp_addr(w1), size);
+    struct vtx  *v  = &gsp_vtx_buf[index];
+    struct vtxf *vf = &gsp_vtxf_buf[index];
+    memcpy(v, gsp_addr(w1), size);
     if (gsp_light_new)
     {
         uint i;
         gsp_light_new = false;
         for (i = gsp_lookat ? 0 : 2; i < gsp_light_no+1; i++)
         {
-            struct light_t  *light;
-            struct lightf_t *lightf;
+            struct light  *l  = &gsp_light_buf[i];
+            struct lightf *lf = &gsp_lightf_buf[i];
             f32 x;
             f32 y;
             f32 z;
@@ -29,14 +29,12 @@ static void gsp_g_vtx(u32 w0, u32 w1)
             f32 ny;
             f32 nz;
             f32 d;
-            light  = &gsp_light_buf[i];
-            lightf = &gsp_lightf_buf[i];
-            lightf->r = light->col[0].r;
-            lightf->g = light->col[0].g;
-            lightf->b = light->col[0].b;
-            x = light->x;
-            y = light->y;
-            z = light->z;
+            lf->r = l->col[0].r;
+            lf->g = l->col[0].g;
+            lf->b = l->col[0].b;
+            x = l->x;
+            y = l->y;
+            z = l->z;
             nx = IDOT3(MM, 0);
             ny = IDOT3(MM, 1);
             nz = IDOT3(MM, 2);
@@ -48,123 +46,106 @@ static void gsp_g_vtx(u32 w0, u32 w1)
                 ny *= d;
                 nz *= d;
             }
-            lightf->x = nx;
-            lightf->y = ny;
-            lightf->z = nz;
+            lf->x = nx;
+            lf->y = ny;
+            lf->z = nz;
         }
     }
     do
     {
+        int s;
+        int t;
         if (gsp_geometry_mode & G_TEXTURE_GEN)
         {
-            f32 x = vtx->r;
-            f32 y = vtx->g;
-            f32 z = vtx->b;
+            f32 x = v->r;
+            f32 y = v->g;
+            f32 z = v->b;
+            f32 nx = MDOT3(MM, 0);
+            f32 ny = MDOT3(MM, 1);
+            f32 nz = MDOT3(MM, 2);
+            f32 d = sqrtf(nx*nx + ny*ny + nz*nz);
+            if (d > 0)
+            {
+                d = 0x4000 / d;
+                nx *= d;
+                ny *= d;
+            }
+        #if 1
             if (gsp_lookat)
             {
-                vtxf->u =
-                    gsp_lightf_buf[0].x*x +
-                    gsp_lightf_buf[0].y*y +
-                    gsp_lightf_buf[0].z*z;
-                vtxf->v =
-                    gsp_lightf_buf[1].x*x +
-                    gsp_lightf_buf[1].y*y +
-                    gsp_lightf_buf[1].z*z;
-                vtxf->u = 0x4000 * (1+vtxf->u);
-                vtxf->v = 0x4000 * (1+vtxf->v);
+            #define LOOKATY gsp_lightf_buf[0]
+            #define LOOKATX gsp_lightf_buf[1]
+                s = 0x80 * (LOOKATY.x*nx + LOOKATY.y*ny + LOOKATY.z*nz);
+                t = 0x80 * (LOOKATX.x*nx + LOOKATX.y*ny + LOOKATX.z*nz);
+            #undef LOOKATY
+            #undef LOOKATX
             }
             else
+        #endif
             {
-                f32 nx = MDOT3(MM, 0);
-                f32 ny = MDOT3(MM, 1);
-                f32 nz = MDOT3(MM, 2);
-                f32 d = sqrtf(nx*nx + ny*ny + nz*nz);
-                if (d > 0)
-                {
-                    d = 0x4000 / d;
-                    nx *= d;
-                    ny *= d;
-                }
-                vtxf->u = 0x4000 + ny;
-                vtxf->v = 0x4000 + nx;
+                s = ny;
+                t = nx;
             }
+            s += 0x4000;
+            t += 0x4000;
         }
         else
         {
-            vtxf->u = vtx->u;
-            vtxf->v = vtx->v;
+            s = v->s;
+            t = v->t;
         }
-        vtxf->u *= gsp_texture_vscale[0];
-        vtxf->v *= gsp_texture_vscale[1];
+        s = (gsp_texture_vscale[0]*s + 0x8000) >> 16;
+        t = (gsp_texture_vscale[1]*t + 0x8000) >> 16;
         if (gsp_texture_filter != GL_NEAREST)
         {
-            vtxf->u += 32*0.5F;
-            vtxf->v += 32*0.5F;
+            s += 32/2;
+            t += 32/2;
         }
+        vf->s = s;
+        vf->t = t;
         if (gsp_geometry_mode & G_LIGHTING)
         {
-            f32  x;
-            f32  y;
-            f32  z;
-            uint n;
-            uint r;
-            uint g;
-            uint b;
+            f32  x = v->r;
+            f32  y = v->g;
+            f32  z = v->b;
+            uint n = gsp_light_no+1;
+            uint r = gsp_light_buf[n].col[0].r;
+            uint g = gsp_light_buf[n].col[0].g;
+            uint b = gsp_light_buf[n].col[0].b;
             uint i;
-            x = vtx->r;
-            y = vtx->g;
-            z = vtx->b;
-            n = gsp_light_no+1;
-            r = gsp_light_buf[n].col[0].r;
-            g = gsp_light_buf[n].col[0].g;
-            b = gsp_light_buf[n].col[0].b;
             for (i = 2; i < n; i++)
             {
-                struct lightf_t *lightf = &gsp_lightf_buf[i];
-                f32 d = lightf->x*x + lightf->y*y + lightf->z*z;
+                struct lightf *lf = &gsp_lightf_buf[i];
+                f32 d = lf->x*x + lf->y*y + lf->z*z;
                 if (d > 0)
                 {
-                    r += d*lightf->r;
-                    g += d*lightf->g;
-                    b += d*lightf->b;
+                    r += d*lf->r;
+                    g += d*lf->g;
+                    b += d*lf->b;
                 }
             }
-            if (r > 0xFF)
-            {
-                r = 0xFF;
-            }
-            if (g > 0xFF)
-            {
-                g = 0xFF;
-            }
-            if (b > 0xFF)
-            {
-                b = 0xFF;
-            }
-            vtxf->shade[0] = r;
-            vtxf->shade[1] = g;
-            vtxf->shade[2] = b;
+            if (r > 0xFF) r = 0xFF;
+            if (g > 0xFF) g = 0xFF;
+            if (b > 0xFF) b = 0xFF;
+            vf->shade[0] = r;
+            vf->shade[1] = g;
+            vf->shade[2] = b;
         }
         else
         {
-            vtxf->shade[0] = vtx->r;
-            vtxf->shade[1] = vtx->g;
-            vtxf->shade[2] = vtx->b;
+            vf->shade[0] = v->r;
+            vf->shade[1] = v->g;
+            vf->shade[2] = v->b;
         }
     #ifdef GSP_FOG
         if (gsp_geometry_mode & G_FOG)
         {
-            f32 x;
-            f32 y;
-            f32 z;
-            f32 nz;
-            f32 nw;
+            f32 x = v->x;
+            f32 y = v->y;
+            f32 z = v->z;
+            f32 nz = MDOT4(gsp_mtxf_mvp, 2);
+            f32 nw = MDOT4(gsp_mtxf_mvp, 3);
             int a;
-            x = vtx->x;
-            y = vtx->y;
-            z = vtx->z;
-            nz = MDOT4(gsp_mtxf_mvp, 2);
-            nw = MDOT4(gsp_mtxf_mvp, 3);
             z = nz/nw;
         #ifdef GEKKO
             z = 1 + 2*z;
@@ -174,23 +155,17 @@ static void gsp_g_vtx(u32 w0, u32 w1)
                 z = -1;
             }
             a = gsp_fog_o + (int)(gsp_fog_m*z);
-            if (a < 0x00)
-            {
-                a = 0x00;
-            }
-            if (a > 0xFF)
-            {
-                a = 0xFF;
-            }
-            vtxf->shade[3] = a;
+            if (a < 0x00) a = 0x00;
+            if (a > 0xFF) a = 0xFF;
+            vf->shade[3] = a;
         }
         else
     #endif
         {
-            vtxf->shade[3] = vtx->a;
+            vf->shade[3] = v->a;
         }
-        vtx++;
-        vtxf++;
+        v++;
+        vf++;
     }
 #ifdef GSP_F3D
     while (count-- > 0);
@@ -200,8 +175,8 @@ static void gsp_g_vtx(u32 w0, u32 w1)
 #endif
 }
 
-#ifdef _3DS
-#ifdef _DEBUG
+#ifdef __3DS__
+#ifdef __DEBUG__
 static void gsp_g_vtx_stub(unused u32 w0, unused u32 w1)
 {
 }

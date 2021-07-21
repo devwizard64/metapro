@@ -21,7 +21,7 @@ extern f32 lib_viewport_l;
 extern f32 lib_viewport_r;
 
 extern void mtx_write(s16 *, const f32 *);
-extern void mtxf_mul(f32[4][4], f32[4][4], f32[4][4]);
+extern void mtxf_cat(f32[4][4], f32[4][4], f32[4][4]);
 extern void mtxf_identity(f32[4][4]);
 extern void mtxf_ortho(f32[4][4], f32, f32, f32, f32, f32, f32);
 extern void thread_yield(int);

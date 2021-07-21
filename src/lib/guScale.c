@@ -1,6 +1,6 @@
 void lib_guScale(void)
 {
-    f32 mtxf[4][4];
-    mtxf_scale(mtxf, a1.f[IX], a2.f[IX], a3.f[IX]);
-    mtx_write(__tlb(a0.i[IX]), &mtxf[0][0]);
+    f32 mf[4][4];
+    mtxf_scale(mf, a1.f[IX], a2.f[IX], a3.f[IX]);
+    mtx_write(__tlb(a0.i[IX]), &mf[0][0]);
 }

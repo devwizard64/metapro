@@ -12,13 +12,13 @@
 
 #ifdef GEKKO
 #define PATH_START  "cardb:" SEP
-#elif defined(_3DS) && defined(_DEBUG)
+#elif defined(__3DS__) && defined(__DEBUG__)
 #define PATH_START  "sdmc:" SEP "3ds" SEP
 #else
 #define PATH_START  ""
 #endif
 
-#ifdef _NATIVE
+#ifdef __NATIVE__
 #define PATH_ROOT   PATH_START "app" SEP APP_PATH SEP
 #else
 #define PATH_ROOT   PATH_START
@@ -56,7 +56,7 @@ typedef union
     f32 f[2];
     f64 d;
 }
-reg_t;
+REG;
 
 extern const u32 cpu_lwl_mask[];
 extern const u32 cpu_lwr_mask[];
@@ -65,11 +65,11 @@ extern const u32 cpu_swr_mask[];
 extern const u8  cpu_l_shift[];
 extern const u8  cpu_r_shift[];
 
-extern u8    cpu_dram[CPU_DRAM_SIZE];
-extern reg_t cpu_reg[CPU_REG_LEN];
+extern u8  cpu_dram[CPU_DRAM_SIZE];
+extern REG cpu_reg[CPU_REG_LEN];
 
 #if defined(_UNSME0_0021F4C0_C_) || defined(_UNSMC3_0020AAF0_C_)
-static inline void *__tlb(u32 addr)
+static inline void *__tlb(PTR addr)
 {
     if (addr >= 0x04000000 && addr < 0x04040000)
     {
@@ -78,7 +78,7 @@ static inline void *__tlb(u32 addr)
     return &cpu_dram[addr & 0x1FFFFFFF];
 }
 #else
-#define __tlb(addr) ((void *)&cpu_dram[(u32)(addr) & 0x1FFFFFFF])
+#define __tlb(addr) ((void *)&cpu_dram[(PTR)(addr) & 0x1FFFFFFF])
 #endif
 
 #define __read_s8(addr)  (*(s8  *)__tlb((addr) ^ AX_B))
@@ -104,7 +104,7 @@ static inline void *__tlb(u32 addr)
 }
 #define __read_u32_l(addr, val)                     \
 {                                                   \
-    u32  _addr = addr;                              \
+    PTR  _addr = addr;                              \
     u32 *_val  = val;                               \
     uint _i    = _addr & 0x03;                      \
     _addr &= ~0x03;                                 \
@@ -113,7 +113,7 @@ static inline void *__tlb(u32 addr)
 }
 #define __read_u32_r(addr, val)                     \
 {                                                   \
-    u32  _addr = addr;                              \
+    PTR  _addr = addr;                              \
     u32 *_val  = val;                               \
     uint _i    = _addr & 0x03;                      \
     _addr &= ~0x03;                                 \
@@ -122,7 +122,7 @@ static inline void *__tlb(u32 addr)
 }
 #define __write_u32_l(addr, val)                    \
 {                                                   \
-    u32  _addr = addr;                              \
+    PTR  _addr = addr;                              \
     u32  _val  = val;                               \
     uint _i    = _addr & 0x03;                      \
     _addr &= ~0x03;                                 \
@@ -132,7 +132,7 @@ static inline void *__tlb(u32 addr)
 }
 #define __write_u32_r(addr, val)                    \
 {                                                   \
-    u32  _addr = addr;                              \
+    PTR  _addr = addr;                              \
     u32  _val  = val;                               \
     uint _i    = _addr & 0x03;                      \
     _addr &= ~0x03;                                 \
@@ -147,11 +147,11 @@ static inline void *__tlb(u32 addr)
 #define __break(code) thread_fault()
 #endif
 
-extern void __call(u32);
-extern u32  __dcall(u32);
+extern void __call(PTR);
+extern u32  __dcall(PTR);
 extern void __byteswap(void *, const void *, s32);
 extern void __wordswap(void *, const void *, s32);
-extern void __dma(void *, u32, u32);
+extern void __dma(void *, PTR, u32);
 extern void __eeprom_read(void *, uint);
 extern void __eeprom_write(const void *, uint);
 extern void cpu_init(void);

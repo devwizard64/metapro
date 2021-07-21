@@ -1,7 +1,7 @@
 /* header says it returns a s32, but the asm doesn't set v0 */
 void lib_osSpTaskStartGo(void)
 {
-    s32   task  = a0.i[IX];
+    PTR   task  = a0.i[IX];
 #ifndef APP_SEQ
     u32   type  = __read_u32(task+0x00);
     void *ucode = __tlb(__read_u32(task+0x10));
@@ -11,7 +11,7 @@ void lib_osSpTaskStartGo(void)
 #ifndef APP_SEQ
     if (type == M_GFXTASK)
     {
-    #ifdef _3DS
+    #ifdef __3DS__
         lib_gsp_ucode = ucode;
         lib_gsp_data  = data;
         svcWaitSynchronization(lib_gsp_end, U64_MAX);
@@ -19,7 +19,7 @@ void lib_osSpTaskStartGo(void)
         svcSignalEvent(lib_gsp_start);
     #else
         gsp_update(ucode, data);
-    #ifdef _NATIVE
+    #ifdef __NATIVE__
         SDL_GL_SwapWindow(lib_window);
     #endif
     #ifdef GEKKO
@@ -31,7 +31,7 @@ void lib_osSpTaskStartGo(void)
     else
 #endif
     {
-    #ifdef _3DS
+    #ifdef __3DS__
         lib_asp_data = data;
         lib_asp_size = size;
         svcWaitSynchronization(lib_asp_end, U64_MAX);

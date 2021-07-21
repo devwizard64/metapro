@@ -13,48 +13,50 @@
 #define asp_s16(addr) ((s16 *)&asp_dmem[(addr) ^ (AX_W >> 1)])
 #define asp_u16(addr) ((u16 *)&asp_dmem[(addr) ^ (AX_W >> 1)])
 
-static void asp_a_spnoop(u32, u32);
-static void asp_a_adpcm(u32, u32);
-static void asp_a_clearbuff(u32, u32);
+typedef void ASP(u32 w0, u32 w1);
+
+static ASP asp_a_spnoop;
+static ASP asp_a_adpcm;
+static ASP asp_a_clearbuff;
 #ifdef ASP_MAIN2
-static void asp_a_addmixer(u32, u32);
+static ASP asp_a_addmixer;
 #else
-static void asp_a_envmixer(u32, u32);
-static void asp_a_loadbuff(u32, u32);
-static void asp_a_resample(u32, u32);
+static ASP asp_a_envmixer;
+static ASP asp_a_loadbuff;
+static ASP asp_a_resample;
 #endif
-static void asp_a_savebuff(u32, u32);
+static ASP asp_a_savebuff;
 #ifdef ASP_NAUDIO
-static void asp_a_mp3(u32, u32);
-static void asp_a_mp3addy(u32, u32);
+static ASP asp_a_mp3;
+static ASP asp_a_mp3addy;
 #else
-static void asp_a_segment(u32, u32);
-static void asp_a_setbuff(u32, u32);
+static ASP asp_a_segment;
+static ASP asp_a_setbuff;
 #endif
 #ifdef ASP_MAIN2
-static void asp_a_duplicate(u32, u32);
+static ASP asp_a_duplicate;
 #else
-static void asp_a_setvol(u32, u32);
+static ASP asp_a_setvol;
 #endif
-static void asp_a_dmemmove(u32, u32);
-static void asp_a_loadadpcm(u32, u32);
-static void asp_a_mixer(u32, u32);
-static void asp_a_interleave(u32, u32);
+static ASP asp_a_dmemmove;
+static ASP asp_a_loadadpcm;
+static ASP asp_a_mixer;
+static ASP asp_a_interleave;
 #ifdef ASP_MAIN2
-static void asp_a_hilogain(u32, u32);
+static ASP asp_a_hilogain;
 #else
-static void asp_a_polef(u32, u32);
+static ASP asp_a_polef;
 #endif
-static void asp_a_setloop(u32, u32);
+static ASP asp_a_setloop;
 #ifdef ASP_MAIN2
-static void asp_a_interl(u32, u32);
-static void asp_a_envsetup1(u32, u32);
-static void asp_a_envmixer(u32, u32);
-static void asp_a_loadbuff(u32, u32);
-static void asp_a_envsetup2(u32, u32);
+static ASP asp_a_interl;
+static ASP asp_a_envsetup1;
+static ASP asp_a_envmixer;
+static ASP asp_a_loadbuff;
+static ASP asp_a_envsetup2;
 #endif
 
-static void (*const asp_table[])(u32, u32) =
+static ASP *const asp_table[] =
 {
     /* 0x00 */  asp_a_spnoop,
     /* 0x01 */  asp_a_adpcm,
@@ -191,7 +193,7 @@ static s16  asp_dry_gain;   /* ? */
 static s16  asp_wet_gain;   /* ? */
 static s16 *asp_loop;       /* ? */
 
-static void *asp_addr(u32 addr)
+static void *asp_addr(PTR addr)
 {
 #if defined(ASP_MAIN1) || defined(ASP_MAIN2)
     return &asp_addr_table[addr >> 24 & 0x0F][addr >> 0 & 0x00FFFFFF];

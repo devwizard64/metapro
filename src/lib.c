@@ -1,16 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef _NATIVE
+#ifdef __NATIVE__
 #include <time.h>
 #endif
-#ifndef _NATIVE
+#ifndef __NATIVE__
 #include <malloc.h>
 #endif
 #include <setjmp.h>
 
 #include <math.h>
-#ifdef _NATIVE
+#ifdef __NATIVE__
 #include <SDL2/SDL.h>
 #endif
 #ifndef GEKKO
@@ -30,7 +30,7 @@
 
 /* #define INPUT_WRITE */
 
-#ifdef _3DS
+#ifdef __3DS__
 #define CONFIG_FLAG_STICK_X     0x01
 #define CONFIG_FLAG_STICK_Y     0x02
 #define CONFIG_FLAG_AUDIO       0x04
@@ -49,40 +49,40 @@
 #define THREAD_STACK_END        0
 #endif
 
-struct thread_t
+struct thread
 {
-    struct thread_t *lprev;
-    struct thread_t *lnext;
-    struct thread_t *qprev;
-    struct thread_t *qnext;
+    struct thread *lprev;
+    struct thread *lnext;
+    struct thread *qprev;
+    struct thread *qnext;
     jmp_buf jmp;
     u8     *stack;
     bool    init;
     bool    ready;
     bool    qlink;
-    u32     addr;
-    u32     entry;
+    PTR     addr;
+    PTR     entry;
     s32     id;
     s32     pri;
-    reg_t   reg[lenof(cpu_reg)];
+    REG    reg[lenof(cpu_reg)];
 };
 
-struct os_event_t
+struct os_event
 {
-    u32 mq;
-    u32 msg;
+    PTR mq;
+    PTR msg;
 };
 
-struct os_pad_t
+struct os_pad
 {
     u16 button;
     s8  stick_x;
     s8  stick_y;
 };
 
-struct config_t
+struct config
 {
-#ifdef _NATIVE
+#ifdef __NATIVE__
     struct
     {
         u8 id;
@@ -90,7 +90,7 @@ struct config_t
     }
     input[16];
 #endif
-#ifdef _3DS
+#ifdef __3DS__
     u32 input[20];
     u32 input_exit;
     u32 input_save;
@@ -107,9 +107,9 @@ struct config_t
 };
 
 #ifndef APP_SEQ
-static const struct config_t lib_config_default =
+static const struct config lib_config_default =
 {
-#ifdef _NATIVE
+#ifdef __NATIVE__
     {
         { 0,   0}, { 3,   0}, { 4,   0}, { 7,   0},
         { 8,   0}, { 9,   0}, {10,   0}, {11,   0},
@@ -117,7 +117,7 @@ static const struct config_t lib_config_default =
         { 4, -78}, { 4,  78}, { 3, -78}, { 3,  78},
     },
 #endif
-#ifdef _3DS
+#ifdef __3DS__
     {
         KEY_A,
         KEY_B | KEY_X,
@@ -176,7 +176,7 @@ static const struct config_t lib_config_default =
 };
 #endif
 
-#ifdef _NATIVE
+#ifdef __NATIVE__
 #ifndef APP_SEQ
 static SDL_Window       *lib_window       = NULL;
 static SDL_GLContext    *lib_context      = NULL;
@@ -185,7 +185,7 @@ static SDL_Joystick     *lib_joystick     = NULL;
 static SDL_AudioDeviceID lib_audio_device = 0;
 static u64               lib_time         = 0;
 #endif
-#ifdef _3DS
+#ifdef __3DS__
 static Thread lib_gsp_thread = NULL;
 static Thread lib_asp_thread = NULL;
 static Handle lib_gsp_start  = 0;
@@ -198,8 +198,8 @@ static u32   *lib_asp_data   = NULL;
 static u32    lib_asp_size   = 0;
 static bool   lib_rsp_update = true;
 static f32 lib_audio_mix[12] = {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-static ndspWaveBuf lib_audio_bufs[2] = {0};
-static u8          lib_audio_buf     = 0;
+static ndspWaveBuf lib_audio_wb_table[2] = {0};
+static u8          lib_audio_wb_index    = 0;
 #endif
 #ifdef GEKKO
 static GXRModeObj *lib_rmode       = NULL;
@@ -208,9 +208,9 @@ static bool        lib_video_draw  = false;
 #endif
 
 #ifndef APP_SEQ
-static struct config_t lib_config;
+static struct config lib_config;
 
-#ifdef _NATIVE
+#ifdef __NATIVE__
 u16 lib_video_w = VIDEO_SCALE*320; /* 400 */
 u16 lib_video_h = VIDEO_SCALE*240;
 f32 lib_viewport_l =   0; /* -40 */
@@ -225,7 +225,7 @@ f32 lib_viewport_r = 320;
 #if 0
 static bool lib_reset = false;
 #endif
-#ifdef _NATIVE
+#ifdef __NATIVE__
 static bool lib_fast  = false;
 #ifdef APP_UNK4
 static u32 lib_frame  = 0;
@@ -235,23 +235,23 @@ static bool lib_save  = false;
 static bool lib_load  = false;
 #endif
 
-static struct thread_t *lib_thread_list  = NULL;
-static struct thread_t *lib_thread_queue = NULL;
-static struct thread_t *lib_thread       = NULL;
+static struct thread *lib_thread_list  = NULL;
+static struct thread *lib_thread_queue = NULL;
+static struct thread *lib_thread       = NULL;
 static jmp_buf lib_jmp;
 #if 0
 static jmp_buf lib_nmi;
 static u8      lib_prenmi = 0;
 #endif
 
-static struct os_event_t lib_event_table[OS_NUM_EVENTS] = {0};
-static struct os_event_t lib_event_vi = {0};
+static struct os_event lib_event_table[OS_NUM_EVENTS] = {0};
+static struct os_event lib_event_vi = {0};
 
 #ifndef APP_SEQ
-static struct os_pad_t *lib_input_data = NULL;
-static struct os_pad_t *lib_input      = NULL;
-static size_t           lib_input_size = 0;
-static struct os_pad_t  lib_pad        = {0};
+static struct os_pad *lib_input_data = NULL;
+static struct os_pad *lib_input      = NULL;
+static size_t         lib_input_size = 0;
+static struct os_pad  lib_pad        = {0};
 #endif
 
 #ifndef APP_SEQ
@@ -280,7 +280,7 @@ void mtx_write(s16 *dst, const f32 *src)
     while (cnt > 0);
 }
 
-void mtxf_mul(f32 mtxf[4][4], f32 a[4][4], f32 b[4][4])
+void mtxf_cat(f32 mf[4][4], f32 a[4][4], f32 b[4][4])
 {
     uint y;
     for (y = 0; y < 4; y++)
@@ -288,107 +288,107 @@ void mtxf_mul(f32 mtxf[4][4], f32 a[4][4], f32 b[4][4])
         uint x;
         for (x = 0; x < 4; x++)
         {
-            mtxf[y][x] =
+            mf[y][x] =
                 a[y][0]*b[0][x] + a[y][1]*b[1][x] +
                 a[y][2]*b[2][x] + a[y][3]*b[3][x];
         }
     }
 }
 
-void mtxf_identity(f32 mtxf[4][4])
+void mtxf_identity(f32 mf[4][4])
 {
-    mtxf[0][0] = 1;
-    mtxf[0][1] = 0;
-    mtxf[0][2] = 0;
-    mtxf[0][3] = 0;
-    mtxf[1][0] = 0;
-    mtxf[1][1] = 1;
-    mtxf[1][2] = 0;
-    mtxf[1][3] = 0;
-    mtxf[2][0] = 0;
-    mtxf[2][1] = 0;
-    mtxf[2][2] = 1;
-    mtxf[2][3] = 0;
-    mtxf[3][0] = 0;
-    mtxf[3][1] = 0;
-    mtxf[3][2] = 0;
-    mtxf[3][3] = 1;
+    mf[0][0] = 1;
+    mf[0][1] = 0;
+    mf[0][2] = 0;
+    mf[0][3] = 0;
+    mf[1][0] = 0;
+    mf[1][1] = 1;
+    mf[1][2] = 0;
+    mf[1][3] = 0;
+    mf[2][0] = 0;
+    mf[2][1] = 0;
+    mf[2][2] = 1;
+    mf[2][3] = 0;
+    mf[3][0] = 0;
+    mf[3][1] = 0;
+    mf[3][2] = 0;
+    mf[3][3] = 1;
 }
 
-void mtxf_ortho(f32 mtxf[4][4], f32 l, f32 r, f32 b, f32 t, f32 n, f32 f)
+void mtxf_ortho(f32 mf[4][4], f32 l, f32 r, f32 b, f32 t, f32 n, f32 f)
 {
-    mtxf[0][0] = 2 / (r-l);
-    mtxf[0][1] = 0;
-    mtxf[0][2] = 0;
-    mtxf[0][3] = 0;
-    mtxf[1][0] = 0;
-    mtxf[1][1] = 2 / (t-b);
-    mtxf[1][2] = 0;
-    mtxf[1][3] = 0;
-    mtxf[2][0] = 0;
-    mtxf[2][1] = 0;
-    mtxf[2][2] = 2 / (n-f);
-    mtxf[2][3] = 0;
-    mtxf[3][0] = (l+r) / (l-r);
-    mtxf[3][1] = (b+t) / (b-t);
-    mtxf[3][2] = (n+f) / (n-f);
-    mtxf[3][3] = 1;
+    mf[0][0] = 2 / (r-l);
+    mf[0][1] = 0;
+    mf[0][2] = 0;
+    mf[0][3] = 0;
+    mf[1][0] = 0;
+    mf[1][1] = 2 / (t-b);
+    mf[1][2] = 0;
+    mf[1][3] = 0;
+    mf[2][0] = 0;
+    mf[2][1] = 0;
+    mf[2][2] = 2 / (n-f);
+    mf[2][3] = 0;
+    mf[3][0] = (l+r) / (l-r);
+    mf[3][1] = (b+t) / (b-t);
+    mf[3][2] = (n+f) / (n-f);
+    mf[3][3] = 1;
 }
 
 #ifndef APP_UNK4
-static void mtxf_perspective(f32 mtxf[4][4], f32 fovy, f32 aspect, f32 n, f32 f)
+static void mtxf_perspective(f32 mf[4][4], f32 fovy, f32 aspect, f32 n, f32 f)
 {
     f32 x;
-    fovy *= (f32)(M_PI / 360.0);
+    fovy *= (f32)(M_PI/360);
     x = cosf(fovy) / sinf(fovy);
-    mtxf[0][0] = x/aspect;
-    mtxf[0][1] = 0;
-    mtxf[0][2] = 0;
-    mtxf[0][3] = 0;
-    mtxf[1][0] = 0;
-    mtxf[1][1] = x;
-    mtxf[1][2] = 0;
-    mtxf[1][3] = 0;
+    mf[0][0] = x/aspect;
+    mf[0][1] = 0;
+    mf[0][2] = 0;
+    mf[0][3] = 0;
+    mf[1][0] = 0;
+    mf[1][1] = x;
+    mf[1][2] = 0;
+    mf[1][3] = 0;
     x = 1 / (n-f);
-    mtxf[2][0] = 0;
-    mtxf[2][1] = 0;
+    mf[2][0] = 0;
+    mf[2][1] = 0;
 #ifdef GEKKO
-    mtxf[2][2] = (n  )*x;
+    mf[2][2] = (n  )*x;
 #else
-    mtxf[2][2] = (n+f)*x;
+    mf[2][2] = (n+f)*x;
 #endif
-    mtxf[2][3] = -1;
-    mtxf[3][0] = 0;
-    mtxf[3][1] = 0;
+    mf[2][3] = -1;
+    mf[3][0] = 0;
+    mf[3][1] = 0;
 #ifdef GEKKO
-    mtxf[3][2] =      n*f*x;
+    mf[3][2] =      n*f*x;
 #else
-    mtxf[3][2] = 2*n*f*x;
+    mf[3][2] = 2*n*f*x;
 #endif
-    mtxf[3][3] = 0;
+    mf[3][3] = 0;
 }
 
-static void mtxf_translate(f32 mtxf[4][4], f32 x, f32 y, f32 z)
+static void mtxf_translate(f32 mf[4][4], f32 x, f32 y, f32 z)
 {
-    mtxf[0][0] = 1;
-    mtxf[0][1] = 0;
-    mtxf[0][2] = 0;
-    mtxf[0][3] = 0;
-    mtxf[1][0] = 0;
-    mtxf[1][1] = 1;
-    mtxf[1][2] = 0;
-    mtxf[1][3] = 0;
-    mtxf[2][0] = 0;
-    mtxf[2][1] = 0;
-    mtxf[2][2] = 1;
-    mtxf[2][3] = 0;
-    mtxf[3][0] = x;
-    mtxf[3][1] = y;
-    mtxf[3][2] = z;
-    mtxf[3][3] = 1;
+    mf[0][0] = 1;
+    mf[0][1] = 0;
+    mf[0][2] = 0;
+    mf[0][3] = 0;
+    mf[1][0] = 0;
+    mf[1][1] = 1;
+    mf[1][2] = 0;
+    mf[1][3] = 0;
+    mf[2][0] = 0;
+    mf[2][1] = 0;
+    mf[2][2] = 1;
+    mf[2][3] = 0;
+    mf[3][0] = x;
+    mf[3][1] = y;
+    mf[3][2] = z;
+    mf[3][3] = 1;
 }
 
-static void mtxf_rotate(f32 mtxf[4][4], f32 a, f32 x, f32 y, f32 z)
+static void mtxf_rotate(f32 mf[4][4], f32 a, f32 x, f32 y, f32 z)
 {
     f32 xx;
     f32 yy;
@@ -405,56 +405,56 @@ static void mtxf_rotate(f32 mtxf[4][4], f32 a, f32 x, f32 y, f32 z)
     x *= s;
     y *= s;
     z *= s;
-    a *= (f32)(M_PI / 180.0);
+    a *= (f32)(M_PI/180);
     s = sinf(a);
     c = cosf(a);
     xyc = x*y*(1-c);
     yzc = y*z*(1-c);
     zxc = z*x*(1-c);
-    mtxf[0][0] = (1-xx)*c + xx;
-    mtxf[0][1] = xyc + z*s;
-    mtxf[0][2] = zxc - y*s;
-    mtxf[0][3] = 0;
-    mtxf[1][0] = xyc - z*s;
-    mtxf[1][1] = (1-yy)*c + yy;
-    mtxf[1][2] = yzc + x*s;
-    mtxf[1][3] = 0;
-    mtxf[2][0] = zxc + y*s;
-    mtxf[2][1] = yzc - x*s;
-    mtxf[2][2] = (1-zz)*c + zz;
-    mtxf[2][3] = 0;
-    mtxf[3][0] = 0;
-    mtxf[3][1] = 0;
-    mtxf[3][2] = 0;
-    mtxf[3][3] = 1;
+    mf[0][0] = (1-xx)*c + xx;
+    mf[0][1] = xyc + z*s;
+    mf[0][2] = zxc - y*s;
+    mf[0][3] = 0;
+    mf[1][0] = xyc - z*s;
+    mf[1][1] = (1-yy)*c + yy;
+    mf[1][2] = yzc + x*s;
+    mf[1][3] = 0;
+    mf[2][0] = zxc + y*s;
+    mf[2][1] = yzc - x*s;
+    mf[2][2] = (1-zz)*c + zz;
+    mf[2][3] = 0;
+    mf[3][0] = 0;
+    mf[3][1] = 0;
+    mf[3][2] = 0;
+    mf[3][3] = 1;
 }
 
-static void mtxf_scale(f32 mtxf[4][4], f32 x, f32 y, f32 z)
+static void mtxf_scale(f32 mf[4][4], f32 x, f32 y, f32 z)
 {
-    mtxf[0][0] = x;
-    mtxf[0][1] = 0;
-    mtxf[0][2] = 0;
-    mtxf[0][3] = 0;
-    mtxf[1][0] = 0;
-    mtxf[1][1] = y;
-    mtxf[1][2] = 0;
-    mtxf[1][3] = 0;
-    mtxf[2][0] = 0;
-    mtxf[2][1] = 0;
-    mtxf[2][2] = z;
-    mtxf[2][3] = 0;
-    mtxf[3][0] = 0;
-    mtxf[3][1] = 0;
-    mtxf[3][2] = 0;
-    mtxf[3][3] = 1;
+    mf[0][0] = x;
+    mf[0][1] = 0;
+    mf[0][2] = 0;
+    mf[0][3] = 0;
+    mf[1][0] = 0;
+    mf[1][1] = y;
+    mf[1][2] = 0;
+    mf[1][3] = 0;
+    mf[2][0] = 0;
+    mf[2][1] = 0;
+    mf[2][2] = z;
+    mf[2][3] = 0;
+    mf[3][0] = 0;
+    mf[3][1] = 0;
+    mf[3][2] = 0;
+    mf[3][3] = 1;
 }
 #endif
 #endif
 
-static void thread_llink(struct thread_t *thread)
+static void thread_llink(struct thread *thread)
 {
-    struct thread_t **list = &lib_thread_list;
-    struct thread_t  *prev = NULL;
+    struct thread **list = &lib_thread_list;
+    struct thread  *prev = NULL;
     while (*list != NULL)
     {
         if (*list == thread)
@@ -469,10 +469,10 @@ static void thread_llink(struct thread_t *thread)
     thread->lnext = NULL;
 }
 
-static void thread_qlink(struct thread_t *thread)
+static void thread_qlink(struct thread *thread)
 {
-    struct thread_t **queue = &lib_thread_queue;
-    struct thread_t  *prev  = NULL;
+    struct thread **queue = &lib_thread_queue;
+    struct thread  *prev  = NULL;
     while (*queue != NULL)
     {
         if (*queue == thread)
@@ -488,7 +488,7 @@ static void thread_qlink(struct thread_t *thread)
     thread->qlink = true;
 }
 
-static void thread_lunlink(struct thread_t *thread)
+static void thread_lunlink(struct thread *thread)
 {
     if (thread->lprev != NULL)
     {
@@ -504,7 +504,7 @@ static void thread_lunlink(struct thread_t *thread)
     }
 }
 
-static void thread_qunlink(struct thread_t *thread)
+static void thread_qunlink(struct thread *thread)
 {
     if (thread->qlink)
     {
@@ -532,9 +532,9 @@ void thread_yield(int arg)
     }
 }
 
-static struct thread_t *thread_find(u32 addr)
+static struct thread *thread_find(PTR addr)
 {
-    struct thread_t *thread;
+    struct thread *thread;
     if (addr == 0)
     {
         thread = lib_thread;
@@ -553,7 +553,7 @@ static struct thread_t *thread_find(u32 addr)
 #if 0
 static void thread_print(void)
 {
-    struct thread_t *queue = lib_thread_queue;
+    struct thread *queue = lib_thread_queue;
     while (queue != NULL)
     {
         printf(
@@ -570,11 +570,11 @@ s32 thread_id(void)
     return lib_thread != NULL ? lib_thread->id : 0;
 }
 
-static void thread_init(u32 addr, s32 id, u32 entry, s32 arg, s32 s, u32 pri)
+static void thread_init(PTR addr, s32 id, PTR entry, s32 arg, s32 s, u32 pri)
 {
-    struct thread_t *thread = malloc(sizeof(*thread));
+    struct thread *thread = malloc(sizeof(*thread));
     thread_llink(thread);
-#ifdef _NATIVE
+#ifdef __NATIVE__
     thread->stack        = malloc(THREAD_STACK_SIZE);
 #else
     thread->stack        = memalign(0x20, THREAD_STACK_SIZE);
@@ -590,21 +590,21 @@ static void thread_init(u32 addr, s32 id, u32 entry, s32 arg, s32 s, u32 pri)
     thread->reg[R_SP].ll = s - 0x10;
 }
 
-static void thread_start(struct thread_t *thread)
+static void thread_start(struct thread *thread)
 {
     thread_qlink(thread);
     thread_yield(THREAD_YIELD_QUEUE);
 }
 
 #ifdef APP_UNK4
-static void thread_stop(struct thread_t *thread)
+static void thread_stop(struct thread *thread)
 {
     thread_qunlink(thread);
     thread_yield(THREAD_YIELD_QUEUE);
 }
 #endif
 
-static void thread_destroy(struct thread_t *thread)
+static void thread_destroy(struct thread *thread)
 {
     if (thread == lib_thread)
     {
@@ -634,7 +634,7 @@ void thread_fault(void)
     }
 }
 
-static void lib_event(struct os_event_t *event)
+static void lib_event(struct os_event *event)
 {
     if (event->mq != 0)
     {
@@ -657,7 +657,7 @@ static void video_update_size(int w, int h)
 }
 #endif
 
-#ifdef _3DS
+#ifdef __3DS__
 static void gsp_main(unused void *arg)
 {
     gsp_init();
@@ -708,7 +708,7 @@ static void video_draw(unused u32 count)
 #ifndef APP_SEQ
 static void video_init(void)
 {
-#ifdef _NATIVE
+#ifdef __NATIVE__
     SDL_Init(SDL_INIT_VIDEO);
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER,       1);
     SDL_GL_SetAttribute(SDL_GL_RED_SIZE,           8);
@@ -716,8 +716,8 @@ static void video_init(void)
     SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,          8);
     SDL_GL_SetAttribute(SDL_GL_ACCELERATED_VISUAL, 1);
     lib_window = SDL_CreateWindow(
-        "app", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, lib_video_w,
-        lib_video_h, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL
+        "app", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        lib_video_w, lib_video_h, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL
     );
     if (lib_window == NULL)
     {
@@ -731,7 +731,7 @@ static void video_init(void)
     SDL_GL_SetSwapInterval(1);
     gsp_init();
 #endif
-#ifdef _3DS
+#ifdef __3DS__
     gfxInitDefault();
     if (lib_config.flag & CONFIG_FLAG_HI_H)
     {
@@ -786,13 +786,13 @@ static void video_init(void)
 #ifndef APP_SEQ
 static void video_destroy(void)
 {
-#ifdef _NATIVE
+#ifdef __NATIVE__
     if (lib_window != NULL)
     {
         SDL_DestroyWindow(lib_window);
     }
 #endif
-#ifdef _3DS
+#ifdef __3DS__
     lib_rsp_update = false;
     if (lib_gsp_thread != NULL)
     {
@@ -813,7 +813,7 @@ static void video_destroy(void)
 }
 #endif
 
-#ifdef _NATIVE
+#ifdef __NATIVE__
 static u64 video_time(void)
 {
 #ifdef WIN32
@@ -832,7 +832,7 @@ static u64 video_time(void)
 
 void video_update(void)
 {
-#ifdef _NATIVE
+#ifdef __NATIVE__
 #ifndef APP_SEQ
 #ifdef APP_UNK4
     if (lib_frame++ == 60*53)
@@ -860,7 +860,7 @@ void video_update(void)
         }
     }
 #endif
-#ifdef _3DS
+#ifdef __3DS__
     gspWaitForVBlank();
 #endif
 #ifdef GEKKO
@@ -891,7 +891,7 @@ static void input_init(void)
         fclose(f);
     }
 #endif
-#ifdef _NATIVE
+#ifdef __NATIVE__
     SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
     SDL_Init(SDL_INIT_JOYSTICK);
     lib_joystick = SDL_JoystickOpen(0);
@@ -902,7 +902,7 @@ static void input_init(void)
 #ifndef APP_SEQ
 static void input_destroy(void)
 {
-#ifdef _NATIVE
+#ifdef __NATIVE__
     if (lib_joystick != NULL)
     {
         SDL_JoystickClose(lib_joystick);
@@ -914,7 +914,7 @@ static void input_destroy(void)
 #ifndef APP_SEQ
 static void input_update(void)
 {
-#ifdef _NATIVE
+#ifdef __NATIVE__
     SDL_Event event;
     while (SDL_PollEvent(&event))
     {
@@ -959,7 +959,7 @@ static void input_update(void)
         }
     }
 #else
-#ifdef _3DS
+#ifdef __3DS__
     u32 held;
     u32 down;
     if (!aptMainLoop())
@@ -1010,18 +1010,18 @@ static void input_update(void)
     }
     else
     {
-    #ifdef _3DS
+    #ifdef __3DS__
         circlePosition stick;
     #endif
         uint mask;
         uint i;
-    #ifdef _3DS
+    #ifdef __3DS__
         hidCircleRead(&stick);
     #endif
         lib_pad.button  = 0;
         lib_pad.stick_x = 0;
         lib_pad.stick_y = 0;
-    #ifdef _NATIVE
+    #ifdef __NATIVE__
         if (lib_joystick != NULL)
         {
             for (mask = 0x8000, i = 0; i < 16; i++, mask >>= 1)
@@ -1096,7 +1096,7 @@ static void input_update(void)
             }
         }
     #else
-    #ifdef _3DS
+    #ifdef __3DS__
         if (lib_config.flag & CONFIG_FLAG_STICK_X)
         {
             lib_pad.stick_x = stick.dx/2;
@@ -1122,12 +1122,8 @@ static void input_update(void)
                 axis = axis*(s8)lib_config.input[i]/100;
                 switch (mask)
                 {
-                    case 0x0080:
-                        lib_pad.stick_x = axis;
-                        break;
-                    case 0x0040:
-                        lib_pad.stick_y = axis;
-                        break;
+                    case 0x0080:    lib_pad.stick_x = axis; break;
+                    case 0x0040:    lib_pad.stick_y = axis; break;
                     default:
                         if (axis > 40)
                         {
@@ -1142,18 +1138,10 @@ static void input_update(void)
             {
                 switch (i)
                 {
-                    case 0x10:
-                        lib_pad.stick_x = -80;
-                        break;
-                    case 0x11:
-                        lib_pad.stick_x =  80;
-                        break;
-                    case 0x12:
-                        lib_pad.stick_y = -80;
-                        break;
-                    case 0x13:
-                        lib_pad.stick_y =  80;
-                        break;
+                    case 0x10:  lib_pad.stick_x = -80;  break;
+                    case 0x11:  lib_pad.stick_x =  80;  break;
+                    case 0x12:  lib_pad.stick_y = -80;  break;
+                    case 0x13:  lib_pad.stick_y =  80;  break;
                     default:
                         lib_pad.button |= mask;
                         break;
@@ -1182,10 +1170,10 @@ static s32 audio_freq(unused s32 freq)
 
 static s32 audio_size(void)
 {
-#ifdef _NATIVE
+#ifdef __NATIVE__
     return SDL_GetQueuedAudioSize(lib_audio_device);
 #endif
-#ifdef _3DS
+#ifdef __3DS__
     return 0x200;
 #endif
 #ifdef GEKKO
@@ -1195,7 +1183,7 @@ static s32 audio_size(void)
 
 static void audio_init(void)
 {
-#ifdef _NATIVE
+#ifdef __NATIVE__
     SDL_AudioSpec spec;
     SDL_Init(SDL_INIT_AUDIO);
     spec.freq     = 32000;
@@ -1207,7 +1195,7 @@ static void audio_init(void)
     lib_audio_device = SDL_OpenAudioDevice(NULL, 0, &spec, NULL, 0);
     SDL_PauseAudioDevice(lib_audio_device, 0);
 #endif
-#ifdef _3DS
+#ifdef __3DS__
     ndspInit();
     ndspSetOutputMode(NDSP_OUTPUT_STEREO);
     ndspChnSetInterp(0, NDSP_INTERP_LINEAR);
@@ -1223,13 +1211,13 @@ static void audio_init(void)
 
 static void audio_destroy(void)
 {
-#ifdef _NATIVE
+#ifdef __NATIVE__
     if (lib_audio_device != 0)
     {
         SDL_CloseAudioDevice(lib_audio_device);
     }
 #endif
-#ifdef _3DS
+#ifdef __3DS__
     ndspExit();
 #endif
 #ifdef GEKKO
@@ -1239,7 +1227,7 @@ static void audio_destroy(void)
 
 static void audio_update(void *src, size_t size)
 {
-#ifdef _NATIVE
+#ifdef __NATIVE__
     void *data = malloc(size);
     __WORDSWAP(data, src, size);
 #ifndef APP_SEQ
@@ -1251,11 +1239,11 @@ static void audio_update(void *src, size_t size)
     SDL_QueueAudio(lib_audio_device, data, size);
     free(data);
 #endif
-#ifdef _3DS
-    ndspWaveBuf *wb = &lib_audio_bufs[lib_audio_buf];
+#ifdef __3DS__
+    ndspWaveBuf *wb = &lib_audio_wb_table[lib_audio_wb_index];
     if (wb->status == NDSP_WBUF_DONE || wb->status == NDSP_WBUF_FREE)
     {
-        lib_audio_buf ^= 1;
+        lib_audio_wb_index ^= 1;
         if (wb->data_pcm16 != NULL)
         {
             linearFree(wb->data_pcm16);
@@ -1354,7 +1342,7 @@ static void lib_update(void)
             fseek(f, 0, SEEK_SET);
             fread(lib_input_data, 1, size, f);
             fclose(f);
-            lib_input = (struct os_pad_t *)((u8 *)lib_input_data + size);
+            lib_input = (struct os_pad *)((u8 *)lib_input_data + size);
         }
         else
         {
@@ -1388,8 +1376,8 @@ void lib_main(void (*start)(void))
     int arg = setjmp(lib_jmp);
     if (arg != THREAD_YIELD_NULL)
     {
-        struct thread_t *queue;
-        struct thread_t *thread;
+        struct thread *queue;
+        struct thread *thread;
         s32 pri;
         thread = lib_thread;
         lib_thread = NULL;
@@ -1492,7 +1480,7 @@ void lib_init(void)
 }
 
 #define LIB_SV(f) void lib_##f(void) {}
-#ifdef _DEBUG
+#ifdef __DEBUG__
 #define LIB_SE(f) void lib_##f(void) {puts(#f); exit(EXIT_FAILURE);}
 #else
 #define LIB_SE(f) void lib_##f(void) {}

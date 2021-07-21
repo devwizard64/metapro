@@ -18,7 +18,9 @@
 #define CPU_MODE_WORDSWAP   0x12408037
 #endif
 
-static void cpu_read_native(FILE *, void *, u32);
+typedef void CPU_READ(FILE *f, void *dst, u32 size);
+
+static CPU_READ cpu_read_native;
 
 const u32 cpu_lwl_mask[] = {0x00000000, 0x000000FF, 0x0000FFFF, 0x00FFFFFF};
 const u32 cpu_lwr_mask[] = {0xFFFFFF00, 0xFFFF0000, 0xFF000000, 0x00000000};
@@ -27,26 +29,26 @@ const u32 cpu_swr_mask[] = {0x00FFFFFF, 0x0000FFFF, 0x000000FF, 0x00000000};
 const u8  cpu_l_shift[]  = { 0,  8, 16, 24};
 const u8  cpu_r_shift[]  = {24, 16,  8,  0};
 
-static void (*cpu_read)(FILE *, void *, u32) = cpu_read_native;
+static CPU_READ *cpu_read = cpu_read_native;
 
 #ifdef APP_DCALL
-static u32 cpu_dcall_table[lenof(app_dcall_table)];
+static PTR cpu_dcall_table[lenof(app_dcall_table)];
 #endif
 #ifdef APP_CACHE
 static u8 *cpu_cache_table[lenof(app_cache_table)];
 #endif
 
 /* todo: align */
-u8    cpu_dram[CPU_DRAM_SIZE];
-reg_t cpu_reg[CPU_REG_LEN];
+u8  cpu_dram[CPU_DRAM_SIZE];
+REG cpu_reg[CPU_REG_LEN];
 
-void __call(u32 addr)
+void __call(PTR addr)
 {
-    const struct app_call_t *start = app_call_table;
+    const struct app_call *start = app_call_table;
     uint len = lenof(app_call_table);
     do
     {
-        const struct app_call_t *call;
+        const struct app_call *call;
         if (addr < start->addr)
         {
             edebug("__call(0x%08" FMT_X "U)\n", addr);
@@ -63,10 +65,10 @@ void __call(u32 addr)
 }
 
 #ifdef APP_DCALL
-u32 __dcall(u32 addr)
+PTR __dcall(PTR addr)
 {
-    const u32 *app;
-    u32       *cpu;
+    const PTR *app;
+    PTR       *cpu;
     addr = (u8 *)__tlb(addr) - cpu_dram;
     app = app_dcall_table;
     cpu = cpu_dcall_table;
@@ -148,7 +150,7 @@ static void cpu_read_wordswap(FILE *f, void *dst, u32 size)
     free(data);
 }
 
-void __dma(void *dst, u32 src, u32 size)
+void __dma(void *dst, PTR src, u32 size)
 {
 #if defined(APP_DCALL) || defined(APP_CACHE)
     uint i;
@@ -157,8 +159,8 @@ void __dma(void *dst, u32 src, u32 size)
 #ifdef APP_DCALL
     for (i = 0; i < lenof(app_dcall_table); i++)
     {
-        u32 app  = app_dcall_table[i];
-        u32 addr = (u8 *)dst - cpu_dram;
+        PTR app  = app_dcall_table[i];
+        PTR addr = (u8 *)dst - cpu_dram;
         if (app >= addr && app < addr+size)
         {
             cpu_dcall_table[i] = src;
@@ -181,7 +183,7 @@ void __dma(void *dst, u32 src, u32 size)
 #ifdef APP_CACHE
     for (i = 0; i < lenof(app_cache_table); i++)
     {
-        const struct app_cache_t *cache = &app_cache_table[i];
+        const struct app_cache *cache = &app_cache_table[i];
         if (src >= cache->addr && src+size <= cache->addr+cache->size)
         {
             memcpy(dst, &cpu_cache_table[i][src-cache->addr], size);
@@ -238,7 +240,7 @@ void cpu_init(void)
 #ifdef APP_CACHE
     uint  i;
 #endif
-#ifdef _3DS
+#ifdef __3DS__
     osSetSpeedupEnable(true);
     romfsInit();
 #endif
@@ -259,7 +261,7 @@ void cpu_init(void)
 #ifdef APP_CACHE
     for (i = 0; i < lenof(app_cache_table); i++)
     {
-        const struct app_cache_t *cache = &app_cache_table[i];
+        const struct app_cache *cache = &app_cache_table[i];
         fseek(f, cache->addr, SEEK_SET);
         cpu_cache_table[i] = malloc(cache->size);
         cpu_read(f, cpu_cache_table[i], cache->size);
@@ -270,7 +272,7 @@ void cpu_init(void)
 
 void cpu_destroy(void)
 {
-#ifdef _3DS
+#ifdef __3DS__
     romfsExit();
 #endif
 }

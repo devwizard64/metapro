@@ -1,11 +1,11 @@
 void lib_osSendMesg(void)
 {
-    u32 mq = a0.i[IX];
-    u32 thread;
+    PTR mq = a0.i[IX];
+    PTR thread;
     s32 count;
     s32 index;
     s32 len;
-    s32 msg;
+    PTR msg;
     if (__read_s32(MQ_COUNT) >= __read_s32(MQ_LEN))
     {
         if (a2.i[IX] == OS_MESG_NOBLOCK)
@@ -21,7 +21,7 @@ void lib_osSendMesg(void)
     count  = __read_s32(MQ_COUNT);
     index  = __read_s32(MQ_INDEX);
     len    = __read_s32(MQ_LEN);
-    msg    = __read_s32(MQ_MSG);
+    msg    = __read_u32(MQ_MSG);
     __write_u32(MQ_RECV, 0);
     __write_u32(msg + 4*((index+count) % len), a1.i[IX]);
     __write_u32(MQ_COUNT, count+1);

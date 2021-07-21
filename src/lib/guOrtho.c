@@ -1,6 +1,6 @@
 void lib_guOrtho(void)
 {
-    f32 mtxf[4][4];
+    f32 mf[4][4];
     f32 l = a1.f[IX];
     f32 r = a2.f[IX];
     f32 b = a3.f[IX];
@@ -13,17 +13,17 @@ void lib_guOrtho(void)
         /* scale y */
         f32 y =             (1.0F/2) * (t+b);
         f32 h = (4.0F/3.0F)*(1.0F/2) * (t-b) * lib_video_h/lib_video_w;
-        mtxf_ortho(mtxf, l, r, y-h, y+h, n, f);
+        mtxf_ortho(mf, l, r, y-h, y+h, n, f);
     }
     else
     {
         /* scale x */
         f32 x =             (1.0F/2) * (r+l);
         f32 w = (3.0F/4.0F)*(1.0F/2) * (r-l) * lib_video_w/lib_video_h;
-        mtxf_ortho(mtxf, x-w, x+w, b, t, n, f);
+        mtxf_ortho(mf, x-w, x+w, b, t, n, f);
     }
 #else
-    mtxf_ortho(mtxf, l, r, b, t, n, f);
+    mtxf_ortho(mf, l, r, b, t, n, f);
 #endif
-    mtx_write(__tlb(a0.i[IX]), &mtxf[0][0]);
+    mtx_write(__tlb(a0.i[IX]), &mf[0][0]);
 }

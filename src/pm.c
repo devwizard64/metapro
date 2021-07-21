@@ -1,26 +1,26 @@
 #include <stdio.h>
 #include <string.h>
-#ifdef _NATIVE
+#ifdef __NATIVE__
 #include <time.h>
 #endif
 
 #include "types.h"
 #include "pm.h"
 
-#ifdef _NATIVE
+#ifdef __NATIVE__
 #define pm_time()       clock()
 #define PM_USEC         (1000000.0F/CLOCKS_PER_SEC)
-typedef clock_t pm_time_t;
+typedef clock_t PM_TIME;
 #endif
-#ifdef _3DS
+#ifdef __3DS__
 #define pm_time()       svcGetSystemTick()
 #define PM_USEC         (1000000.0F/SYSCLOCK_ARM11)
-typedef u64 pm_time_t;
+typedef u64 PM_TIME;
 #endif
 #ifdef GEKKO
 #define pm_time()       0
 #define PM_USEC         0.0F
-typedef u8 pm_time_t;
+typedef u8 PM_TIME;
 #endif
 
 static const char *const pm_str[PM_LEN] =
@@ -31,10 +31,10 @@ static const char *const pm_str[PM_LEN] =
     "RSP GFXTASK",
 };
 
-static pm_time_t pm_table[PM_LEN] = {0};
-static pm_time_t pm_cpu_stack[8]  = {0};
-static pm_time_t pm_gsp_stack[8]  = {0};
-static pm_time_t pm_asp_stack[8]  = {0};
+static PM_TIME pm_table[PM_LEN] = {0};
+static PM_TIME pm_cpu_stack[8]  = {0};
+static PM_TIME pm_gsp_stack[8]  = {0};
+static PM_TIME pm_asp_stack[8]  = {0};
 static u8 pm_cpu_index = 0;
 static u8 pm_gsp_index = 0;
 static u8 pm_asp_index = 0;
@@ -54,17 +54,17 @@ void pm_asp_start(void)
     pm_asp_stack[pm_asp_index++] = pm_time();
 }
 
-void pm_cpu_end(enum pm_index_t index)
+void pm_cpu_end(enum pm_index index)
 {
     pm_table[index] += pm_time() - pm_cpu_stack[--pm_cpu_index];
 }
 
-void pm_gsp_end(enum pm_index_t index)
+void pm_gsp_end(enum pm_index index)
 {
     pm_table[index] += pm_time() - pm_gsp_stack[--pm_gsp_index];
 }
 
-void pm_asp_end(enum pm_index_t index)
+void pm_asp_end(enum pm_index index)
 {
     pm_table[index] += pm_time() - pm_asp_stack[--pm_asp_index];
 }

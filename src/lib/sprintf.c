@@ -53,15 +53,9 @@ void lib_sprintf(void)
         {
             switch (*++fmt)
             {
-                case 'd':
-                    dst += sprintf(dst, "%" FMT_d, *arg++);
-                    break;
-                case 'x':
-                    dst += sprintf(dst, "%" FMT_x, *arg++);
-                    break;
-                default:
-                    edebug("invalid fmt %c\n", *fmt);
-                    break;
+                case 'd':   dst += sprintf(dst, "%" FMT_d, *arg++); break;
+                case 'x':   dst += sprintf(dst, "%" FMT_x, *arg++); break;
+                default:    edebug("invalid fmt %c\n", *fmt);       break;
             }
             fmt++;
         }

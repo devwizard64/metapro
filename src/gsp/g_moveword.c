@@ -30,10 +30,12 @@ static void gsp_g_moveword(u32 w0, u32 w1)
             gsp_addr_table[offset/4] = &cpu_dram[w1 & 0x1FFFFFFF];
             break;
     #ifdef GSP_F3D
+    #ifdef GSP_FOG
         case G_MW_FOG:
             gsp_fog_m = w1 >> 16;
             gsp_fog_o = w1 >>  0;
             break;
+    #endif
     #endif
     #ifdef GSP_F3DEX2
         case G_MW_LIGHTCOL:

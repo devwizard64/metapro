@@ -79,7 +79,7 @@ cpu_reg = [
 ]
 
 stack_reg = [
-    ["reg_t", cpu_reg],
+    ["REG", cpu_reg],
     ["uint ", [
         (0x0002000000000000, "c1c"),
     ]],
@@ -1039,9 +1039,9 @@ def main(argc, argv):
         "%s"
         "#define CPU_REG_LEN     0x%02X\n"
         "\n"
-        "struct app_call_t\n"
+        "struct app_call\n"
         "{\n"
-        "    u32    addr;\n"
+        "    PTR    addr;\n"
         "    void (*call)(void);\n"
         "};\n"
         "\n"
@@ -1052,9 +1052,9 @@ def main(argc, argv):
     )
     if len(app.cache) > 0:
         app_h += (
-            "struct app_cache_t\n"
+            "struct app_cache\n"
             "{\n"
-            "    u32 addr;\n"
+            "    PTR addr;\n"
             "    u32 size;\n"
             "};\n"
             "\n"
@@ -1095,12 +1095,12 @@ def main(argc, argv):
         g_addr |= dst
     g_addr = sorted(g_addr)
     d_addr = sorted(d_addr)
-    app_h += "extern const struct app_call_t app_call_table[%d];\n" % \
+    app_h += "extern const struct app_call app_call_table[%d];\n" % \
         len(g_addr)
     if len(app.dcall) > 0:
-        app_h += "extern const u32 app_dcall_table[%d];\n" % len(app.dcall)
+        app_h += "extern const PTR app_dcall_table[%d];\n" % len(app.dcall)
     if len(app.cache) > 0:
-        app_h += "extern const struct app_cache_t app_cache_table[%d];\n" % \
+        app_h += "extern const struct app_cache app_cache_table[%d];\n" % \
             len(app.cache)
     app_h += "\n"
     app_c = (
@@ -1109,7 +1109,7 @@ def main(argc, argv):
         "#include \"cpu.h\"\n"
         "#include \"lib.h\"\n"
         "\n"
-        "const struct app_call_t app_call_table[%d] =\n"
+        "const struct app_call app_call_table[%d] =\n"
         "{\n"
     ) % len(g_addr)
     for addr in g_addr:
@@ -1118,7 +1118,7 @@ def main(argc, argv):
     if len(app.dcall) > 0:
         app_c += (
             "\n"
-            "const u32 app_dcall_table[%d] =\n"
+            "const PTR app_dcall_table[%d] =\n"
             "{\n"
         ) % len(app.dcall)
         for addr in app.dcall:
@@ -1127,7 +1127,7 @@ def main(argc, argv):
     app_c += "\n"
     if len(app.cache) > 0:
         app_c += (
-            "const struct app_cache_t app_cache_table[%d] =\n"
+            "const struct app_cache app_cache_table[%d] =\n"
             "{\n"
         ) % len(app.cache)
         for start, end in app.cache:
