@@ -68,6 +68,7 @@ reg   = (
 header = (
     "#define GSP_F3DEX\n"
     "#define GSP_F3DEX2\n"
+    "#define GSP_FOG\n"
     "#define ASP_NAUDIO\n"
     "\n"
     "#define __osExceptionPreamble   0x8002DF60\n"
@@ -177,8 +178,10 @@ lib = {
 a00_pat = {
     # imem check
     0x80000480: [0x24180001, 0x00000000, 0x00000000, 0x00000000, 0x00000000],
+    0x800004A0: [0x00000000, 0x00000000, 0x00000000],
     # dmem check
     0x800004B0: [0x24180001, 0x00000000, 0x00000000, 0x00000000, 0x00000000],
+    0x800004D0: [0x00000000, 0x00000000, 0x00000000],
     # dma_read
     0x80002C70: [0x1000001F],
     # 8001FD64

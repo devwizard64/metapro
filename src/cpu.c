@@ -45,7 +45,7 @@ REG cpu_reg[CPU_REG_LEN];
 void __call(PTR addr)
 {
     const struct app_call *start = app_call_table;
-    uint len = lenof(app_call_table);
+    uint len = lenof(app_call_table)-1;
     do
     {
         const struct app_call *call;
@@ -53,7 +53,10 @@ void __call(PTR addr)
         {
             edebug("__call(0x%08" FMT_X "U)\n", addr);
         }
-        len = (len+1) / 2;
+        if (len > 1)
+        {
+            len /= 2;
+        }
         call = start + len;
         if (addr >= call->addr)
         {

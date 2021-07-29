@@ -220,9 +220,6 @@ static bool lib_reset = false;
 #endif
 #ifdef __NATIVE__
 static bool lib_fast  = false;
-#ifdef APP_UNK4
-static u32 lib_frame  = 0;
-#endif
 #endif
 static bool lib_save  = false;
 static bool lib_load  = false;
@@ -904,12 +901,6 @@ void video_update(void)
 {
 #ifdef __NATIVE__
 #ifndef APP_SEQ
-#ifdef APP_UNK4
-    if (lib_frame++ == 60*53)
-    {
-        lib_fast = false;
-    }
-#endif
     if (lib_fast)
     {
         lib_time = video_time();

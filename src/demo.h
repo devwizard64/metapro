@@ -1,5 +1,5 @@
-#ifndef _DEMO_H_
-#define _DEMO_H_
+#ifndef __DEMO_H__
+#define __DEMO_H__
 
 #include "types.h"
 

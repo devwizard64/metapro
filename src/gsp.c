@@ -908,35 +908,21 @@ static const GLint gsp_texture_fmt_table[] =
     /* RGBA  4 */ 0,
     /* RGBA  8 */ 0,
     /* RGBA 16 */ GPU_RGBA5551,
-#if 0
     /* RGBA 32 */ GPU_RGBA8,
-#else
-    /* RGBA 32 */ 0,
-#endif
     /* YUV   4 */ 0,
     /* YUV   8 */ 0,
     /* YUV  16 */ 0,
     /* YUV  32 */ 0,
-#ifdef APP_UNSM
     /* CI    4 */ 0,
     /* CI    8 */ 0,
-#else
-    /* CI    4 */ 0,
-    /* CI    8 */ 0,
-#endif
     /* CI   16 */ 0,
     /* CI   32 */ 0,
     /* IA    4 */ GPU_LA4,
     /* IA    8 */ GPU_LA4,
     /* IA   16 */ GPU_LA8,
     /* IA   32 */ 0,
-#if 0
     /* I     4 */ GPU_LA4,
     /* I     8 */ GPU_LA8,
-#else
-    /* I     4 */ 0,
-    /* I     8 */ 0,
-#endif
     /* I    16 */ 0,
     /* I    32 */ 0,
 };
@@ -1130,7 +1116,6 @@ static void gsp_combine_cc_fog(u8 *col, unused struct vtxf *vf)
 }
 #endif
 
-#ifdef APP_UNSM
 static void gsp_combine_cc_special1(u8 *col, struct vtxf *vf)
 {
     if (gsp_texture_enabled)
@@ -1147,6 +1132,7 @@ static void gsp_combine_cc_special1(u8 *col, struct vtxf *vf)
     }
 }
 
+#ifdef APP_UNSM
 static void gsp_combine_cc_special2(u8 *col, struct vtxf *vf)
 {
     if (gsp_texture_enabled)
@@ -1934,6 +1920,9 @@ static void gsp_g_setcombine(u32 w0, u32 w1)
         case CC1(0, 0, 0, 0):
             gsp_combine_cc = gsp_combine_cc_0;
             break;
+        case CC1(0, 0, 0, 1):
+            gsp_combine_cc = gsp_combine_cc_1;
+            break;
     #endif
         case CC1(0, 0, 0, TEXEL0):
         case CC1(TEXEL1, TEXEL0, LOD_FRACTION, TEXEL0):
@@ -1977,11 +1966,11 @@ static void gsp_g_setcombine(u32 w0, u32 w1)
             gsp_combine_cc = gsp_combine_cc_prim_env_shade_env;
             break;
     #endif
-    #ifdef APP_UNSM
         case CC1(TEXEL0, SHADE, TEXEL0_ALPHA, SHADE):
             gsp_combine_cc = gsp_combine_cc_special1;
             gsp_triangle   = gsp_triangle_special;
             break;
+    #ifdef APP_UNSM
         case CC1(PRIMITIVE, SHADE, TEXEL0, SHADE):
             gsp_combine_cc = gsp_combine_cc_special2;
             gsp_triangle   = gsp_triangle_special;
