@@ -1,5 +1,5 @@
-#ifndef _ASP_H_
-#define _ASP_H_
+#ifndef __ASP_H__
+#define __ASP_H__
 
 #include "types.h"
 

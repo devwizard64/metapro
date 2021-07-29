@@ -1,5 +1,5 @@
-#ifndef _TYPES_H_
-#define _TYPES_H_
+#ifndef __TYPES_H__
+#define __TYPES_H__
 
 #ifndef __ASSEMBLER__
 
@@ -32,6 +32,7 @@ typedef double          f64;
 
 #define lenof(x)        (sizeof((x)) / sizeof((x)[0]))
 
+#define NULLPTR 0
 typedef u32 PTR;
 
 #ifdef __GNUC__
@@ -56,9 +57,11 @@ typedef u32 PTR;
 #define wprint(...) fprintf(stderr, "warning: " __VA_ARGS__)
 #define eprint(...) {fprintf(stderr, "error: " __VA_ARGS__); eexit();}
 #ifdef __DEBUG__
+#define pdebug printf
 #define wdebug wprint
 #define edebug eprint
 #else
+#define pdebug(...)
 #define wdebug(...)
 #define edebug(...)
 #endif

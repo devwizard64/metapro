@@ -1,5 +1,5 @@
-#ifndef _CPU_H_
-#define _CPU_H_
+#ifndef __CPU_H__
+#define __CPU_H__
 
 #ifndef __ASSEMBLER__
 
@@ -68,7 +68,7 @@ extern const u8  cpu_r_shift[];
 extern u8  cpu_dram[CPU_DRAM_SIZE];
 extern REG cpu_reg[CPU_REG_LEN];
 
-#if defined(_UNSME0_0021F4C0_C_) || defined(_UNSMC3_0020AAF0_C_)
+#if defined(__UNSME0_0021F4C0_C__) || defined(__UNSMC3_0020AAF0_C__)
 static inline void *__tlb(PTR addr)
 {
     if (addr >= 0x04000000 && addr < 0x04040000)

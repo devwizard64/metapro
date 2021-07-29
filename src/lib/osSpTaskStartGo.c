@@ -4,7 +4,7 @@ void lib_osSpTaskStartGo(void)
     PTR   task  = a0.i[IX];
 #ifndef APP_SEQ
     u32   type  = __read_u32(task+0x00);
-    void *ucode = __tlb(__read_u32(task+0x10));
+    void *ucode = __tlb(__read_s32(task+0x10));
 #endif
     void *data  = __tlb(__read_s32(task+0x30));
     u32   size  = __read_u32(task+0x34);
@@ -31,6 +31,7 @@ void lib_osSpTaskStartGo(void)
     else
 #endif
     {
+    #if defined(APP_UNSM) /* && defined(APP_E0) */
     #ifdef __3DS__
         lib_asp_data = data;
         lib_asp_size = size;
@@ -38,11 +39,10 @@ void lib_osSpTaskStartGo(void)
         svcClearEvent(lib_asp_end);
         svcSignalEvent(lib_asp_start);
     #else
-    #if defined(APP_UNSM) /* && defined(APP_E0) */
         asp_update(data, size);
+    #endif
     #else
         (void)size;
-    #endif
     #endif
     }
     lib_event(&lib_event_table[OS_EVENT_SP]);

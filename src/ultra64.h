@@ -1,5 +1,5 @@
-#ifndef _ULTRA64_H_
-#define _ULTRA64_H_
+#ifndef __ULTRA64_H__
+#define __ULTRA64_H__
 
 #define OS_PRIORITY_IDLE        0
 

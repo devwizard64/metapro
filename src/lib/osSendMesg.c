@@ -17,15 +17,15 @@ void lib_osSendMesg(void)
         lib_thread->ready = false;
         thread_yield(THREAD_YIELD_QUEUE);
     }
-    thread = __read_u32(MQ_RECV);
+    thread = __read_s32(MQ_RECV);
     count  = __read_s32(MQ_COUNT);
     index  = __read_s32(MQ_INDEX);
     len    = __read_s32(MQ_LEN);
-    msg    = __read_u32(MQ_MSG);
-    __write_u32(MQ_RECV, 0);
+    msg    = __read_s32(MQ_MSG);
+    __write_u32(MQ_RECV, NULLPTR);
     __write_u32(msg + 4*((index+count) % len), a1.i[IX]);
     __write_u32(MQ_COUNT, count+1);
-    if (thread != 0)
+    if (thread != NULLPTR)
     {
         thread_find(thread)->ready = true;
         if (lib_thread != NULL)

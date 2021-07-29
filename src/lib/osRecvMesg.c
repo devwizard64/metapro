@@ -17,19 +17,19 @@ void lib_osRecvMesg(void)
         lib_thread->ready = false;
         thread_yield(THREAD_YIELD_QUEUE);
     }
-    thread = __read_u32(MQ_SEND);
+    thread = __read_s32(MQ_SEND);
     count  = __read_s32(MQ_COUNT);
     index  = __read_s32(MQ_INDEX);
     len    = __read_s32(MQ_LEN);
-    msg    = __read_u32(MQ_MSG);
-    __write_u32(MQ_SEND, 0);
-    if (a1.i[IX] != 0)
+    msg    = __read_s32(MQ_MSG);
+    __write_u32(MQ_SEND, NULLPTR);
+    if (a1.i[IX] != NULLPTR)
     {
-        __write_u32(a1.i[IX], __read_u32(msg + 4*index));
+        __write_u32(a1.i[IX], __read_s32(msg + 4*index));
     }
     __write_u32(MQ_INDEX, (index+1) % len);
     __write_u32(MQ_COUNT, count-1);
-    if (thread != 0)
+    if (thread != NULLPTR)
     {
         thread_find(thread)->ready = true;
         if (lib_thread != NULL)

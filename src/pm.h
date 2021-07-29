@@ -1,5 +1,5 @@
-#ifndef _PM_H_
-#define _PM_H_
+#ifndef __PM_H__
+#define __PM_H__
 
 #include "types.h"
 

@@ -1,5 +1,5 @@
-#ifndef _ABI_H_
-#define _ABI_H_
+#ifndef __ABI_H__
+#define __ABI_H__
 
 #define A_SPNOOP        0x00
 #define A_ADPCM         0x01

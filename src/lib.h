@@ -1,5 +1,5 @@
-#ifndef _LIB_H_
-#define _LIB_H_
+#ifndef __LIB_H__
+#define __LIB_H__
 
 #include "types.h"
 #include "app.h"
@@ -20,6 +20,7 @@ extern u16 lib_video_h;
 extern f32 lib_viewport_l;
 extern f32 lib_viewport_r;
 
+extern void mtx_read(f32 *, const s16 *);
 extern void mtx_write(s16 *, const f32 *);
 extern void mtxf_cat(f32[4][4], f32[4][4], f32[4][4]);
 extern void mtxf_identity(f32[4][4]);
@@ -192,7 +193,80 @@ extern void lib_osAiSetNextBuffer(void);
 #endif
 #endif
 
+#ifdef APP_UNKT
+#ifdef APP_E0
+extern void lib_osCreateThread(void);
+extern void lib_osInitialize(void);
+extern void lib_osStartThread(void);
+extern void lib_osCreateViManager(void);
+extern void lib_osViSetMode(void);
+extern void lib_osViBlack(void);
+extern void lib_osViSetSpecialFeatures(void);
+extern void lib_osCreatePiManager(void);
+extern void lib_osSetThreadPri(void);
+extern void lib_osCreateMesgQueue(void);
+extern void lib_osViSetEvent(void);
+extern void lib_osSetEventMesg(void);
+extern void lib_osSpTaskLoad(void);
+extern void lib_osSpTaskStartGo(void);
+extern void lib_osContInit(void);
+extern void lib_osContStartReadData(void);
+extern void lib_osContGetReadData(void);
+extern void lib_osRecvMesg(void);
+extern void lib_osWritebackDCacheAll(void);
+extern void lib_osSendMesg(void);
+extern void lib_osViSwapBuffer(void);
+extern void lib_bzero(void);
+extern void lib_osInvalICache(void);
+extern void lib_osInvalDCache(void);
+extern void lib_osPiStartDma(void);
+extern void lib_osSpTaskYield(void);
+extern void lib_osSpTaskYielded(void);
+extern void lib_osGetTime(void);
+extern void lib___ull_rem(void);
+extern void lib___ull_div(void);
+extern void lib___ll_div(void);
+extern void lib___ll_mul(void);
+extern void lib___osGetCurrFaultedThread(void);
+extern void lib_sqrtf(void);
+extern void lib_guOrtho(void);
+extern void lib_osSetTime(void);
+extern void lib_osEepromProbe(void);
+extern void lib_osPfsIsPlug(void);
+extern void lib_osPfsInitPak(void);
+extern void lib_osPfsNumFiles(void);
+extern void lib_osPfsFileState(void);
+extern void lib_osPfsFreeBlocks(void);
+extern void lib_guRotate(void);
+extern void lib_guScale(void);
+extern void lib_guPerspective(void);
+extern void lib_guLookAtF(void);
+extern void lib_guLookAt(void);
+extern void lib_guTranslate(void);
+extern void lib_osSyncPrintf(void);
+extern void lib_guMtxCatL(void);
+extern void lib_osPfsFindFile(void);
+extern void lib_osPfsDeleteFile(void);
+extern void lib_osEepromLongWrite(void);
+extern void lib_osEepromLongRead(void);
+extern void lib_osPfsReadWriteFile(void);
+extern void lib_osPfsAllocateFile(void);
+extern void lib_osAiSetFrequency(void);
+extern void lib_osAiGetLength(void);
+extern void lib_osAiSetNextBuffer(void);
+extern void lib_osGetCount(void);
+extern void lib_osWritebackDCache(void);
+extern void lib_bcopy(void);
+extern void lib_osVirtualToPhysical(void);
+extern void lib_osSetTimer(void);
+extern void lib_sinf(void);
+extern void lib_cosf(void);
+extern void lib_guMtxCatF(void);
+#endif
+#endif
+
 #ifdef APP_UNK4
+#ifdef APP_E0
 extern void lib_osSendMesg(void);
 extern void lib_osStopThread(void);
 extern void lib_osRecvMesg(void);
@@ -268,6 +342,7 @@ extern void lib_osEepromRead(void);
 extern void lib_osViGetCurrentFramebuffer(void);
 /* ext */
 extern void lib_osAiGetLength(void);
+#endif
 #endif
 
 #endif /* __ASSEMBLER__ */

@@ -155,7 +155,7 @@ static ASP *const asp_table[] =
 #define asp_wet_gain    0x037E
 #define asp_loop        0x0370
 */
-#if defined(ASP_MAIN1) || defined(ASP_MAIN2)
+#ifdef ASP_MAIN
 #define asp_adpcm       0x04C0
 #define asp_sample      0x05C0
 #endif
@@ -172,7 +172,7 @@ static ASP *const asp_table[] =
 #endif
 
 static u8   asp_dmem[0x1000];
-#if defined(ASP_MAIN1) || defined(ASP_MAIN2)
+#ifdef ASP_MAIN
 static u8  *asp_addr_table[0x10];
 static u16  asp_dmemin;
 static u16  asp_dmemout;
@@ -180,7 +180,7 @@ static u16  asp_count;
 #endif
 static s16  asp_vol_l;      /* ? */
 static s16  asp_vol_r;      /* ? */
-#if defined(ASP_MAIN1) || defined(ASP_MAIN2)
+#ifdef ASP_MAIN
 static u16  asp_aux_0;
 static u16  asp_aux_1;
 static u16  asp_aux_2;
@@ -195,7 +195,7 @@ static s16 *asp_loop;       /* ? */
 
 static void *asp_addr(PTR addr)
 {
-#if defined(ASP_MAIN1) || defined(ASP_MAIN2)
+#ifdef ASP_MAIN
     return &asp_addr_table[addr >> 24 & 0x0F][addr >> 0 & 0x00FFFFFF];
 #endif
 #ifdef ASP_NAUDIO

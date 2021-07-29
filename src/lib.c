@@ -64,7 +64,7 @@ struct thread
     PTR     entry;
     s32     id;
     s32     pri;
-    REG    reg[lenof(cpu_reg)];
+    REG     reg[lenof(cpu_reg)];
 };
 
 struct os_event
@@ -248,6 +248,25 @@ static struct os_pad  lib_pad        = {0};
 #endif
 
 #ifndef APP_SEQ
+void mtx_read(f32 *dst, const s16 *src)
+{
+    uint cnt = 4*4;
+    do
+    {
+    #ifdef _EB
+        dst[0x00] = (1.0F/0x10000) * (s32)(src[0x00] << 16 | (u16)src[0x10]);
+        dst[0x01] = (1.0F/0x10000) * (s32)(src[0x01] << 16 | (u16)src[0x11]);
+    #else
+        dst[0x00] = (1.0F/0x10000) * (s32)(src[0x01] << 16 | (u16)src[0x11]);
+        dst[0x01] = (1.0F/0x10000) * (s32)(src[0x00] << 16 | (u16)src[0x10]);
+    #endif
+        dst += 0x02;
+        src += 0x02;
+        cnt -= 0x02;
+    }
+    while (cnt > 0);
+}
+
 void mtx_write(s16 *dst, const f32 *src)
 {
     uint cnt = 4*4;
@@ -360,7 +379,64 @@ static void mtxf_perspective(f32 mf[4][4], f32 fovy, f32 aspect, f32 n, f32 f)
 #endif
     mf[3][3] = 0;
 }
+#endif
 
+#ifdef APP_UNKT
+static void mtxf_lookat(
+    f32 mf[4][4],
+    f32 ex, f32 ey, f32 ez,
+    f32 ax, f32 ay, f32 az,
+    f32 ux, f32 uy, f32 uz
+)
+{
+    f32 d;
+    f32 lx;
+    f32 ly;
+    f32 lz;
+    f32 rx;
+    f32 ry;
+    f32 rz;
+    lx = ax - ex;
+    ly = ay - ey;
+    lz = az - ez;
+    d = -1 / sqrtf(lx*lx + ly*ly + lz*lz);
+    lx *= d;
+    ly *= d;
+    lz *= d;
+    rx = uy*lz - uz*ly;
+    ry = uz*lx - ux*lz;
+    rz = ux*ly - uy*lx;
+    d = 1 / sqrtf (rx*rx + ry*ry + rz*rz);
+    rx *= d;
+    ry *= d;
+    rz *= d;
+    ux = ly*rz - lz*ry;
+    uy = lz*rx - lx*rz;
+    uz = lx*ry - ly*rx;
+    d = 1 / sqrtf (ux*ux + uy*uy + uz*uz);
+    ux *= d;
+    uy *= d;
+    uz *= d;
+    mf[0][0] = rx;
+    mf[0][1] = ux;
+    mf[0][2] = lx;
+    mf[0][3] = 0;
+    mf[1][0] = ry;
+    mf[1][1] = uy;
+    mf[1][2] = ly;
+    mf[1][3] = 0;
+    mf[2][0] = rz;
+    mf[2][1] = uz;
+    mf[2][2] = lz;
+    mf[2][3] = 0;
+    mf[3][0] = -(ex*rx + ey*ry + ez*rz);
+    mf[3][1] = -(ex*ux + ey*uy + ez*uz);
+    mf[3][2] = -(ex*lx + ey*ly + ez*lz);
+    mf[3][3] = 1;
+}
+#endif
+
+#ifndef APP_UNK4
 static void mtxf_translate(f32 mf[4][4], f32 x, f32 y, f32 z)
 {
     mf[0][0] = 1;
@@ -528,7 +604,7 @@ void thread_yield(int arg)
 static struct thread *thread_find(PTR addr)
 {
     struct thread *thread;
-    if (addr == 0)
+    if (addr == NULLPTR)
     {
         thread = lib_thread;
     }
@@ -629,7 +705,7 @@ void thread_fault(void)
 
 static void lib_event(struct os_event *event)
 {
-    if (event->mq != 0)
+    if (event->mq != NULLPTR)
     {
         a0.i[IX] = event->mq;
         a1.i[IX] = event->msg;
@@ -1494,8 +1570,7 @@ LIB_SV(osUnmapTLBAll)
 #include "lib/osRecvMesg.c"
 LIB_SV(osSpTaskLoad)
 #include "lib/osSpTaskStartGo.c"
-/* see osSpTaskStartGo */
-LIB_SV(osSpTaskYield)
+LIB_SV(osSpTaskYield) /* see osSpTaskStartGo */
 #include "lib/osSendMesg.c"
 LIB_S0(osSpTaskYielded)
 #include "lib/osStartThread.c"
@@ -1576,8 +1651,7 @@ LIB_SV(80304B38)
 LIB_SV(80304F80)
 LIB_SV(osSpTaskLoad)
 #include "lib/osSpTaskStartGo.c"
-/* see osSpTaskStartGo */
-LIB_SV(osSpTaskYield)
+LIB_SV(osSpTaskYield) /* see osSpTaskStartGo */
 LIB_S0(osSpTaskYielded)
 #include "lib/osCreateThread.c"
 #include "lib/osSetThreadPri.c"
@@ -1699,8 +1773,7 @@ LIB_SV(8027E5CC)
 #include "lib/osRecvMesg.c"
 LIB_SV(osSpTaskLoad)
 #include "lib/osSpTaskStartGo.c"
-/* see osSpTaskStartGo */
-LIB_SV(osSpTaskYield)
+LIB_SV(osSpTaskYield) /* see osSpTaskStartGo */
 #include "lib/osSendMesg.c"
 LIB_S0(osSpTaskYielded)
 #include "lib/osStartThread.c"
@@ -1723,7 +1796,80 @@ LIB_SV(osWritebackDCache)
 #endif
 #endif
 
+#ifdef APP_UNKT
+#ifdef APP_E0
+#include "lib/osCreateThread.c"
+#include "lib/osInitialize.c"
+#include "lib/osStartThread.c"
+LIB_SV(osCreateViManager)
+LIB_SV(osViSetMode)
+LIB_SV(osViBlack)
+LIB_SV(osViSetSpecialFeatures)
+LIB_SV(osCreatePiManager)
+#include "lib/osSetThreadPri.c"
+#include "lib/osCreateMesgQueue.c"
+#include "lib/osViSetEvent.c"
+#include "lib/osSetEventMesg.c"
+LIB_SV(osSpTaskLoad)
+#include "lib/osSpTaskStartGo.c"
+#include "lib/osContInit.c"
+#include "lib/osContStartReadData.c"
+#include "lib/osContGetReadData.c"
+#include "lib/osRecvMesg.c"
+LIB_SV(osWritebackDCacheAll)
+#include "lib/osSendMesg.c"
+LIB_SV(osViSwapBuffer)
+#include "lib/bzero.c"
+LIB_SV(osInvalICache)
+LIB_SV(osInvalDCache)
+#include "lib/osPiStartDma.c"
+LIB_SV(osSpTaskYield) /* see osSpTaskStartGo */
+LIB_S0(osSpTaskYielded)
+#include "lib/osGetTime.c"
+LIB_SE(__ull_rem)
+LIB_SE(__ull_div)
+LIB_SE(__ll_div)
+LIB_SE(__ll_mul)
+LIB_SE(__osGetCurrFaultedThread)
+#include "lib/sqrtf.c"
+#include "lib/guOrtho.c"
+LIB_SV(osSetTime)
+#include "lib/osEepromProbe.c"
+#include "lib/osPfsIsPlug.c"
+LIB_SE(osPfsInitPak)
+LIB_SE(osPfsNumFiles)
+LIB_SE(osPfsFileState)
+LIB_SE(osPfsFreeBlocks)
+#include "lib/guRotate.c"
+#include "lib/guScale.c"
+#include "lib/guPerspective.c"
+#include "lib/guLookAtF.c"
+#include "lib/guLookAt.c"
+#include "lib/guTranslate.c"
+LIB_SE(osSyncPrintf)
+#include "lib/guMtxCatL.c"
+LIB_SE(osPfsFindFile)
+LIB_SE(osPfsDeleteFile)
+#include "lib/osEepromLongWrite.c"
+#include "lib/osEepromLongRead.c"
+LIB_SE(osPfsReadWriteFile)
+LIB_SE(osPfsAllocateFile)
+#include "lib/osAiSetFrequency.c"
+#include "lib/osAiGetLength.c"
+#include "lib/osAiSetNextBuffer.c"
+LIB_S0(osGetCount)
+LIB_SV(osWritebackDCache)
+#include "lib/bcopy.c"
+#include "lib/osVirtualToPhysical.c"
+LIB_SE(osSetTimer)
+#include "lib/sinf.c"
+#include "lib/cosf.c"
+#include "lib/guMtxCatF.c"
+#endif
+#endif
+
 #ifdef APP_UNK4
+#ifdef APP_E0
 #include "lib/osSendMesg.c"
 #include "lib/osStopThread.c"
 #include "lib/osRecvMesg.c"
@@ -1749,8 +1895,7 @@ LIB_SV(osWritebackDCache)
 LIB_S0(osViGetNextFramebuffer)
 LIB_S0(osEPiLinkHandle)
 LIB_SV(osViBlack)
-/* see osSpTaskStartGo */
-LIB_SE(osSpTaskYield)
+LIB_SE(osSpTaskYield) /* see osSpTaskStartGo */
 LIB_SE(80030794)
 #include "lib/guMtxIdentF.c"
 LIB_SV(osViSetMode)
@@ -1800,4 +1945,5 @@ LIB_SE(osEepromRead)
 LIB_S0(osViGetCurrentFramebuffer)
 /* ext */
 #include "lib/osAiGetLength.c"
+#endif
 #endif

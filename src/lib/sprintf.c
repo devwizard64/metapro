@@ -12,7 +12,7 @@
         _c = __read_u8(_src++); \
         *_dst++ = _c;           \
     }                           \
-    while (_c != 0x00);         \
+    while (_c != 0);            \
 }
 #define __write_str(dst, src)   \
 {                               \
@@ -24,7 +24,7 @@
         _c = *_src++;           \
         __write_u8(_dst++, _c); \
     }                           \
-    while (_c != 0x00);         \
+    while (_c != 0);            \
 }
 #endif
 
