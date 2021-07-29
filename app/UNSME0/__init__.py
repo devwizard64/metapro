@@ -23,8 +23,9 @@ header = (
     "#define GSP_F3D\n"
     "#define GSP_F3D_20D\n"
     "#define GSP_FOG\n"
+    "#define ASP_MAIN\n"
     "#define ASP_MAIN1\n"
-    "#ifdef _GCN\n"
+    "#ifdef GEKKO\n"
     "#define APP_BORDER 8\n"
     "#else\n"
     "#define APP_BORDER 0\n"
@@ -253,6 +254,6 @@ dcall = [
 ]
 
 cache = [
-    [0x004EC000, 0x00579C20], # motion_player
-    [0x00593560, 0x007B0860], # audio_sample
+    [0x004EC000, 0x00579C20], # anime
+    [0x00593560, 0x007B0860], # audio
 ]

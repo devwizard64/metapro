@@ -20,7 +20,9 @@ reg   = (
 )
 
 header = (
+    "#define GSP_F3DEX\n"
     "#define GSP_F3DEX2\n"
+    "#define ASP_MAIN\n"
     "#define ASP_MAIN2\n"
     "\n"
     "#define __osExceptionPreamble   0x803FFFF0\n"

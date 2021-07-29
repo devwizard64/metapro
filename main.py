@@ -477,6 +477,22 @@ def op_b():
         lines.append((addr, ""))
     return lines, False
 
+def op_bal():
+    global addr
+    a = addr
+    if inst_rs != 0x00:
+        raise RuntimeError("bgezal $%s" % gpr[inst_rs])
+    bdst = inst_bdst
+    jtbl.add(bdst)
+    addr += 4
+    next, end = op_process()
+    l = next[0][1] if len(next) > 0 else ""
+    if bdst in app.lib:
+        line = "    lib_%s();\n" % app.lib[bdst]
+    else:
+        line = "    app_%08X();\n" % bdst
+    return [(a, l), (addr, line)], False
+
 def op_arithi():
     global reg_flag
     # global stack_max
@@ -785,7 +801,7 @@ op_regimm_table = [
     op_null,    # 0x0E tnei
     op_null,    # 0x0F
     op_null,    # 0x10 bltzal
-    op_null,    # 0x11 bgezal
+    op_bal,     # 0x11 bgezal
     op_null,    # 0x12 bltzall
     op_null,    # 0x13 bgezall
     op_null,    # 0x14
@@ -1063,6 +1079,9 @@ def main(argc, argv):
     d_addr = set()
     for src, start, end, dst, pat, xpr, ins in app.segment:
         offs = start - src
+        for addr in pat:
+            patch = B"".join([struct.pack(">I", x) for x in pat[addr]])
+            data = data[:addr-offs] + patch + data[addr-offs + len(patch):]
         addr = start
         while addr < end:
             f = False
@@ -1095,8 +1114,9 @@ def main(argc, argv):
         g_addr |= dst
     g_addr = sorted(g_addr)
     d_addr = sorted(d_addr)
-    app_h += "extern const struct app_call app_call_table[%d];\n" % \
-        len(g_addr)
+    app_h += "extern const struct app_call app_call_table[%d];\n" % (
+        len(g_addr)+1
+    )
     if len(app.dcall) > 0:
         app_h += "extern const PTR app_dcall_table[%d];\n" % len(app.dcall)
     if len(app.cache) > 0:
@@ -1111,10 +1131,13 @@ def main(argc, argv):
         "\n"
         "const struct app_call app_call_table[%d] =\n"
         "{\n"
-    ) % len(g_addr)
+    ) % (len(g_addr)+1)
     for addr in g_addr:
         app_c += "    {0x%08XU, app_%08X},\n" % (addr, addr)
-    app_c += "};\n"
+    app_c += (
+        "    {0},\n"
+        "};\n"
+    )
     if len(app.dcall) > 0:
         app_c += (
             "\n"
@@ -1157,13 +1180,10 @@ def main(argc, argv):
     jtbl = set()
     for src, start, end, dst, pat, xpr, ins in app.segment:
         offs = start - src
-        for addr in pat:
-            patch = B"".join([struct.pack(">I", x) for x in pat[addr]])
-            data = data[:addr-offs] + patch + data[addr-offs + len(patch):]
         app_c = (
             "#include <math.h>\n"
             "\n"
-            "#define _%s_%08X_C_\n"
+            "#define __%s_%08X_C__\n"
             "#include \"types.h\"\n"
             "#include \"app.h\"\n"
             "#include \"cpu.h\"\n"
