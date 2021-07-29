@@ -1,9 +1,16 @@
 static void gsp_g_vtx(u32 w0, u32 w1)
 {
 #ifdef GSP_F3D
+#ifdef GSP_F3DEX
+    uint index = w0 >> 17 & 0x7F;
+    uint count = w0 >> 10 & 0x3F;
+    uint size  = w0 >>  0 & 0x03FF;
+    size++;
+#else
     uint count = w0 >> 20 & 0x0F;
     uint index = w0 >> 16 & 0x0F;
     uint size  = w0 >>  0 & 0xFFFF;
+#endif
 #endif
 #ifdef GSP_F3DEX2
     uint count = w0 >> 12 & 0xFF;
@@ -167,11 +174,10 @@ static void gsp_g_vtx(u32 w0, u32 w1)
         v++;
         vf++;
     }
-#ifdef GSP_F3D
-    while (count-- > 0);
-#endif
-#ifdef GSP_F3DEX2
+#ifdef GSP_F3DEX
     while (--count > 0);
+#else
+    while (count-- > 0);
 #endif
 }
 

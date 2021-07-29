@@ -1,5 +1,5 @@
-#ifndef _GSP_H_
-#define _GSP_H_
+#ifndef __GSP_H__
+#define __GSP_H__
 
 #include "types.h"
 

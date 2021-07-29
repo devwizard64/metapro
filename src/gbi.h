@@ -1,5 +1,5 @@
-#ifndef _GBI_H_
-#define _GBI_H_
+#ifndef __GBI_H__
+#define __GBI_H__
 
 #define G_OFF       0x00
 #define G_ON        0x01
@@ -16,9 +16,19 @@
 #define G_RDPHALF_1             0xB3
 #define G_PERSPNORM             0xB4
 #else
+#ifdef GSP_F3DEX
+#define G_LOAD_UCODE            0xAF
+#define G_BRANCH_Z              0xB0
+#define G_TRI2                  0xB1
+#define G_MODIFYVTX             0xB2
+#else
 #define G_RDPHALF_CONT          0xB2
+#endif
 #define G_RDPHALF_2             0xB3
 #define G_RDPHALF_1             0xB4
+#ifdef GSP_F3DEX
+#define G_QUAD                  0xB5
+#endif
 #endif
 #define G_CLEARGEOMETRYMODE     0xB6
 #define G_SETGEOMETRYMODE       0xB7
@@ -122,10 +132,19 @@
 #define G_ZBUFFER               0x00000001
 #define G_TEXTURE_ENABLE        0x00000002
 #define G_SHADE                 0x00000004
+#ifdef GSP_F3DEX2
+#define G_CULL_SHIFT            9
+#define G_CULL_FRONT            0x00000200
+#define G_CULL_BACK             0x00000400
+#define G_CULL_BOTH             0x00000600
+#define G_SHADING_SMOOTH        0x00200000
+#else
 #define G_SHADING_SMOOTH        0x00000200
+#define G_CULL_SHIFT            12
 #define G_CULL_FRONT            0x00001000
 #define G_CULL_BACK             0x00002000
 #define G_CULL_BOTH             0x00003000
+#endif
 #define G_FOG                   0x00010000
 #define G_LIGHTING              0x00020000
 #define G_TEXTURE_GEN           0x00040000
@@ -315,11 +334,10 @@
 #define G_MW_SEGMENT    0x06
 #define G_MW_FOG        0x08
 #define G_MW_LIGHTCOL   0x0A
-#ifdef GSP_F3D
-#define G_MW_POINTS     0x0C
-#endif
-#ifdef GSP_F3DEX2
+#ifdef GSP_F3DEX
 #define G_MW_FORCEMTX   0x0C
+#else
+#define G_MW_POINTS     0x0C
 #endif
 #ifndef GSP_F3D_20D
 #define G_MW_PERSPNORM  0x0E

@@ -64,7 +64,7 @@ static void gsp_g_mtx(u32 w0, u32 w1)
             }
             mtxf_cat(MM, mf, src);
         }
-    #ifdef GSP_F3DEX2
+    #ifdef APP_UNK4
         mtx_write(gsp_mtx, &MM[0][0]);
     #endif
         gsp_change |= CHANGE_MTXF_MODELVIEW;
