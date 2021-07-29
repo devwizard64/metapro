@@ -1562,7 +1562,10 @@ static void gsp_g_perspnorm(unused u32 w0, unused u32 w1)
 #endif
 #endif
 
+#ifdef GSP_F3DEX
 #include "gsp/g_quad.c"
+#endif
+
 #include "gsp/g_cleargeometrymode.c"
 #include "gsp/g_setgeometrymode.c"
 #include "gsp/g_enddl.c"
