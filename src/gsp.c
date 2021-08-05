@@ -36,11 +36,11 @@
 #include "gbi.h"
 
 #ifdef APP_UNSM
-#define GSP_OUTPUT_LEN  (3*0x1800)
-#define GSP_TEXTURE_LEN 0x100
+#define GDP_OUTPUT_LEN  (3*0x1800)
+#define GDP_TEXTURE_LEN 0x100
 #else
-#define GSP_OUTPUT_LEN  (3*0x4000)
-#define GSP_TEXTURE_LEN 0x200
+#define GDP_OUTPUT_LEN  (3*0x4000)
+#define GDP_TEXTURE_LEN 0x200
 #endif
 
 #ifdef GSP_F3DEX
@@ -285,32 +285,61 @@ struct obj_txtr
 };
 
 typedef void GSP(u32 w0, u32 w1);
-typedef void GSP_TEXTURE_READ(void *buf, const void *addr, uint len);
-typedef void GSP_COMBINE(u8 *col, struct vtxf *vf);
-typedef void GSP_TRIANGLE(u8 *t);
+typedef void GDP_TEXTURE_READ(void *buf, const void *addr, uint len);
+typedef void GDP_TRIANGLE(u8 *t);
+typedef void GDP_COMBINE(u8 *col, struct vtxf *vf);
 
-static GSP_COMBINE *gsp_combine_cc;
-static GSP_COMBINE *gsp_combine_ac;
+static GDP_TRIANGLE *gdp_triangle;
 #ifdef __3DS__
-static GSP_TRIANGLE *gsp_write_triangle;
+static GDP_TRIANGLE *gdp_write_triangle;
 #else
-#define gsp_write_triangle gsp_write_triangle_init
+#define gdp_write_triangle gdp_write_triangle_init
 #endif
-static GSP_TRIANGLE *gsp_triangle;
+static GDP_COMBINE *gdp_combine_cc;
+static GDP_COMBINE *gdp_combine_ac;
 
 #ifndef GSP_LEGACY
-static s16  gsp_output_vtx_buf[3*3*GSP_OUTPUT_LEN];
-static f32  gsp_output_txc_buf[2*3*GSP_OUTPUT_LEN];
-static u8   gsp_output_col_buf[4*3*GSP_OUTPUT_LEN];
-static s16 *gsp_output_vtx;
-static f32 *gsp_output_txc;
-static u8  *gsp_output_col;
-static s16 *gsp_output_v;
-static f32 *gsp_output_t;
-static u8  *gsp_output_c;
-static u32  gsp_output_total;
-static u32  gsp_output_count;
+static s16  gdp_output_vtx_buf[3*3*GDP_OUTPUT_LEN];
+static f32  gdp_output_txc_buf[2*3*GDP_OUTPUT_LEN];
+static u8   gdp_output_col_buf[4*3*GDP_OUTPUT_LEN];
+static s16 *gdp_output_vtx;
+static f32 *gdp_output_txc;
+static u8  *gdp_output_col;
+static s16 *gdp_output_v;
+static f32 *gdp_output_t;
+static u8  *gdp_output_c;
+static u32  gdp_output_total;
+static u32  gdp_output_count;
 #endif
+
+static u8  gdp_env[4];
+static u8  gdp_prim[4];
+#if 0
+static u8  gdp_blend[4];
+#endif
+static u8  gdp_fog[4];
+static u16 gdp_fill;
+
+static s16 gdp_scissor_l;
+static s16 gdp_scissor_t;
+static s16 gdp_scissor_r;
+static s16 gdp_scissor_b;
+
+static void *gsp_texture_buf;
+static void *gsp_texture_addr;
+static u8    gsp_texture_fmt;
+static u16   gsp_texture_len;
+static u8    gsp_texture_flag[2];
+static u8    gsp_texture_shift[2];
+static u16   gsp_texture_size[2];
+static f32   gsp_texture_tscale[2];
+
+static u32 gdp_texrect[4];
+
+static u32 gdp_othermode_l;
+static u32 gdp_othermode_h;
+static u8  gdp_cycle;
+static u8  gdp_rect;
 
 static struct vp     gsp_viewport;
 static struct light  gsp_light_buf[10];
@@ -330,78 +359,40 @@ static f32  MM[4][4];
 static u8  *gsp_addr_table[16];
 static u32 *gsp_dl_stack[10];
 static s8   gsp_dl_index;
-
-static u32 gsp_light_no;
+static u16  gsp_texture_scale[2];
+static u32  gsp_geometry_mode;
 #ifdef GSP_FOG
-static s16 gsp_fog_m;
-static s16 gsp_fog_o;
+static s16  gsp_fog_m;
+static s16  gsp_fog_o;
 #endif
-
-static u32 gsp_geometry_mode;
-static u32 gsp_othermode_l;
-static u32 gsp_othermode_h;
-static u32 gsp_cycle;
-
-#ifdef GSP_F3DEX
-static u32 gsp_rdphalf_1;
-#endif
-
-static s16 gsp_scissor_l;
-static s16 gsp_scissor_t;
-static s16 gsp_scissor_r;
-static s16 gsp_scissor_b;
-
-static u16 gsp_fill;
-static u8  gsp_fog[4];
-#if 0
-static u8  gsp_blend[4];
-#endif
-static u8  gsp_prim[4];
-static u8  gsp_env[4];
-
-static void *gsp_texture_buf;
-static void *gsp_texture_addr;
-static u8    gsp_texture_fmt;
-static u16   gsp_texture_len;
-static u8    gsp_texture_flag[2];
-static u8    gsp_texture_shift[2];
-static u16   gsp_texture_size[2];
-static u16   gsp_texture_vscale[2];
-static f32   gsp_texture_tscale[2];
-
-static bool gsp_texrect_flip;
-static s16  gsp_texrect_xh;
-static s16  gsp_texrect_yh;
-static s16  gsp_texrect_xl;
-static s16  gsp_texrect_yl;
-static f32  gsp_texrect_ul;
-static f32  gsp_texrect_vl;
-static f32  gsp_texrect_dsdx;
-static f32  gsp_texrect_dtdy;
+static u8   gsp_light_no;
+static bool gsp_light_new;
+static bool gsp_lookat;
+static bool gsp_texture_enabled;
 
 #ifdef GSP_F3DEX2
-static u8   gsp_obj_rendermode;
+static u8 gsp_obj_rendermode;
 #endif
 
 #ifdef __3DS__
-static f32 gsp_depth;
+static f32  gsp_depth;
 #endif
-static bool gsp_lookat;
-static bool gsp_light_new;
-static bool gsp_texture_enabled;
-static u8   gsp_rect;
 static u8   gsp_change;
 static bool gsp_cache_flag;
 
 #ifdef GEKKO
 #define GL_NEAREST 0
 #define GL_LINEAR  1
-static u8     gsp_texture_filter;
+static u8     gdp_texture_filter;
 #else
-static struct texture gsp_texture_table[GSP_TEXTURE_LEN];
-static GLuint gsp_texture_name_table[GSP_TEXTURE_LEN];
-static u32    gsp_texture;
-static GLuint gsp_texture_filter;
+static struct texture gdp_texture_table[GDP_TEXTURE_LEN];
+static GLuint gdp_texture_name_table[GDP_TEXTURE_LEN];
+static u32    gdp_texture;
+static GLuint gdp_texture_filter;
+#endif
+
+#if 0
+static const char *const str_im_fmt[] = {"RGBA", "YUV", "CI", "IA", "I"};
 #endif
 
 static void *gsp_addr(PTR addr)
@@ -409,7 +400,7 @@ static void *gsp_addr(PTR addr)
     return &gsp_addr_table[addr >> 24 & 0x0F][addr >>  0 & 0x00FFFFFF];
 }
 
-static void gsp_texture_read_rgba16(void *buf, const void *addr, uint len)
+static void gdp_texture_read_rgba16(void *buf, const void *addr, uint len)
 {
 #ifdef __3DS__
     __WORDSWAP(buf, addr, len);
@@ -435,25 +426,25 @@ static void gsp_texture_read_rgba16(void *buf, const void *addr, uint len)
 }
 
 #if 0
-static void gsp_texture_read_rgba32(void *buf, const void *addr, uint len)
+static void gdp_texture_read_rgba32(void *buf, const void *addr, uint len)
 {
     __BYTESWAP(buf, addr, len);
 }
 #else
-#define gsp_texture_read_rgba32 NULL
+#define gdp_texture_read_rgba32 NULL
 #endif
 
-#define gsp_texture_read_yuv16  NULL
+#define gdp_texture_read_yuv16  NULL
 
 #ifdef APP_UNSM
-#define gsp_texture_read_ci4    NULL
-#define gsp_texture_read_ci8    NULL
+#define gdp_texture_read_ci4    NULL
+#define gdp_texture_read_ci8    NULL
 #else
-#define gsp_texture_read_ci4    NULL
-#define gsp_texture_read_ci8    NULL
+#define gdp_texture_read_ci4    NULL
+#define gdp_texture_read_ci8    NULL
 #endif
 
-static void gsp_texture_read_ia4(void *buf, const void *addr, uint len)
+static void gdp_texture_read_ia4(void *buf, const void *addr, uint len)
 {
     u8       *dst = buf;
     const u8 *src = addr;
@@ -494,7 +485,7 @@ static void gsp_texture_read_ia4(void *buf, const void *addr, uint len)
     while (len > 0);
 }
 
-static void gsp_texture_read_ia8(void *buf, const void *addr, uint len)
+static void gdp_texture_read_ia8(void *buf, const void *addr, uint len)
 {
 #ifdef __3DS__
     __BYTESWAP(buf, addr, len);
@@ -520,7 +511,7 @@ static void gsp_texture_read_ia8(void *buf, const void *addr, uint len)
 }
 
 #ifdef APP_UNSM
-static void gsp_texture_read_ia8_special(void *buf, const void *addr, uint len)
+static void gdp_texture_read_ia8_special(void *buf, const void *addr, uint len)
 {
     u8       *dst = buf;
     const u8 *src = addr;
@@ -550,7 +541,7 @@ static void gsp_texture_read_ia8_special(void *buf, const void *addr, uint len)
 }
 #endif
 
-static void gsp_texture_read_ia16(void *buf, const void *addr, uint len)
+static void gdp_texture_read_ia16(void *buf, const void *addr, uint len)
 {
 #ifdef __3DS__
     __WORDSWAP(buf, addr, len);
@@ -572,7 +563,7 @@ static void gsp_texture_read_ia16(void *buf, const void *addr, uint len)
 }
 
 #ifndef APP_UNSM
-static void gsp_texture_read_i4(void *buf, const void *addr, uint len)
+static void gdp_texture_read_i4(void *buf, const void *addr, uint len)
 {
     u8       *dst = buf;
     const u8 *src = addr;
@@ -605,7 +596,7 @@ static void gsp_texture_read_i4(void *buf, const void *addr, uint len)
     while (len > 0);
 }
 
-static void gsp_texture_read_i8(void *buf, const void *addr, uint len)
+static void gdp_texture_read_i8(void *buf, const void *addr, uint len)
 {
 #ifdef __3DS__
     __BYTESWAP(buf, addr, len);
@@ -626,33 +617,33 @@ static void gsp_texture_read_i8(void *buf, const void *addr, uint len)
 #endif
 }
 #else
-#define gsp_texture_read_i4     NULL
-#define gsp_texture_read_i8     NULL
+#define gdp_texture_read_i4     NULL
+#define gdp_texture_read_i8     NULL
 #endif
 
 #ifdef GEKKO
 unused
 #endif
-static GSP_TEXTURE_READ *gsp_texture_read_table[] =
+static GDP_TEXTURE_READ *gdp_texture_read_table[] =
 {
     /* RGBA  4 */ NULL,
     /* RGBA  8 */ NULL,
-    /* RGBA 16 */ gsp_texture_read_rgba16,
-    /* RGBA 32 */ gsp_texture_read_rgba32,
+    /* RGBA 16 */ gdp_texture_read_rgba16,
+    /* RGBA 32 */ gdp_texture_read_rgba32,
     /* YUV   4 */ NULL,
     /* YUV   8 */ NULL,
-    /* YUV  16 */ gsp_texture_read_yuv16,
+    /* YUV  16 */ gdp_texture_read_yuv16,
     /* YUV  32 */ NULL,
-    /* CI    4 */ gsp_texture_read_ci4,
-    /* CI    8 */ gsp_texture_read_ci8,
+    /* CI    4 */ gdp_texture_read_ci4,
+    /* CI    8 */ gdp_texture_read_ci8,
     /* CI   16 */ NULL,
     /* CI   32 */ NULL,
-    /* IA    4 */ gsp_texture_read_ia4,
-    /* IA    8 */ gsp_texture_read_ia8,
-    /* IA   16 */ gsp_texture_read_ia16,
+    /* IA    4 */ gdp_texture_read_ia4,
+    /* IA    8 */ gdp_texture_read_ia8,
+    /* IA   16 */ gdp_texture_read_ia16,
     /* IA   32 */ NULL,
-    /* I     4 */ gsp_texture_read_i4,
-    /* I     8 */ gsp_texture_read_i8,
+    /* I     4 */ gdp_texture_read_i4,
+    /* I     8 */ gdp_texture_read_i8,
     /* I    16 */ NULL,
     /* I    32 */ NULL,
 };
@@ -717,7 +708,7 @@ static void gsp_flush_viewport(void)
     int r;
     int t;
     int b;
-    if (gsp_rect == 0)
+    if (gdp_rect == 0)
     {
         l = gsp_viewport.x - gsp_viewport.w;
         r = gsp_viewport.x + gsp_viewport.w;
@@ -752,7 +743,7 @@ static void gsp_flush_viewport(void)
 
 static void gsp_flush_cull(void)
 {
-    if (gsp_rect == 0)
+    if (gdp_rect == 0)
     {
     #ifdef GEKKO
         /* GX_SetCullMode(gsp_geometry_mode >> G_CULL_SHIFT & 0x03); */
@@ -799,7 +790,7 @@ static void gsp_flush_cull(void)
 static void gsp_flush_rendermode(void)
 {
     u32 othermode_l =
-        gsp_cycle ? G_RM_TEX_EDGE | G_RM_TEX_EDGE2 : gsp_othermode_l;
+        gdp_cycle ? G_RM_TEX_EDGE | G_RM_TEX_EDGE2 : gdp_othermode_l;
 #ifdef GEKKO
     GX_SetZMode(EN_ZR, GX_LEQUAL, EN_ZW);
     GX_SetBlendMode(
@@ -854,10 +845,10 @@ static void gsp_flush_rendermode(void)
 
 static void gsp_flush_scissor(void)
 {
-    int l = gsp_scissor_l;
-    int r = gsp_scissor_r;
-    int t = gsp_scissor_t;
-    int b = gsp_scissor_b;
+    int l = gdp_scissor_l;
+    int r = gdp_scissor_r;
+    int t = gdp_scissor_t;
+    int b = gdp_scissor_b;
 #ifdef GEKKO
     GX_SetScissor(
         (  l) * lib_video_w/1280,
@@ -875,7 +866,7 @@ static void gsp_flush_scissor(void)
 #endif
 }
 
-#define EN_TX ((gsp_rect == 0 && gsp_texture_enabled) || gsp_rect == 1)
+#define EN_TX ((gdp_rect == 0 && gsp_texture_enabled) || gdp_rect == 1)
 static void gsp_flush_texture_enabled(void)
 {
 #ifdef GEKKO
@@ -895,7 +886,7 @@ static void gsp_flush_texture_enabled(void)
 
 #ifdef GEKKO
 #else
-static const GLuint gsp_texture_flag_table[] =
+static const GLuint gdp_texture_flag_table[] =
 {
     /* 0x00 G_TX_NOMIRROR | G_TX_WRAP  */ GL_REPEAT,
     /* 0x01 G_TX_MIRROR   | G_TX_WRAP  */ GL_MIRRORED_REPEAT,
@@ -903,7 +894,7 @@ static const GLuint gsp_texture_flag_table[] =
     /* 0x03 G_TX_MIRROR   | G_TX_CLAMP */ GL_CLAMP_TO_EDGE,
 };
 #ifdef __3DS__
-static const GLint gsp_texture_fmt_table[] =
+static const GLint gdp_texture_fmt_table[] =
 {
     /* RGBA  4 */ 0,
     /* RGBA  8 */ 0,
@@ -935,33 +926,33 @@ static void gsp_flush_texture(void)
     /* todo: texture */
 #else
     void  *addr   = gsp_texture_addr;
-    GLuint filter = gsp_texture_filter;
+    GLuint filter = gdp_texture_filter;
     uint i;
-    for (i = 0; i < gsp_texture; i++)
+    for (i = 0; i < gdp_texture; i++)
     {
-        struct texture *texture = &gsp_texture_table[i];
-        GLuint *name = &gsp_texture_name_table[i];
+        struct texture *texture = &gdp_texture_table[i];
+        GLuint *name = &gdp_texture_name_table[i];
         if (texture->addr == addr && texture->filter == filter)
         {
             glBindTexture(GL_TEXTURE_2D, *name);
             return;
         }
     }
-    if (gsp_texture < GSP_TEXTURE_LEN)
+    if (gdp_texture < GDP_TEXTURE_LEN)
     {
-        struct texture *texture = &gsp_texture_table[gsp_texture];
-        GLuint *name = &gsp_texture_name_table[i];
-        GSP_TEXTURE_READ *texture_read;
+        struct texture *texture = &gdp_texture_table[gdp_texture];
+        GLuint *name = &gdp_texture_name_table[i];
+        GDP_TEXTURE_READ *texture_read;
         texture->addr   = addr;
         texture->filter = filter;
         glFlush();
         glGenTextures(1, name);
         glBindTexture(GL_TEXTURE_2D, *name);
-        texture_read = gsp_texture_read_table[gsp_texture_fmt];
+        texture_read = gdp_texture_read_table[gsp_texture_fmt];
         if (texture_read != NULL)
         {
-            GLint fs = gsp_texture_flag_table[gsp_texture_flag[0]];
-            GLint ft = gsp_texture_flag_table[gsp_texture_flag[1]];
+            GLint fs = gdp_texture_flag_table[gsp_texture_flag[0]];
+            GLint ft = gdp_texture_flag_table[gsp_texture_flag[1]];
             texture_read(gsp_texture_buf, addr, gsp_texture_len);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
             glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
@@ -970,21 +961,21 @@ static void gsp_flush_texture(void)
             glTexImage2D(
                 GL_TEXTURE_2D, 0,
             #ifdef __3DS__
-                gsp_texture_fmt_table[gsp_texture_fmt],
+                gdp_texture_fmt_table[gsp_texture_fmt],
             #else
                 GL_RGBA8,
             #endif
                 gsp_texture_size[0], gsp_texture_size[1],
                 0, GL_RGBA, GL_UNSIGNED_BYTE, gsp_texture_buf
             );
-            gsp_texture++;
+            gdp_texture++;
         }
         else
         {
         #if 0
             wdebug(
-                "unknown texture fmt %02X / %db\n",
-                gsp_texture_fmt >> 2, 4 << (gsp_texture_fmt & 0x03)
+                "unknown texture fmt G_IM_FMT_%s, G_IM_SIZ_%db\n",
+                str_im_fmt[gsp_texture_fmt >> 2], 4 << (gsp_texture_fmt & 0x03)
             );
         #endif
         }
@@ -999,15 +990,15 @@ static void gsp_flush_texture(void)
 static void gsp_flush_triangles(void)
 {
 #ifndef GSP_LEGACY
-    if (gsp_output_count > 0)
+    if (gdp_output_count > 0)
     {
     #ifdef GEKKO
         uint i;
-        GX_SetArray(GX_VA_POS,  gsp_output_vtx, sizeof(s16)*3);
-        GX_SetArray(GX_VA_TEX0, gsp_output_txc, sizeof(f32)*2);
-        GX_SetArray(GX_VA_CLR0, gsp_output_col, sizeof(u8)*4);
-        GX_Begin(GX_TRIANGLES, GX_VTXFMT0, gsp_output_count);
-        for (i = 0; i < gsp_output_count; i++)
+        GX_SetArray(GX_VA_POS,  gdp_output_vtx, sizeof(s16)*3);
+        GX_SetArray(GX_VA_TEX0, gdp_output_txc, sizeof(f32)*2);
+        GX_SetArray(GX_VA_CLR0, gdp_output_col, sizeof(u8)*4);
+        GX_Begin(GX_TRIANGLES, GX_VTXFMT0, gdp_output_count);
+        for (i = 0; i < gdp_output_count; i++)
         {
             GX_Position1x16(i);
             GX_Color1x16(i);
@@ -1015,15 +1006,15 @@ static void gsp_flush_triangles(void)
         }
         GX_End();
     #else
-        glVertexPointer(3, GL_SHORT, 0, gsp_output_vtx);
-        glTexCoordPointer(2, GL_FLOAT, 0, gsp_output_txc);
-        glColorPointer(4, GL_UNSIGNED_BYTE, 0, gsp_output_col);
-        glDrawArrays(GL_TRIANGLES, 0, gsp_output_count);
+        glVertexPointer(3, GL_SHORT, 0, gdp_output_vtx);
+        glTexCoordPointer(2, GL_FLOAT, 0, gdp_output_txc);
+        glColorPointer(4, GL_UNSIGNED_BYTE, 0, gdp_output_col);
+        glDrawArrays(GL_TRIANGLES, 0, gdp_output_count);
     #endif
-        gsp_output_vtx = gsp_output_v;
-        gsp_output_txc = gsp_output_t;
-        gsp_output_col = gsp_output_c;
-        gsp_output_count = 0;
+        gdp_output_vtx = gdp_output_v;
+        gdp_output_txc = gdp_output_t;
+        gdp_output_col = gdp_output_c;
+        gdp_output_count = 0;
     }
 #endif
 }
@@ -1042,216 +1033,7 @@ static void gsp_flush(void)
     gsp_change = 0;
 }
 
-static void gsp_combine_cc_0(u8 *col, unused struct vtxf *vf)
-{
-    col[0] = 0x00;
-    col[1] = 0x00;
-    col[2] = 0x00;
-}
-
-static void gsp_combine_cc_1(u8 *col, unused struct vtxf *vf)
-{
-    col[0] = 0xFF;
-    col[1] = 0xFF;
-    col[2] = 0xFF;
-}
-
-static void gsp_combine_cc_shade(u8 *col, struct vtxf *vf)
-{
-    col[0] = vf->shade[0];
-    col[1] = vf->shade[1];
-    col[2] = vf->shade[2];
-}
-
-static void gsp_combine_cc_prim(u8 *col, unused struct vtxf *vf)
-{
-    col[0] = gsp_prim[0];
-    col[1] = gsp_prim[1];
-    col[2] = gsp_prim[2];
-}
-
-static void gsp_combine_cc_env(u8 *col, unused struct vtxf *vf)
-{
-    col[0] = gsp_env[0];
-    col[1] = gsp_env[1];
-    col[2] = gsp_env[2];
-}
-
-static void gsp_combine_cc_shade_env(u8 *col, struct vtxf *vf)
-{
-    col[0] = vf->shade[0] * gsp_env[0] / 0x100;
-    col[1] = vf->shade[1] * gsp_env[1] / 0x100;
-    col[2] = vf->shade[2] * gsp_env[2] / 0x100;
-}
-
-#ifndef APP_UNSM
-static void gsp_combine_cc_shade_prim(u8 *col, struct vtxf *vf)
-{
-    col[0] = vf->shade[0] * gsp_prim[0] / 0x100;
-    col[1] = vf->shade[1] * gsp_prim[1] / 0x100;
-    col[2] = vf->shade[2] * gsp_prim[2] / 0x100;
-}
-
-static void gsp_combine_cc_prim_env(u8 *col, unused struct vtxf *vf)
-{
-    col[0] = gsp_prim[0] * gsp_env[0] / 0x100;
-    col[1] = gsp_prim[1] * gsp_env[1] / 0x100;
-    col[2] = gsp_prim[2] * gsp_env[2] / 0x100;
-}
-
-static void gsp_combine_cc_prim_env_shade_env(u8 *col, struct vtxf *vf)
-{
-    col[0] = (gsp_prim[0]-gsp_env[0]) * vf->shade[0]/0x100 + gsp_env[0];
-    col[1] = (gsp_prim[1]-gsp_env[1]) * vf->shade[1]/0x100 + gsp_env[1];
-    col[2] = (gsp_prim[2]-gsp_env[2]) * vf->shade[2]/0x100 + gsp_env[2];
-}
-#endif
-
-#ifdef GSP_FOG
-static void gsp_combine_cc_fog(u8 *col, unused struct vtxf *vf)
-{
-    col[0] = gsp_fog[0];
-    col[1] = gsp_fog[1];
-    col[2] = gsp_fog[2];
-}
-#endif
-
-static void gsp_combine_cc_special1(u8 *col, struct vtxf *vf)
-{
-    if (gsp_texture_enabled)
-    {
-        col[0] = 0xFF;
-        col[1] = 0xFF;
-        col[2] = 0xFF;
-    }
-    else
-    {
-        col[0] = vf->shade[0];
-        col[1] = vf->shade[1];
-        col[2] = vf->shade[2];
-    }
-}
-
-#ifdef APP_UNSM
-static void gsp_combine_cc_special2(u8 *col, struct vtxf *vf)
-{
-    if (gsp_texture_enabled)
-    {
-        col[0] = gsp_prim[0];
-        col[1] = gsp_prim[1];
-        col[2] = gsp_prim[2];
-    }
-    else
-    {
-        col[0] = vf->shade[0];
-        col[1] = vf->shade[1];
-        col[2] = vf->shade[2];
-    }
-}
-#endif
-
-#ifdef APP_UNK4
-static void gsp_combine_cc_special3(u8 *col, struct vtxf *vf)
-{
-    if (gsp_texture_enabled)
-    {
-        col[0] = vf->shade[0];
-        col[1] = vf->shade[1];
-        col[2] = vf->shade[2];
-    }
-    else
-    {
-        col[0] = gsp_env[0];
-        col[1] = gsp_env[1];
-        col[2] = gsp_env[2];
-    }
-}
-#endif
-
-static void gsp_combine_cc_special4(u8 *col, unused struct vtxf *vf)
-{
-    if (gsp_texture_enabled)
-    {
-        col[0] = gsp_prim[0];
-        col[1] = gsp_prim[1];
-        col[2] = gsp_prim[2];
-    }
-    else
-    {
-        col[0] = gsp_env[0];
-        col[1] = gsp_env[1];
-        col[2] = gsp_env[2];
-    }
-}
-
-#ifdef APP_UNK4
-static void gsp_combine_cc_special5(u8 *col, struct vtxf *vf)
-{
-    gsp_combine_cc_special4(col, vf);
-    col[0] = col[0] * vf->shade[0] / 0x100;
-    col[1] = col[1] * vf->shade[1] / 0x100;
-    col[2] = col[2] * vf->shade[2] / 0x100;
-}
-#endif
-
-#ifdef APP_UNKT
-static void gsp_combine_cc_special6(u8 *col, unused struct vtxf *vf)
-{
-    if (gsp_texture_enabled)
-    {
-        col[0] = 0xFF - gsp_env[0];
-        col[1] = 0xFF - gsp_env[1];
-        col[2] = 0xFF - gsp_env[2];
-    }
-    else
-    {
-        col[0] = gsp_prim[0];
-        col[1] = gsp_prim[1];
-        col[2] = gsp_prim[2];
-    }
-}
-#endif
-
-static void gsp_combine_ac_0(u8 *col, unused struct vtxf *vf)
-{
-    col[3] = 0x00;
-}
-
-static void gsp_combine_ac_1(u8 *col, unused struct vtxf *vf)
-{
-    col[3] = 0xFF;
-}
-
-static void gsp_combine_ac_shade(u8 *col, struct vtxf *vf)
-{
-    col[3] = vf->shade[3];
-}
-
-static void gsp_combine_ac_prim(u8 *col, unused struct vtxf *vf)
-{
-    col[3] = gsp_prim[3];
-}
-
-static void gsp_combine_ac_env(u8 *col, unused struct vtxf *vf)
-{
-    col[3] = gsp_env[3];
-}
-
-static void gsp_combine_ac_shade_env(u8 *col, unused struct vtxf *vf)
-{
-    col[3] = vf->shade[3] * gsp_env[3] / 0x100;
-}
-
-#ifdef GSP_FOG
-static void gsp_combine_ac_fog(u8 *col, struct vtxf *vf)
-{
-    col[3] = vf->shade[3];
-}
-#endif
-
-static GSP gsp_g_setothermode_l;
-
-static void gsp_write_triangle_init(u8 *t)
+static void gdp_write_triangle_init(u8 *t)
 {
     uint i;
     if (gsp_change != 0)
@@ -1266,27 +1048,27 @@ static void gsp_write_triangle_init(u8 *t)
         struct vtx  *v  = &gsp_vtx_buf[t[i]];
         struct vtxf *vf = &gsp_vtxf_buf[t[i]];
         u8 col[4];
-        gsp_combine_cc(col, vf);
-        gsp_combine_ac(col, vf);
+        gdp_combine_cc(col, vf);
+        gdp_combine_ac(col, vf);
     #ifdef GSP_LEGACY
         glColor4ub(col[0], col[1], col[2], col[3]);
         glTexCoord2f(vf->s*gsp_texture_tscale[0], vf->t*gsp_texture_tscale[1]);
         glVertex3s(v->x, v->y, v->z);
     #else
-        gsp_output_v[0] = v->x;
-        gsp_output_v[1] = v->y;
-        gsp_output_v[2] = v->z;
-        gsp_output_t[0] = vf->s*gsp_texture_tscale[0];
-        gsp_output_t[1] = vf->t*gsp_texture_tscale[1];
-        gsp_output_c[0] = col[0];
-        gsp_output_c[1] = col[1];
-        gsp_output_c[2] = col[2];
-        gsp_output_c[3] = col[3];
-        gsp_output_v += 3;
-        gsp_output_t += 2;
-        gsp_output_c += 4;
-        gsp_output_total++;
-        gsp_output_count++;
+        gdp_output_v[0] = v->x;
+        gdp_output_v[1] = v->y;
+        gdp_output_v[2] = v->z;
+        gdp_output_t[0] = vf->s*gsp_texture_tscale[0];
+        gdp_output_t[1] = vf->t*gsp_texture_tscale[1];
+        gdp_output_c[0] = col[0];
+        gdp_output_c[1] = col[1];
+        gdp_output_c[2] = col[2];
+        gdp_output_c[3] = col[3];
+        gdp_output_v += 3;
+        gdp_output_t += 2;
+        gdp_output_c += 4;
+        gdp_output_total++;
+        gdp_output_count++;
     #endif
     }
 #ifdef GSP_LEGACY
@@ -1296,122 +1078,36 @@ static void gsp_write_triangle_init(u8 *t)
 
 #ifdef __3DS__
 #ifndef GSP_LEGACY
-static void gsp_write_triangle_stub(unused u8 *t)
+static void gdp_write_triangle_stub(unused u8 *t)
 {
     if (gsp_change != 0)
     {
         gsp_flush();
     }
-    gsp_output_v += 3*3;
-    gsp_output_t += 3*2;
-    gsp_output_c += 3*4;
-    gsp_output_total += 3;
-    gsp_output_count += 3;
+    gdp_output_v += 3*3;
+    gdp_output_t += 3*2;
+    gdp_output_c += 3*4;
+    gdp_output_total += 3;
+    gdp_output_count += 3;
 }
 #endif
 #endif
-
-static void gsp_triangle_default(u8 *t)
-{
-#ifndef GSP_LEGACY
-    if (gsp_output_total < GSP_OUTPUT_LEN)
-#endif
-    {
-        gsp_write_triangle(t);
-    }
-#ifndef GSP_LEGACY
-    else
-    {
-        wdebug("output over\n");
-    }
-#endif
-}
-
-#ifdef GSP_FOG
-static void gsp_triangle_fog(u8 *t)
-{
-#ifndef GSP_LEGACY
-    if (gsp_output_total < GSP_OUTPUT_LEN-1)
-#endif
-    {
-        u8 sa0;
-        u8 sa1;
-        u8 sa2;
-        gsp_write_triangle(t);
-        sa0 = gsp_vtxf_buf[t[0]].shade[3];
-        sa1 = gsp_vtxf_buf[t[1]].shade[3];
-        sa2 = gsp_vtxf_buf[t[2]].shade[3];
-        if (sa0 > 0x00 || sa1 > 0x00 || sa2 > 0x00)
-        {
-            u32 othermode_l;
-            u8  texture_enabled;
-            GSP_COMBINE *combine_cc;
-            GSP_COMBINE *combine_ac;
-            othermode_l = gsp_othermode_l;
-            gsp_g_setothermode_l(
-                0xB900031D, G_RM_AA_ZB_XLU_DECAL | G_RM_AA_ZB_XLU_DECAL2
-            );
-            texture_enabled = gsp_texture_enabled;
-            combine_cc = gsp_combine_cc;
-            combine_ac = gsp_combine_ac;
-            gsp_texture_enabled = G_OFF;
-            gsp_combine_cc = gsp_combine_cc_fog;
-            gsp_combine_ac = gsp_combine_ac_fog;
-            gsp_change |= CHANGE_TEXTURE_ENABLED;
-            gsp_write_triangle(t);
-            gsp_othermode_l = othermode_l;
-            gsp_texture_enabled = texture_enabled;
-            gsp_combine_cc = combine_cc;
-            gsp_combine_ac = combine_ac;
-            gsp_change |= CHANGE_RENDERMODE | CHANGE_TEXTURE_ENABLED;
-        }
-    }
-#ifndef GSP_LEGACY
-    else
-    {
-        wdebug("output over\n");
-    }
-#endif
-}
-#endif
-
-static void gsp_triangle_special(u8 *t)
-{
-#ifndef GSP_LEGACY
-    if (gsp_output_total < GSP_OUTPUT_LEN-1)
-#endif
-    {
-        u8  texture_enabled;
-        u32 othermode_l;
-        texture_enabled = gsp_texture_enabled;
-        gsp_texture_enabled = G_OFF;
-        gsp_change |= CHANGE_TEXTURE_ENABLED;
-        gsp_write_triangle(t);
-        othermode_l = gsp_othermode_l;
-        gsp_g_setothermode_l(
-            0xB900031D, G_RM_AA_ZB_XLU_DECAL | G_RM_AA_ZB_XLU_DECAL2
-        );
-        gsp_texture_enabled = texture_enabled;
-        gsp_change |= CHANGE_TEXTURE_ENABLED;
-        gsp_write_triangle(t);
-        gsp_othermode_l = othermode_l;
-        gsp_change |= CHANGE_RENDERMODE;
-    }
-#ifndef GSP_LEGACY
-    else
-    {
-        wdebug("warning: output over\n");
-    }
-#endif
-}
 
 static void gsp_flush_texrect(void)
 {
+    int  xh   = (s16)(gdp_texrect[0] >> 8) >> 4;
+    int  yh   = (s16)(gdp_texrect[0] << 4) >> 4;
+    int  xl   = (s16)(gdp_texrect[1] >> 8) >> 4;
+    int  yl   = (s16)(gdp_texrect[1] << 4) >> 4;
+    f32  ul   = (1.0F/32)        * (s16)(gdp_texrect[2] >> 16);
+    f32  vl   = (1.0F/32)        * (s16)(gdp_texrect[2] >>  0);
+    f32  dsdx = (32/4.0F/0x0400) * (s16)(gdp_texrect[3] >> 16);
+    f32  dtdy = (32/4.0F/0x0400) * (s16)(gdp_texrect[3] >>  0);
     f32  uh;
     f32  vh;
     uint i;
     u8   t[3];
-    if (gsp_rect == 0)
+    if (gdp_rect == 0)
     {
         gsp_mtxf_projection++;
         gsp_mtxf_modelview++;
@@ -1420,9 +1116,9 @@ static void gsp_flush_texrect(void)
             CHANGE_MTXF_MODELVIEW | CHANGE_VIEWPORT |
             CHANGE_CULL | CHANGE_RENDERMODE | CHANGE_TEXTURE_ENABLED;
     }
-    if (gsp_rect != 1)
+    if (gdp_rect != 1)
     {
-        gsp_rect = 1;
+        gdp_rect = 1;
         mtxf_ortho(
             MP,
         #ifdef LIB_DYNRES
@@ -1434,45 +1130,46 @@ static void gsp_flush_texrect(void)
         );
         gsp_change |= CHANGE_MTXF_PROJECTION;
     }
-    if (gsp_cycle)
+    if (gdp_cycle)
     {
-        gsp_texrect_xh &= ~3;
-        gsp_texrect_yh &= ~3;
-        gsp_texrect_xh += 4;
-        gsp_texrect_yh += 4;
-        gsp_texrect_dsdx = 32/4.0F;
+        xh = (xh & ~3) + 4;
+        yh = (yh & ~3) + 4;
+        dsdx = 32/4.0F;
     }
-    else if (gsp_texture_filter != GL_NEAREST)
+    else
     {
-        gsp_texrect_ul += 32*0.5F;
-        gsp_texrect_vl += 32*0.5F;
+        if (gdp_texture_filter != GL_NEAREST)
+        {
+            ul += 32*0.5F;
+            vl += 32*0.5F;
+        }
     }
-    uh = gsp_texrect_ul + gsp_texrect_dsdx*(gsp_texrect_xh-gsp_texrect_xl);
-    vh = gsp_texrect_vl + gsp_texrect_dtdy*(gsp_texrect_yh-gsp_texrect_yl);
-    if (gsp_texrect_flip)
+    uh = ul + dsdx*(xh-xl);
+    vh = vl + dtdy*(yh-yl);
+    if (gdp_texrect[0] >> 24 & 1)
     {
         gsp_vtxf_buf[0].s = uh;
-        gsp_vtxf_buf[0].t = gsp_texrect_vl;
-        gsp_vtxf_buf[2].s = gsp_texrect_ul;
+        gsp_vtxf_buf[0].t = vl;
+        gsp_vtxf_buf[2].s = ul;
         gsp_vtxf_buf[2].t = vh;
     }
     else
     {
-        gsp_vtxf_buf[0].s = gsp_texrect_ul;
+        gsp_vtxf_buf[0].s = ul;
         gsp_vtxf_buf[0].t = vh;
         gsp_vtxf_buf[2].s = uh;
-        gsp_vtxf_buf[2].t = gsp_texrect_vl;
+        gsp_vtxf_buf[2].t = vl;
     }
     gsp_vtxf_buf[1].s = uh;
     gsp_vtxf_buf[1].t = vh;
-    gsp_vtxf_buf[3].s = gsp_texrect_ul;
-    gsp_vtxf_buf[3].t = gsp_texrect_vl;
+    gsp_vtxf_buf[3].s = ul;
+    gsp_vtxf_buf[3].t = vl;
     for (i = 0; i < 4; i++)
     {
         struct vtx  *v  = &gsp_vtx_buf[i];
         struct vtxf *vf = &gsp_vtxf_buf[i];
-        v->x = i == 0 || i == 3 ? gsp_texrect_xl : gsp_texrect_xh;
-        v->y = i == 2 || i == 3 ? gsp_texrect_yl : gsp_texrect_yh;
+        v->x = i == 0 || i == 3 ? xl : xh;
+        v->y = i == 2 || i == 3 ? yl : yh;
         v->z = 0;
         vf->shade[0] = 0xFF;
         vf->shade[1] = 0xFF;
@@ -1482,18 +1179,18 @@ static void gsp_flush_texrect(void)
     t[0] = 0;
     t[1] = 1;
     t[2] = 2;
-    gsp_write_triangle(t);
+    gdp_write_triangle(t);
     t[0] = 0;
     t[1] = 2;
     t[2] = 3;
-    gsp_write_triangle(t);
+    gdp_write_triangle(t);
 }
 
 static void gsp_flush_rect(void)
 {
-    if (gsp_rect != 0)
+    if (gdp_rect != 0)
     {
-        gsp_rect = 0;
+        gdp_rect = 0;
         gsp_mtxf_projection--;
         gsp_mtxf_modelview--;
         gsp_change |=
@@ -1631,451 +1328,8 @@ static void gsp_g_noop(unused u32 w0, unused u32 w1)
 #include "gsp/g_rdphalf_1.c"
 #include "gsp/g_setothermode_l.c"
 #include "gsp/g_setothermode_h.c"
-#endif
-
-static void gsp_g_texrect(u32 w0, u32 w1)
-{
-    gsp_texrect_xh = (s16)(w0 >> 8) >> 4;
-    gsp_texrect_yh = (s16)(w0 << 4) >> 4;
-    gsp_texrect_xl = (s16)(w1 >> 8) >> 4;
-    gsp_texrect_yl = (s16)(w1 << 4) >> 4;
-    gsp_texrect_flip = false;
-}
-
-static void gsp_g_texrectflip(u32 w0, u32 w1)
-{
-    gsp_texrect_xh = (s16)(w0 >> 8) >> 4;
-    gsp_texrect_yh = (s16)(w0 << 4) >> 4;
-    gsp_texrect_xl = (s16)(w1 >> 8) >> 4;
-    gsp_texrect_yl = (s16)(w1 << 4) >> 4;
-    gsp_texrect_flip = true;
-}
-
-#ifdef __DEBUG__
-static void gsp_g_rdploadsync(unused u32 w0, unused u32 w1)
-{
-}
-
-static void gsp_g_rdppipesync(unused u32 w0, unused u32 w1)
-{
-}
-
-static void gsp_g_rdptilesync(unused u32 w0, unused u32 w1)
-{
-}
-
-static void gsp_g_rdpfullsync(unused u32 w0, unused u32 w1)
-{
-}
-#endif
-
-#if 0
-static void gsp_g_setkeygb(unused u32 w0, unused u32 w1)
-{
-}
-
-static void gsp_g_setkeyr(unused u32 w0, unused u32 w1)
-{
-}
-
-static void gsp_g_setconvert(unused u32 w0, unused u32 w1)
-{
-}
-#else
-#define gsp_g_setkeygb          NULL
-#define gsp_g_setkeyr           NULL
-#define gsp_g_setconvert        NULL
-#endif
-
-static void gsp_g_setscissor(u32 w0, u32 w1)
-{
-    gsp_scissor_l = w0 >> 12 & 0x0FFF;
-    gsp_scissor_t = w0 >>  0 & 0x0FFF;
-    gsp_scissor_r = w1 >> 12 & 0x0FFF;
-    gsp_scissor_b = w1 >>  0 & 0x0FFF;
-    gsp_change |= CHANGE_SCISSOR;
-}
-
-#ifdef APP_UNK4
-static void gsp_g_setprimdepth(unused u32 w0, unused u32 w1)
-{
-    /* todo: primdepth (?) */
-}
-#else
-#define gsp_g_setprimdepth      NULL
-#endif
-
-#if 0
-static void gsp_g_rdpsetothermode(u32 w0, u32 w1)
-{
-    gsp_othermode_h = w0;
-    gsp_othermode_l = w1;
-    gsp_change |= CHANGE_RENDERMODE;
-}
-#else
-#define gsp_g_rdpsetothermode   NULL
-#endif
-
-#ifndef APP_UNSM
-static void gsp_g_loadtlut(unused u32 w0, unused u32 w1)
-{
-    /* todo: CI */
-}
-#else
-#define gsp_g_loadtlut          NULL
-#endif
-
-#ifdef GSP_F3DEX2
 #include "gsp/g_rdphalf_2.c"
-#endif
 
-static void gsp_g_settilesize(u32 w0, u32 w1)
-{
-    /* ? */
-    if ((w0 & 0x00FFFFFF) == 0)
-    {
-        gsp_texture_size[0] = (w1 >> 14 & 0x03FF) + 1;
-        gsp_texture_size[1] = (w1 >>  2 & 0x03FF) + 1;
-        gsp_texture_tscale[0] = (1.0F/32) / gsp_texture_size[0];
-        gsp_texture_tscale[1] = (1.0F/32) / gsp_texture_size[1];
-    }
-    gsp_change |= CHANGE_TEXTURE;
-}
-
-static void gsp_g_loadblock(unused u32 w0, unused u32 w1)
-{
-    gsp_texture_len = ((w1 >> 12 & 0x0FFF)+1) << (gsp_texture_fmt & 0x03) >> 1;
-    gsp_change |= CHANGE_TEXTURE;
-}
-
-static void gsp_g_loadtile(unused u32 w0, unused u32 w1)
-{
-    gsp_change |= CHANGE_TEXTURE;
-}
-
-static void gsp_g_settile(u32 w0, u32 w1)
-{
-    u32 tile;
-    gsp_texture_fmt = w0 >> 19 & 0x1F;
-    tile            = w1 >> 24 & 0x07;
-    if (tile == G_TX_RENDERTILE)
-    {
-        gsp_texture_flag[1]  = w1 >> 18 & 0x03;
-        gsp_texture_shift[1] = w1 >> 10 & 0x07;
-        gsp_texture_flag[0]  = w1 >>  8 & 0x03;
-        gsp_texture_shift[0] = w1 >>  0 & 0x07;
-    }
-    gsp_change |= CHANGE_TEXTURE;
-}
-
-static void gsp_g_fillrect(u32 w0, u32 w1)
-{
-    if (gsp_fill != 0xFFFC)
-    {
-        u32 xh;
-        u32 yh;
-        u32 xl;
-        u32 yl;
-        u32 r;
-        u32 g;
-        u32 b;
-        u32 i;
-        u8  t[3];
-        if (gsp_rect == 0)
-        {
-            gsp_mtxf_projection++;
-            gsp_mtxf_modelview++;
-            mtxf_identity(MM);
-            gsp_change |=
-                CHANGE_MTXF_MODELVIEW | CHANGE_CULL |
-                CHANGE_RENDERMODE | CHANGE_TEXTURE_ENABLED;
-        }
-        if (gsp_rect != 2)
-        {
-            gsp_rect = 2;
-            mtxf_ortho(MP, 0, 320, 240, 0, -1, 1);
-            gsp_change |= CHANGE_MTXF_PROJECTION;
-        }
-        xh = w0 >> 14 & 0x03FF;
-        yh = w0 >>  2 & 0x03FF;
-        xl = w1 >> 14 & 0x03FF;
-        yl = w1 >>  2 & 0x03FF;
-        r = RGBA16_R(gsp_fill);
-        g = RGBA16_G(gsp_fill);
-        b = RGBA16_B(gsp_fill);
-        if (gsp_cycle)
-        {
-            xh++;
-            yh++;
-        }
-        for (i = 0; i < 4; i++)
-        {
-            struct vtx  *v  = &gsp_vtx_buf[i];
-            struct vtxf *vf = &gsp_vtxf_buf[i];
-            v->x = i == 0 || i == 3 ? xl : xh;
-            v->y = i == 2 || i == 3 ? yl : yh;
-            v->z = 0;
-            vf->shade[0] = r;
-            vf->shade[1] = g;
-            vf->shade[2] = b;
-            vf->shade[3] = 0xFF;
-        }
-        t[0] = 0;
-        t[1] = 1;
-        t[2] = 2;
-        gsp_write_triangle(t);
-        t[0] = 0;
-        t[1] = 2;
-        t[2] = 3;
-        gsp_write_triangle(t);
-    }
-}
-
-static void gsp_g_setfillcolor(unused u32 w0, u32 w1)
-{
-    gsp_fill = w1 >> 16;
-}
-
-static void gsp_g_setfogcolor(unused u32 w0, u32 w1)
-{
-    gsp_fog[0] = w1 >> 24;
-    gsp_fog[1] = w1 >> 16;
-    gsp_fog[2] = w1 >>  8;
-    gsp_fog[3] = w1 >>  0;
-}
-
-static void gsp_g_setblendcolor(unused u32 w0, unused u32 w1)
-{
-#if 0
-    gsp_blend[0] = w1 >> 24;
-    gsp_blend[1] = w1 >> 16;
-    gsp_blend[2] = w1 >>  8;
-    gsp_blend[3] = w1 >>  0;
-#endif
-}
-
-static void gsp_g_setprimcolor(unused u32 w0, u32 w1)
-{
-    gsp_prim[0] = w1 >> 24;
-    gsp_prim[1] = w1 >> 16;
-    gsp_prim[2] = w1 >>  8;
-    gsp_prim[3] = w1 >>  0;
-}
-
-static void gsp_g_setenvcolor(unused u32 w0, u32 w1)
-{
-    gsp_env[0] = w1 >> 24;
-    gsp_env[1] = w1 >> 16;
-    gsp_env[2] = w1 >>  8;
-    gsp_env[3] = w1 >>  0;
-}
-
-static void gsp_g_setcombine(u32 w0, u32 w1)
-{
-    u32 cc;
-    u32 ac;
-    if (gsp_cycle)
-    {
-        return;
-    }
-    cc =
-        (w0 <<  8 & 0xF0000000U) |
-        (w1 >>  4 & 0x0F000000U) |
-        (w0 <<  4 & 0x00F80000U) |
-        (w1 <<  1 & 0x00070000U) |
-        (w0 <<  7 & 0x0000F000U) |
-        (w1 >> 16 & 0x00000F00U) |
-        (w0 <<  3 & 0x000000F8U) |
-        (w1 >>  6 & 0x00000007U);
-    ac =
-        (w0 <<  9 & 0x00E00000U) |
-        (w1 <<  6 & 0x001C0000U) |
-        (w0 <<  6 & 0x00038000U) |
-        (w1 <<  3 & 0x00007000U) |
-        (w1 >> 12 & 0x00000E00U) |
-        (w1 <<  3 & 0x000001C0U) |
-        (w1 >> 15 & 0x00000038U) |
-        (w1 <<  0 & 0x00000007U);
-    if ((cc & 0x0000FFFFU) == CC(0, 0, 0, COMBINED))
-    {
-        cc = (cc & 0xFFFF0000U) | cc >> 16;
-    }
-    if ((ac & 0x00000FFFU) == AC(0, 0, 0, COMBINED))
-    {
-        ac = (ac & 0x00FFF000U) | ac >> 12;
-    }
-#ifdef GSP_FOG
-    gsp_triangle =
-        (gsp_geometry_mode & G_FOG) ? gsp_triangle_fog : gsp_triangle_default;
-#else
-    gsp_triangle = gsp_triangle_default;
-#endif
-#ifdef APP_UNSM
-    gsp_texture_read_table[G_IM_FMT_IA << 2 | G_IM_SIZ_8b] =
-        gsp_texture_read_ia8;
-#endif
-    switch (cc)
-    {
-    #ifndef APP_UNSM
-        case CC1(0, 0, 0, 0):
-            gsp_combine_cc = gsp_combine_cc_0;
-            break;
-        case CC1(0, 0, 0, 1):
-            gsp_combine_cc = gsp_combine_cc_1;
-            break;
-    #endif
-        case CC1(0, 0, 0, TEXEL0):
-        case CC1(TEXEL1, TEXEL0, LOD_FRACTION, TEXEL0):
-            gsp_combine_cc = gsp_combine_cc_1;
-            break;
-        case CC1(0, 0, 0, SHADE):
-        case CC1(TEXEL0, 0, SHADE, 0):
-            gsp_combine_cc = gsp_combine_cc_shade;
-            break;
-    #ifndef APP_UNSM
-        case CC1(0, 0, 0, PRIMITIVE):
-    #endif
-        case CC1(TEXEL0, 0, PRIMITIVE, 0):
-    #ifndef APP_UNSM
-        case CC1(PRIMITIVE, 0, TEXEL0, 0):
-    #endif
-            gsp_combine_cc = gsp_combine_cc_prim;
-            break;
-    #ifndef APP_UNSM
-        case CC1(0, 0, 0, ENVIRONMENT):
-    #endif
-        case CC1(TEXEL0, 0, ENVIRONMENT, 0):
-            gsp_combine_cc = gsp_combine_cc_env;
-            break;
-        case CC1(SHADE, 0, ENVIRONMENT, 0):
-            gsp_combine_cc = gsp_combine_cc_shade_env;
-            break;
-    #ifndef APP_UNSM
-        case CC1(PRIMITIVE, 0, SHADE, 0):
-        case CC2(TEXEL0, 0, SHADE, 0, COMBINED, 0, PRIMITIVE, 0):
-            gsp_combine_cc = gsp_combine_cc_shade_prim;
-            break;
-        case CC1(PRIMITIVE, 0, ENVIRONMENT, 0):
-            gsp_combine_cc = gsp_combine_cc_prim_env;
-            break;
-        case CC1(PRIMITIVE, ENVIRONMENT, SHADE, ENVIRONMENT):
-        case CC2(
-            TEXEL0, 0, PRIMITIVE, 0,
-            COMBINED, ENVIRONMENT, SHADE, ENVIRONMENT
-        ):
-            gsp_combine_cc = gsp_combine_cc_prim_env_shade_env;
-            break;
-    #endif
-        case CC1(TEXEL0, SHADE, TEXEL0_ALPHA, SHADE):
-            gsp_combine_cc = gsp_combine_cc_special1;
-            gsp_triangle   = gsp_triangle_special;
-            break;
-    #ifdef APP_UNSM
-        case CC1(PRIMITIVE, SHADE, TEXEL0, SHADE):
-            gsp_combine_cc = gsp_combine_cc_special2;
-            gsp_triangle   = gsp_triangle_special;
-            gsp_texture_read_table[G_IM_FMT_IA << 2 | G_IM_SIZ_8b] =
-                gsp_texture_read_ia8_special;
-            break;
-    #endif
-    #ifdef APP_UNK4
-        case CC1(SHADE, ENVIRONMENT, TEXEL0, ENVIRONMENT):
-            gsp_combine_cc = gsp_combine_cc_special3;
-            gsp_triangle   = gsp_triangle_special;
-            break;
-    #endif
-        case CC1(PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT):
-            gsp_combine_cc = gsp_combine_cc_special4;
-            gsp_triangle   = gsp_triangle_special;
-            break;
-    #ifdef APP_UNK4
-        case CC2(
-            PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT, COMBINED, 0, SHADE, 0
-        ):
-            gsp_combine_cc = gsp_combine_cc_special5;
-            gsp_triangle   = gsp_triangle_special;
-            break;
-    #endif
-    #ifdef APP_UNKT
-        case CC1(1, ENVIRONMENT, TEXEL0, PRIMITIVE):
-            gsp_combine_cc = gsp_combine_cc_special6;
-            gsp_triangle   = gsp_triangle_special;
-            break;
-    #endif
-        default:
-            gsp_combine_cc = gsp_combine_cc_0;
-            wdebug("unknown cc %08" FMT_X "%08" FMT_X "\n", w0, w1);
-            break;
-    }
-    switch (ac)
-    {
-    #ifndef APP_UNSM
-        case AC1(0, 0, 0, 1):
-    #endif
-        case AC1(0, 0, 0, TEXEL0):
-    #ifndef APP_UNSM
-        case AC2(0, 0, 0, COMBINED, 0, 0, 0, 1):
-        case AC1(TEXEL0, 0, 0, 1):
-    #endif
-    #ifndef APP_UNSM
-        /* ??? */
-        case AC1(PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT):
-    #endif
-            gsp_combine_ac = gsp_combine_ac_1;
-            break;
-        case AC1(0, 0, 0, SHADE):
-        case AC1(TEXEL0, 0, SHADE, 0):
-    #ifndef APP_UNSM
-        case AC1(SHADE, 0, TEXEL0, 0):
-    #endif
-        case AC2(TEXEL1, TEXEL0, LOD_FRACTION, TEXEL0, 0, 0, 0, SHADE):
-            gsp_combine_ac = gsp_combine_ac_shade;
-            break;
-    #ifndef APP_UNSM
-        case AC1(0, 0, 0, PRIMITIVE):
-    #endif
-        case AC1(TEXEL0, 0, PRIMITIVE, 0):
-    #ifndef APP_UNSM
-        case AC1(PRIMITIVE, 0, TEXEL0, 0):
-    #endif
-        case AC1(PRIMITIVE, SHADE, TEXEL0, SHADE):
-            gsp_combine_ac = gsp_combine_ac_prim;
-            break;
-        case AC1(0, 0, 0, ENVIRONMENT):
-        case AC1(TEXEL0, 0, ENVIRONMENT, 0):
-        case AC1(ENVIRONMENT, 0, TEXEL0, 0):
-            gsp_combine_ac = gsp_combine_ac_env;
-            break;
-        case AC1(SHADE, 0, ENVIRONMENT, 0):
-            gsp_combine_ac = gsp_combine_ac_shade_env;
-            break;
-        default:
-            gsp_combine_ac = gsp_combine_ac_0;
-            wdebug("unknown ac %08" FMT_X "%08" FMT_X "\n", w0, w1);
-            break;
-    }
-}
-
-static void gsp_g_settimg(unused u32 w0, u32 w1)
-{
-    gsp_texture_addr = gsp_addr(w1);
-    gsp_change |= CHANGE_TEXTURE;
-}
-
-#ifdef __DEBUG__
-static void gsp_g_setzimg(unused u32 w0, unused u32 w1)
-{
-}
-
-static void gsp_g_setcimg(unused u32 w0, unused u32 w1)
-{
-}
-#else
-#define gsp_g_setzimg           NULL
-#define gsp_g_setcimg           NULL
-#endif
-
-#ifdef GSP_F3DEX2
 static void gsp_g_obj_rectangle(unused u32 w0, unused u32 w1)
 {
     puts("G_OBJ_RECTANGLE");
@@ -2119,10 +1373,6 @@ static void gsp_g_obj_ldtx_rect_r(unused u32 w0, unused u32 w1)
     puts("G_OBJ_LDTX_RECT_R");
     exit(EXIT_FAILURE);
 }
-
-/*
-static const char *const str_im_fmt[] = {"RGBA", "YUV", "CI", "IA", "I"};
-*/
 
 static void gsp_g_bg_1cyc(unused u32 w0, unused u32 w1)
 {
@@ -2199,6 +1449,34 @@ static void gsp_g_rdphalf_0(unused u32 w0, unused u32 w1)
     */
 }
 #endif
+
+#include "gdp/g_setcimg.c"
+#include "gdp/g_setzimg.c"
+#include "gdp/g_settimg.c"
+#include "gdp/g_setcombine.c"
+#include "gdp/g_setenvcolor.c"
+#include "gdp/g_setprimcolor.c"
+#include "gdp/g_setblendcolor.c"
+#include "gdp/g_setfogcolor.c"
+#include "gdp/g_setfillcolor.c"
+#include "gdp/g_fillrect.c"
+#include "gdp/g_settile.c"
+#include "gdp/g_loadtile.c"
+#include "gdp/g_loadblock.c"
+#include "gdp/g_settilesize.c"
+#include "gdp/g_loadtlut.c"
+#include "gdp/g_rdpsetothermode.c"
+#include "gdp/g_setprimdepth.c"
+#include "gdp/g_setscissor.c"
+#include "gdp/g_setconvert.c"
+#include "gdp/g_setkeyr.c"
+#include "gdp/g_setkeygb.c"
+#include "gdp/g_rdpfullsync.c"
+#include "gdp/g_rdptilesync.c"
+#include "gdp/g_rdppipesync.c"
+#include "gdp/g_rdploadsync.c"
+#include "gdp/g_texrectflip.c"
+#include "gdp/g_texrect.c"
 
 static GSP *gsp_table[] =
 {
@@ -2500,38 +1778,38 @@ static GSP *gsp_table[] =
     /* 0xE2 */  gsp_g_setothermode_l,
     /* 0xE3 */  gsp_g_setothermode_h,
 #endif
-    /* 0xE4 */  gsp_g_texrect,
-    /* 0xE5 */  gsp_g_texrectflip,
-    /* 0xE6 */  gsp_g_rdploadsync,
-    /* 0xE7 */  gsp_g_rdppipesync,
-    /* 0xE8 */  gsp_g_rdptilesync,
-    /* 0xE9 */  gsp_g_rdpfullsync,
-    /* 0xEA */  gsp_g_setkeygb,
-    /* 0xEB */  gsp_g_setkeyr,
-    /* 0xEC */  gsp_g_setconvert,
-    /* 0xED */  gsp_g_setscissor,
-    /* 0xEE */  gsp_g_setprimdepth,
-    /* 0xEF */  gsp_g_rdpsetothermode,
-    /* 0xF0 */  gsp_g_loadtlut,
+    /* 0xE4 */  gdp_g_texrect,
+    /* 0xE5 */  gdp_g_texrectflip,
+    /* 0xE6 */  gdp_g_rdploadsync,
+    /* 0xE7 */  gdp_g_rdppipesync,
+    /* 0xE8 */  gdp_g_rdptilesync,
+    /* 0xE9 */  gdp_g_rdpfullsync,
+    /* 0xEA */  gdp_g_setkeygb,
+    /* 0xEB */  gdp_g_setkeyr,
+    /* 0xEC */  gdp_g_setconvert,
+    /* 0xED */  gdp_g_setscissor,
+    /* 0xEE */  gdp_g_setprimdepth,
+    /* 0xEF */  gdp_g_rdpsetothermode,
+    /* 0xF0 */  gdp_g_loadtlut,
 #ifdef GSP_F3DEX2
     /* 0xF1 */  gsp_g_rdphalf_2,
 #else
     /* 0xF1 */  NULL,
 #endif
-    /* 0xF2 */  gsp_g_settilesize,
-    /* 0xF3 */  gsp_g_loadblock,
-    /* 0xF4 */  gsp_g_loadtile,
-    /* 0xF5 */  gsp_g_settile,
-    /* 0xF6 */  gsp_g_fillrect,
-    /* 0xF7 */  gsp_g_setfillcolor,
-    /* 0xF8 */  gsp_g_setfogcolor,
-    /* 0xF9 */  gsp_g_setblendcolor,
-    /* 0xFA */  gsp_g_setprimcolor,
-    /* 0xFB */  gsp_g_setenvcolor,
-    /* 0xFC */  gsp_g_setcombine,
-    /* 0xFD */  gsp_g_settimg,
-    /* 0xFE */  gsp_g_setzimg,
-    /* 0xFF */  gsp_g_setcimg,
+    /* 0xF2 */  gdp_g_settilesize,
+    /* 0xF3 */  gdp_g_loadblock,
+    /* 0xF4 */  gdp_g_loadtile,
+    /* 0xF5 */  gdp_g_settile,
+    /* 0xF6 */  gdp_g_fillrect,
+    /* 0xF7 */  gdp_g_setfillcolor,
+    /* 0xF8 */  gdp_g_setfogcolor,
+    /* 0xF9 */  gdp_g_setblendcolor,
+    /* 0xFA */  gdp_g_setprimcolor,
+    /* 0xFB */  gdp_g_setenvcolor,
+    /* 0xFC */  gdp_g_setcombine,
+    /* 0xFD */  gdp_g_settimg,
+    /* 0xFE */  gdp_g_setzimg,
+    /* 0xFF */  gdp_g_setcimg,
 };
 
 #ifdef GSP_F3DEX2
@@ -2641,18 +1919,18 @@ static void gsp_start(void *ucode, u32 *dl)
     #ifdef APP_UNK4
     #ifdef APP_E0
         case 0x00039E90:
-            /* printf("notice: using F3DEX2\n"); */
+            /* pdebug("notice: using F3DEX2\n"); */
             goto meme;
         case 0x0003B220:
-            /* printf("notice: using L3DEX2\n"); */
+            pdebug("notice: using L3DEX2\n");
         meme:
             memcpy(&gsp_table[0x01], gsp_table_3d, sizeof(gsp_table_3d));
             gsp_table[G_MTX]     = gsp_g_mtx;
             gsp_table[G_MOVEMEM] = gsp_g_movemem;
-            gsp_table[G_TEXRECT] = gsp_g_texrect;
+            gsp_table[G_TEXRECT] = gdp_g_texrect;
             break;
         case 0x0003C3B0:
-            /* printf("notice: using S2DEX2\n"); */
+            /* pdebug("notice: using S2DEX2\n"); */
             memcpy(&gsp_table[0x01], gsp_table_2d, sizeof(gsp_table_2d));
             gsp_table[G_OBJ_RECTANGLE_R] = gsp_g_obj_rectangle_r;
             gsp_table[G_OBJ_MOVEMEM]     = gsp_g_obj_movemem;
@@ -2668,11 +1946,11 @@ static void gsp_start(void *ucode, u32 *dl)
     (void)ucode;
 #endif
 #ifndef GSP_LEGACY
-    gsp_output_vtx = gsp_output_v = gsp_output_vtx_buf;
-    gsp_output_txc = gsp_output_t = gsp_output_txc_buf;
-    gsp_output_col = gsp_output_c = gsp_output_col_buf;
-    gsp_output_total = 0;
-    gsp_output_count = 0;
+    gdp_output_vtx = gdp_output_v = gdp_output_vtx_buf;
+    gdp_output_txc = gdp_output_t = gdp_output_txc_buf;
+    gdp_output_col = gdp_output_c = gdp_output_col_buf;
+    gdp_output_total = 0;
+    gdp_output_count = 0;
 #endif
     gsp_mtxf_projection = gsp_mtxf_projection_stack;
     gsp_mtxf_modelview  = gsp_mtxf_modelview_stack;
@@ -2684,7 +1962,7 @@ static void gsp_start(void *ucode, u32 *dl)
     gsp_dl_index = 0;
     gsp_lookat = false;
     gsp_light_new = false;
-    gsp_rect = 0;
+    gdp_rect = 0;
     gsp_change = CHANGE_MTXF_PROJECTION | CHANGE_MTXF_MODELVIEW;
 }
 
@@ -2744,10 +2022,10 @@ void gsp_update(void *ucode, u32 *dl)
     {
         gsp_cache_flag = false;
     #ifndef GEKKO
-        if (gsp_texture > 0)
+        if (gdp_texture > 0)
         {
-            glDeleteTextures(gsp_texture, gsp_texture_name_table);
-            gsp_texture = 0;
+            glDeleteTextures(gdp_texture, gdp_texture_name_table);
+            gdp_texture = 0;
         }
     #endif
     }
@@ -2755,7 +2033,7 @@ void gsp_update(void *ucode, u32 *dl)
     depth = gfxIsWide() ? 0 : (1.0F/3)*osGet3DSliderState();
     pglSelectScreen(GFX_TOP, GFX_LEFT);
     gsp_table[G_VTX] = gsp_g_vtx;
-    gsp_write_triangle = gsp_write_triangle_init;
+    gdp_write_triangle = gdp_write_triangle_init;
     gsp_depth = depth;
 #endif
     gsp_draw(ucode, dl);
@@ -2766,7 +2044,7 @@ void gsp_update(void *ucode, u32 *dl)
         pglSelectScreen(GFX_TOP, GFX_RIGHT);
         gsp_table[G_VTX] = gsp_g_vtx_stub;
     #ifndef GSP_LEGACY
-        gsp_write_triangle = gsp_write_triangle_stub;
+        gdp_write_triangle = gdp_write_triangle_stub;
     #endif
         gsp_depth = -depth;
         gsp_draw(ucode, dl);

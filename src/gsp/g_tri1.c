@@ -12,5 +12,5 @@ static void gsp_g_tri1(unused u32 w0, unused u32 w1)
     t[2] = (w0 >>  0 & 0xFF) / GSP_TRI_LEN;
 #endif
     gsp_flush_rect();
-    gsp_triangle(t);
+    gdp_triangle(t);
 }

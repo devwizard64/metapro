@@ -17,7 +17,7 @@ static void gsp_g_modifyvtx(u32 w0, u32 w1)
         case G_MWO_POINT_ST:
             vf->s = (s16)(w1 >> 16);
             vf->t = (s16)(w1 >>  0);
-            if (gsp_texture_filter != GL_NEAREST)
+            if (gdp_texture_filter != GL_NEAREST)
             {
                 vf->s += 32*0.5F;
                 vf->t += 32*0.5F;

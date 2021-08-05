@@ -101,9 +101,9 @@ static void gsp_g_vtx(u32 w0, u32 w1)
             s = v->s;
             t = v->t;
         }
-        s = (gsp_texture_vscale[0]*s + 0x8000) >> 16;
-        t = (gsp_texture_vscale[1]*t + 0x8000) >> 16;
-        if (gsp_texture_filter != GL_NEAREST)
+        s = (gsp_texture_scale[0]*s + 0x8000) >> 16;
+        t = (gsp_texture_scale[1]*t + 0x8000) >> 16;
+        if (gdp_texture_filter != GL_NEAREST)
         {
             s += 32/2;
             t += 32/2;

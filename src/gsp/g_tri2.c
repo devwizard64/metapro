@@ -9,6 +9,6 @@ static void gsp_g_tri2(u32 w0, u32 w1)
     b[1] = (w1 >>  8 & 0xFF) / GSP_TRI_LEN;
     b[2] = (w1 >>  0 & 0xFF) / GSP_TRI_LEN;
     gsp_flush_rect();
-    gsp_triangle(a);
-    gsp_triangle(b);
+    gdp_triangle(a);
+    gdp_triangle(b);
 }
