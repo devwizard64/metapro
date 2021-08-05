@@ -1020,8 +1020,8 @@ def main(argc, argv):
         data = f.read()
     data = app.patch(data)
     app_h = (
-        "#ifndef _APP_H_\n"
-        "#define _APP_H_\n"
+        "#ifndef __APP_H__\n"
+        "#define __APP_H__\n"
         "\n"
         "#include \"types.h\"\n"
         "\n"
@@ -1237,7 +1237,7 @@ def main(argc, argv):
             f.write(app_c)
     app_h += (
         "\n"
-        "#endif /* _APP_H_ */\n"
+        "#endif /* __APP_H__ */\n"
     )
     with open(os.path.join(path_build, "app.h"), "w") as f:
         f.write(app_h)
