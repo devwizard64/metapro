@@ -111,9 +111,9 @@ inst_jdst = None
 inst_maxb = None
 reg_flag  = 0
 chk_flag  = 0
-stack_min  = 0
-# stack_max  = 0
-# stack_used = False
+stack_min = 0
+# stack_max = 0
+# stack_use = False
 wret      = False
 
 def op_unpack():
@@ -623,7 +623,7 @@ def op_cop1():
 
 def op_load():
     global reg_flag
-    # global stack_used
+    # global stack_use
     global wret
     rs = gpr_i[inst_rs]
     if inst_op == 0x31:
@@ -655,7 +655,7 @@ def op_load():
         0x37: "s64",
     }[inst_op]
     # if inst_rs == 0x1D and inst_immu >= stack_min and inst_immu < stack_max:
-    #     stack_used = True
+    #     stack_use = True
     #     k = {
     #         0x20: 7,
     #         0x21: 6,
@@ -674,7 +674,7 @@ def op_load():
 
 def op_store():
     global chk_flag
-    # global stack_used
+    # global stack_use
     rs = gpr_i[inst_rs]
     if inst_op == 0x39 or inst_op == 0x3D:
         flag = 0x000100000000 << (inst_rt >> 1)
@@ -703,7 +703,7 @@ def op_store():
         0x3D: "u64",
     }[inst_op]
     # if inst_rs == 0x1D and inst_immu >= stack_min and inst_immu < stack_max:
-    #     stack_used = True
+    #     stack_use = True
     #     k = {
     #         0x28: 7,
     #         0x29: 6,
@@ -1002,7 +1002,7 @@ def main(argc, argv):
     global chk_flag
     global stack_min
     # global stack_max
-    # global stack_used
+    # global stack_use
     global wret
     if argc < 2:
         print("usage: %s <app>" % argv[0])
@@ -1097,9 +1097,9 @@ def main(argc, argv):
             #     print("    0x%08X," % addr)
             dst.append(addr)
             inst_maxb = 0
-            stack_min  = 0x00
-            # stack_max  = 0x10
-            # stack_used = False
+            stack_min = 0x00
+            # stack_max = 0x10
+            # stack_use = False
             wret = None
             while True:
                 op_unpack()
@@ -1204,9 +1204,9 @@ def main(argc, argv):
             inst_maxb = 0
             reg_flag = app.reg
             chk_flag = 0
-            stack_min  = 0x00
-            # stack_max  = 0x10
-            # stack_used = False
+            stack_min = 0x00
+            # stack_max = 0x10
+            # stack_use = False
             wret = None
             btbl = set()
             lines = []
@@ -1216,7 +1216,7 @@ def main(argc, argv):
                 addr += 4
                 if end:
                     break
-            # if stack_used:
+            # if stack_use:
             #     app_c += "    u8 stack[0x%04X];\n" % (
             #         (stack_max+0x07) & ~0x07
             #     )
