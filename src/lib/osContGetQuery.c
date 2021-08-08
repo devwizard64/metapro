@@ -1,15 +1,14 @@
 void lib_osContGetQuery(void)
 {
-    __write_u16(a0+0x00, CONT_TYPE_NORMAL);
-    __write_u8( a0+0x02, 1);
-    __write_u8( a0+0x03, 0);
-    __write_u16(a0+0x04, CONT_TYPE_NORMAL);
-    __write_u8( a0+0x06, 1);
-    __write_u8( a0+0x07, 0);
-    __write_u16(a0+0x08, CONT_TYPE_NORMAL);
-    __write_u8( a0+0x0A, 1);
-    __write_u8( a0+0x0B, 0);
-    __write_u16(a0+0x0C, CONT_TYPE_NORMAL);
-    __write_u8( a0+0x0E, 1);
-    __write_u8( a0+0x0F, 0);
+#ifdef APP_UNSM
+    os_cont_status(a0, 0, CONT_TYPE_NORMAL, 0, 0);
+    os_cont_status(a0, 1, CONT_TYPE_NORMAL, 0, 0);
+    os_cont_status(a0, 2, CONT_TYPE_NORMAL, 0, 0);
+    os_cont_status(a0, 3, CONT_TYPE_NORMAL, 0, 0);
+#else
+    os_cont_status(a0, 0, CONT_TYPE_NORMAL, 0, 0);
+    os_cont_status(a0, 1, 0, 0, CONT_NO_RESPONSE_ERROR);
+    os_cont_status(a0, 2, 0, 0, CONT_NO_RESPONSE_ERROR);
+    os_cont_status(a0, 3, 0, 0, CONT_NO_RESPONSE_ERROR);
+#endif
 }

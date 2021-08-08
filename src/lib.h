@@ -347,4 +347,4 @@ extern void lib_osAiGetLength(void);
 
 #endif /* __ASSEMBLER__ */
 
-#endif /* _LIB_H_ */
+#endif /* __LIB_H__ */

@@ -111,7 +111,7 @@ struct texture
 
 struct vp
 {
-#ifdef _EB
+#ifdef __EB__
     s16 w;
     s16 h;
     s16 d;
@@ -134,7 +134,7 @@ struct vp
 
 struct vtx
 {
-#ifdef _EB
+#ifdef __EB__
     s16 x;
     s16 y;
     s16 z;
@@ -170,7 +170,7 @@ struct light
 {
     struct
     {
-    #ifdef _EB
+    #ifdef __EB__
         u8 r;
         u8 g;
         u8 b;
@@ -183,7 +183,7 @@ struct light
     #endif
     }
     col[2];
-#ifdef _EB
+#ifdef __EB__
     s8 x;
     s8 y;
     s8 z;

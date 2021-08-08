@@ -28,6 +28,7 @@
 #define MQ_LEN                  (mq+0x10)
 #define MQ_MSG                  (mq+0x14)
 
+#define CONT_NO_RESPONSE_ERROR  0x08
 #define CONT_TYPE_NORMAL        0x0005
 
 #define OS_TV_PAL               0
@@ -37,4 +38,4 @@
 #define M_GFXTASK               1
 #define M_AUDTASK               2
 
-#endif /* _ULTRA64_H_ */
+#endif /* __ULTRA64_H__ */

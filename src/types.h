@@ -37,7 +37,7 @@ typedef u32 PTR;
 
 #ifdef __GNUC__
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
-#define _EB
+#define __EB__
 #endif
 #define unused          __attribute__((unused))
 #define fallthrough     __attribute__((fallthrough))
@@ -87,4 +87,4 @@ typedef u32 PTR;
 #define FMT_X   "X"
 #endif
 
-#endif /* _TYPES_H_ */
+#endif /* __TYPES_H__ */

@@ -31,4 +31,4 @@
 #define A_MAIN                  0x00
 #define A_MIX                   0x10
 
-#endif /* _ABI_H_ */
+#endif /* __ABI_H__ */

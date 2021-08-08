@@ -25,4 +25,4 @@ extern void tm_draw(void);
 
 #endif /* __ASSEMBLER__ */
 
-#endif /* __TIM_H__ */
+#endif /* __TM_H__ */

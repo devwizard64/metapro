@@ -12,7 +12,7 @@
 #include "gsp.h"
 
 #define CPU_MODE_BYTESWAP   0x40123780
-#ifdef _EB
+#ifdef __EB__
 #define CPU_MODE_WORDSWAP   0x37804012
 #else
 #define CPU_MODE_WORDSWAP   0x12408037
@@ -103,7 +103,7 @@ void __byteswap(void *dst, const void *src, s32 size)
 
 void __wordswap(void *dst, const void *src, s32 size)
 {
-#ifdef _EB
+#ifdef __EB__
     u8 *_dst = dst;
     const u8 *_src = src;
     do

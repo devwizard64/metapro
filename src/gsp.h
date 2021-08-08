@@ -12,4 +12,4 @@ extern void gsp_update(void *, u32 *);
 
 #endif /* __ASSEMBLER__ */
 
-#endif /* _GSP_H_ */
+#endif /* __GSP_H__ */

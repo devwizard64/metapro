@@ -20,7 +20,7 @@ APP_OBJ := $(shell python3 main.py $(APP) $(BUILD)/app/)
 APP_SRC := $(addprefix build/$(APP)/,$(notdir $(APP_OBJ:.o=.c)))
 
 FLAG    := -I src -I build/$(APP)
-FLAG    += -Wall -Wextra -Wpedantic -fno-strict-aliasing -Ofast
+FLAG    += -fno-strict-aliasing -Wall -Wextra -Wpedantic -Ofast
 FLAG    += -ggdb3 -D __DEBUG__
 
 ifeq ($(TARGET),native)

@@ -30,7 +30,7 @@
 #define PATH_INPUT  PATH_ROOT  "input.bin"
 #define PATH_CONFIG PATH_START "config.bin"
 
-#ifdef _EB
+#ifdef __EB__
 #define IX      1
 #define AX_B    0
 #define AX_H    0
@@ -172,4 +172,4 @@ extern void cpu_destroy(void);
 
 #endif /* __ASSEMBLER__ */
 
-#endif /* _CPU_H_ */
+#endif /* __CPU_H__ */

@@ -9,4 +9,4 @@ extern void asp_update(u32 *, uint);
 
 #endif /* __ASSEMBLER__ */
 
-#endif /* _ASP_H_ */
+#endif /* __ASP_H__ */

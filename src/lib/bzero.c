@@ -1,6 +1,6 @@
 void lib_bzero(void)
 {
-#ifdef _EB
+#ifdef __EB__
     memset(__tlb(a0), 0x00, a1);
 #else
     while (a1-- != 0)

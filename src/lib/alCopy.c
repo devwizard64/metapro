@@ -1,6 +1,6 @@
 void lib_alCopy(void)
 {
-#ifdef _EB
+#ifdef __EB__
     memmove(__tlb(a0), __tlb(a1), a2);
 #else
     while (a2-- != 0)

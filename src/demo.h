@@ -9,4 +9,4 @@ extern void demo_main(void);
 
 #endif /* __ASSEMBLER__ */
 
-#endif /* _DEMO_H_ */
+#endif /* __DEMO_H__ */

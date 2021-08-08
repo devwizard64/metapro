@@ -369,4 +369,4 @@
 #define G_OBJRM_WIDEN           0x40
 #endif
 
-#endif /* _GBI_H_ */
+#endif /* __GBI_H__ */

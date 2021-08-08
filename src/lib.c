@@ -26,20 +26,20 @@
 
 #include "ultra64.h"
 
-#define VIDEO_SCALE             4
+#define VIDEO_SCALE     2
 
 /* #define INPUT_WRITE */
 
 #ifdef __3DS__
-#define CONFIG_FLAG_STICK_X     0x01
-#define CONFIG_FLAG_STICK_Y     0x02
-#define CONFIG_FLAG_AUDIO       0x04
-#define CONFIG_FLAG_HI_H        0x08
-#define CONFIG_FLAG_AA_H        0x10
-#define CONFIG_FLAG_AA_V        0x20
+#define CFG_STICK_X     (1 << 0)
+#define CFG_STICK_Y     (1 << 1)
+#define CFG_AUDIO       (1 << 2)
+#define CFG_HI_H        (1 << 3)
+#define CFG_AA_H        (1 << 4)
+#define CFG_AA_V        (1 << 5)
 #endif
 #ifdef GEKKO
-#define CONFIG_FLAG_AUDIO       0x01
+#define CFG_AUDIO       (1 << 0)
 #endif
 
 #define THREAD_STACK_SIZE       0x4000
@@ -143,7 +143,7 @@ static const struct config lib_config_default =
     KEY_SELECT,
     KEY_ZL,
     KEY_ZR,
-    CONFIG_FLAG_STICK_X | CONFIG_FLAG_STICK_Y | CONFIG_FLAG_AUDIO,
+    CFG_STICK_X | CFG_STICK_Y | CFG_AUDIO,
 #endif
 #ifdef GEKKO
     {
@@ -171,7 +171,7 @@ static const struct config lib_config_default =
     PAD_BUTTON_DOWN,
     PAD_BUTTON_LEFT,
     PAD_BUTTON_RIGHT,
-    CONFIG_FLAG_AUDIO,
+    CFG_AUDIO,
 #endif
 };
 #endif
@@ -244,13 +244,28 @@ static size_t         lib_input_size = 0;
 static struct os_pad  lib_pad        = {0};
 #endif
 
+#define os_cont_status(ptr, i, type, status, errno) \
+{                                                   \
+    __write_u16((ptr)+4*(i)+0, type);               \
+    __write_u8 ((ptr)+4*(i)+2, status);             \
+    __write_u8 ((ptr)+4*(i)+3, errno);              \
+}
+
+#define os_cont_pad(ptr, i, button, stick_x, stick_y, errno)    \
+{                                                               \
+    __write_u16((ptr)+6*(i)+0, button);                         \
+    __write_u8 ((ptr)+6*(i)+2, stick_x);                        \
+    __write_u8 ((ptr)+6*(i)+3, stick_y);                        \
+    __write_u8 ((ptr)+6*(i)+4, errno);                          \
+}
+
 #ifndef APP_SEQ
 void mtx_read(f32 *dst, const s16 *src)
 {
     uint cnt = 4*4;
     do
     {
-    #ifdef _EB
+    #ifdef __EB__
         dst[0x00] = (1.0F/0x10000) * (s32)(src[0x00] << 16 | (u16)src[0x10]);
         dst[0x01] = (1.0F/0x10000) * (s32)(src[0x01] << 16 | (u16)src[0x11]);
     #else
@@ -271,7 +286,7 @@ void mtx_write(s16 *dst, const f32 *src)
     {
         s32 a = 0x10000 * src[0x00];
         s32 b = 0x10000 * src[0x01];
-    #ifdef _EB
+    #ifdef __EB__
         dst[0x00] = a >> 16;
         dst[0x01] = b >> 16;
         dst[0x10] = a >>  0;
@@ -800,7 +815,7 @@ static void video_init(void)
 #endif
 #ifdef __3DS__
     gfxInitDefault();
-    if (lib_config.flag & CONFIG_FLAG_HI_H)
+    if (lib_config.flag & CFG_HI_H)
     {
         gfxSetWide(true);
         video_update_size(800, 240);
@@ -1055,13 +1070,31 @@ static void input_update(void)
 #endif
     if (lib_input_size > 0)
     {
-    #ifdef GEKKO
+    #ifdef __EB__
         lib_pad.button  = lib_input->button;
     #else
         lib_pad.button  = lib_input->button >> 8 | lib_input->button << 8;
     #endif
         lib_pad.stick_x = lib_input->stick_x;
         lib_pad.stick_y = lib_input->stick_y;
+        pdebug(
+            "X:%+4d  Y:%+4d  [%c%c%c|%c%c%c%c%c%c|%c%c%c]  F:%d\n",
+            lib_pad.stick_x,
+            lib_pad.stick_y,
+            (lib_pad.button & 0x0200) ? '<' : ' ',
+            " v^X"[lib_pad.button >> 10 & 3],
+            (lib_pad.button & 0x0100) ? '>' : ' ',
+            (lib_pad.button & 0x8000) ? 'A' : ' ',
+            (lib_pad.button & 0x4000) ? 'B' : ' ',
+            (lib_pad.button & 0x2000) ? 'Z' : ' ',
+            (lib_pad.button & 0x1000) ? 'S' : ' ',
+            (lib_pad.button & 0x0020) ? 'L' : ' ',
+            (lib_pad.button & 0x0010) ? 'R' : ' ',
+            (lib_pad.button & 0x0002) ? '<' : ' ',
+            " v^X"[lib_pad.button >> 2 & 3],
+            (lib_pad.button & 0x0001) ? '>' : ' ',
+            (uint)(lib_input-lib_input_data)
+        );
         lib_input++;
         lib_input_size -= sizeof(*lib_input);
         if (lib_input_size == 0)
@@ -1158,11 +1191,11 @@ static void input_update(void)
         }
     #else
     #ifdef __3DS__
-        if (lib_config.flag & CONFIG_FLAG_STICK_X)
+        if (lib_config.flag & CFG_STICK_X)
         {
             lib_pad.stick_x = stick.dx/2;
         }
-        if (lib_config.flag & CONFIG_FLAG_STICK_Y)
+        if (lib_config.flag & CFG_STICK_Y)
         {
             lib_pad.stick_y = stick.dy/2;
         }
@@ -1212,7 +1245,7 @@ static void input_update(void)
         }
     #endif
     #ifdef INPUT_WRITE
-    #ifdef GEKKO
+    #ifdef __EB__
         lib_input->button  = lib_pad.button;
     #else
         lib_input->button  = lib_pad.button >> 8 | lib_pad.button << 8;
@@ -1876,7 +1909,7 @@ LIB_SE(__ll_mul)
 LIB_S0(__osMotorAccess)
 LIB_S0(osMotorInit)
 LIB_S0(osContReset)
-LIB_SE(osEepromWrite)
+#include "lib/osEepromWrite.c"
 #include "lib/osCreateThread.c"
 #include "lib/osContStartReadData.c"
 #include "lib/osContGetReadData.c"
