@@ -1,7 +1,7 @@
 /* header says it returns a s32, but the asm doesn't set v0 */
 void lib_osSpTaskStartGo(void)
 {
-    PTR   task  = a0.i[IX];
+    PTR   task  = a0;
 #ifndef APP_SEQ
     u32   type  = __read_u32(task+0x00);
     void *ucode = __tlb(__read_s32(task+0x10));

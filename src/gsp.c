@@ -338,7 +338,7 @@ static u32 gdp_texrect[4];
 
 static u32 gdp_othermode_l;
 static u32 gdp_othermode_h;
-static u8  gdp_cycle;
+static u32 gdp_cycle;
 static u8  gdp_rect;
 
 static struct vp     gsp_viewport;
@@ -386,7 +386,7 @@ static bool gsp_cache_flag;
 static u8     gdp_texture_filter;
 #else
 static struct texture gdp_texture_table[GDP_TEXTURE_LEN];
-static GLuint gdp_texture_name_table[GDP_TEXTURE_LEN];
+static GLuint gdp_texture_name[GDP_TEXTURE_LEN];
 static u32    gdp_texture;
 static GLuint gdp_texture_filter;
 #endif
@@ -745,12 +745,14 @@ static void gsp_flush_cull(void)
 {
     if (gdp_rect == 0)
     {
-    #ifdef GEKKO
-        /* GX_SetCullMode(gsp_geometry_mode >> G_CULL_SHIFT & 0x03); */
-        GX_SetCullMode(GX_CULL_NONE);
-    #else
         switch (gsp_geometry_mode & G_CULL_BOTH)
         {
+        #ifdef GEKKO
+            case 0:             GX_SetCullMode(GX_CULL_NONE);   break;
+            case G_CULL_FRONT:  GX_SetCullMode(GX_CULL_BACK);   break;
+            case G_CULL_BACK:   GX_SetCullMode(GX_CULL_FRONT);  break;
+            case G_CULL_BOTH:   GX_SetCullMode(GX_CULL_ALL);    break;
+        #else
             case 0:
                 glDisable(GL_CULL_FACE);
                 break;
@@ -766,14 +768,13 @@ static void gsp_flush_cull(void)
                 glEnable(GL_CULL_FACE);
                 glCullFace(GL_FRONT_AND_BACK);
                 break;
+        #endif
         }
-    #endif
     }
     else
     {
     #ifdef GEKKO
-        /* GX_SetCullMode(GX_CULL_BACK); */
-        GX_SetCullMode(GX_CULL_NONE);
+        GX_SetCullMode(GX_CULL_FRONT);
     #else
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
@@ -797,44 +798,20 @@ static void gsp_flush_rendermode(void)
         EN_BL ? GX_BM_BLEND : GX_BM_NONE, GX_BL_SRCALPHA, GX_BL_INVSRCALPHA,
         GX_LO_NOOP
     );
-    GX_SetCoPlanar(EN_DE);
+    /* GX_SetCoPlanar(EN_DE); */
     GX_SetAlphaCompare(
         EN_AC ? GX_GEQUAL : GX_ALWAYS, 0x20, GX_AOP_AND, GX_ALWAYS, 0x00
     );
 #else
-    if (EN_ZR)
-    {
-        glEnable(GL_DEPTH_TEST);
-    }
-    else
-    {
-        glDisable(GL_DEPTH_TEST);
-    }
+    if (EN_ZR)  glEnable(GL_DEPTH_TEST);
+    else        glDisable(GL_DEPTH_TEST);
     glDepthMask(EN_ZW);
-    if (EN_BL)
-    {
-        glEnable(GL_BLEND);
-    }
-    else
-    {
-        glDisable(GL_BLEND);
-    }
-    if (EN_DE)
-    {
-        glPolygonOffset(-1, -2);
-    }
-    else
-    {
-        glPolygonOffset(0, 0);
-    }
-    if (EN_AC)
-    {
-        glEnable(GL_ALPHA_TEST);
-    }
-    else
-    {
-        glDisable(GL_ALPHA_TEST);
-    }
+    if (EN_BL)  glEnable(GL_BLEND);
+    else        glDisable(GL_BLEND);
+    if (EN_DE)  glPolygonOffset(-1, -2);
+    else        glPolygonOffset(0, 0);
+    if (EN_AC)  glEnable(GL_ALPHA_TEST);
+    else        glDisable(GL_ALPHA_TEST);
 #endif
 }
 #undef EN_ZR
@@ -931,7 +908,7 @@ static void gsp_flush_texture(void)
     for (i = 0; i < gdp_texture; i++)
     {
         struct texture *texture = &gdp_texture_table[i];
-        GLuint *name = &gdp_texture_name_table[i];
+        GLuint *name = &gdp_texture_name[i];
         if (texture->addr == addr && texture->filter == filter)
         {
             glBindTexture(GL_TEXTURE_2D, *name);
@@ -941,7 +918,7 @@ static void gsp_flush_texture(void)
     if (gdp_texture < GDP_TEXTURE_LEN)
     {
         struct texture *texture = &gdp_texture_table[gdp_texture];
-        GLuint *name = &gdp_texture_name_table[i];
+        GLuint *name = &gdp_texture_name[i];
         GDP_TEXTURE_READ *texture_read;
         texture->addr   = addr;
         texture->filter = filter;
@@ -975,7 +952,7 @@ static void gsp_flush_texture(void)
         #if 0
             wdebug(
                 "unknown texture fmt G_IM_FMT_%s, G_IM_SIZ_%db\n",
-                str_im_fmt[gsp_texture_fmt >> 2], 4 << (gsp_texture_fmt & 0x03)
+                str_im_fmt[gsp_texture_fmt >> 2], 4 << (gsp_texture_fmt & 3)
             );
         #endif
         }
@@ -995,8 +972,8 @@ static void gsp_flush_triangles(void)
     #ifdef GEKKO
         uint i;
         GX_SetArray(GX_VA_POS,  gdp_output_vtx, sizeof(s16)*3);
+        GX_SetArray(GX_VA_CLR0, gdp_output_col, sizeof(u8) *4);
         GX_SetArray(GX_VA_TEX0, gdp_output_txc, sizeof(f32)*2);
-        GX_SetArray(GX_VA_CLR0, gdp_output_col, sizeof(u8)*4);
         GX_Begin(GX_TRIANGLES, GX_VTXFMT0, gdp_output_count);
         for (i = 0; i < gdp_output_count; i++)
         {
@@ -1237,11 +1214,11 @@ static void gsp_g_rdphalf_cont(unused u32 w0, unused u32 w1)
 
 #ifdef GSP_F3D_20D
 #ifdef __DEBUG__
-static void gsp_g_perspnorm(unused u32 w0, unused u32 w1)
+static void gsp_g_perspnormalize(unused u32 w0, unused u32 w1)
 {
 }
 #else
-#define gsp_g_perspnorm         NULL
+#define gsp_g_perspnormalize    NULL
 #endif
 #endif
 
@@ -1681,7 +1658,7 @@ static GSP *gsp_table[] =
     /* 0xB1 */  gsp_g_rdphalf_cont,
     /* 0xB2 */  gsp_g_rdphalf_2,
     /* 0xB3 */  gsp_g_rdphalf_1,
-    /* 0xB4 */  gsp_g_perspnorm,
+    /* 0xB4 */  gsp_g_perspnormalize,
 #else
     /* 0xB1 */  NULL,
     /* 0xB2 */  gsp_g_rdphalf_cont,
@@ -1850,11 +1827,11 @@ void gsp_init(void)
     GX_ClearVtxDesc();
     GX_SetCurrentMtx(GX_PNMTX0);
     GX_SetVtxDesc(GX_VA_POS,  GX_INDEX16);
-    GX_SetVtxDesc(GX_VA_TEX0, GX_INDEX16);
     GX_SetVtxDesc(GX_VA_CLR0, GX_INDEX16);
+    GX_SetVtxDesc(GX_VA_TEX0, GX_INDEX16);
     GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS,  GX_POS_XYZ,  GX_S16,   0);
-    GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST,   GX_F32,   0);
     GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+    GX_SetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_ST,   GX_F32,   0);
     GX_SetNumChans(1);
     GX_SetNumTexGens(1);
     GX_SetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP_NULL, GX_COLOR0A0);
@@ -1960,8 +1937,8 @@ static void gsp_start(void *ucode, u32 *dl)
     }
     gsp_dl_stack[0] = dl;
     gsp_dl_index = 0;
-    gsp_lookat = false;
     gsp_light_new = false;
+    gsp_lookat = false;
     gdp_rect = 0;
     gsp_change = CHANGE_MTXF_PROJECTION | CHANGE_MTXF_MODELVIEW;
 }
@@ -2024,7 +2001,7 @@ void gsp_update(void *ucode, u32 *dl)
     #ifndef GEKKO
         if (gdp_texture > 0)
         {
-            glDeleteTextures(gdp_texture, gdp_texture_name_table);
+            glDeleteTextures(gdp_texture, gdp_texture_name);
             gdp_texture = 0;
         }
     #endif

@@ -64,7 +64,7 @@ struct thread
     PTR     entry;
     s32     id;
     s32     pri;
-    REG     reg[lenof(cpu_reg)];
+    struct cpu cpu;
 };
 
 struct os_event
@@ -641,19 +641,19 @@ static void thread_init(PTR addr, s32 id, PTR entry, s32 arg, s32 s, u32 pri)
     struct thread *thread = malloc(sizeof(*thread));
     thread_llink(thread);
 #ifdef __NATIVE__
-    thread->stack        = malloc(THREAD_STACK_SIZE);
+    thread->stack   = malloc(THREAD_STACK_SIZE);
 #else
-    thread->stack        = memalign(0x20, THREAD_STACK_SIZE);
+    thread->stack   = memalign(0x20, THREAD_STACK_SIZE);
 #endif
-    thread->init         = true;
-    thread->ready        = true;
-    thread->qlink        = false;
-    thread->addr         = addr;
-    thread->entry        = entry;
-    thread->id           = id;
-    thread->pri          = pri;
-    thread->reg[R_A0].ll = arg;
-    thread->reg[R_SP].ll = s - 0x10;
+    thread->init    = true;
+    thread->ready   = true;
+    thread->qlink   = false;
+    thread->addr    = addr;
+    thread->entry   = entry;
+    thread->id      = id;
+    thread->pri     = pri;
+    thread->a0      = arg;
+    thread->sp      = s - 0x10;
 }
 
 static void thread_start(struct thread *thread)
@@ -704,9 +704,9 @@ static void lib_event(struct os_event *event)
 {
     if (event->mq != NULLPTR)
     {
-        a0.i[IX] = event->mq;
-        a1.i[IX] = event->msg;
-        a2.i[IX] = OS_MESG_NOBLOCK;
+        a0 = event->mq;
+        a1 = event->msg;
+        a2 = OS_MESG_NOBLOCK;
         lib_osSendMesg();
     }
 }
@@ -1175,10 +1175,11 @@ static void input_update(void)
                 int axis;
                 switch (lib_config.input[i] >> 8)
                 {
-                    case 0x80: axis = PAD_StickX(0);    break;
-                    case 0x81: axis = PAD_StickY(0);    break;
-                    case 0x82: axis = PAD_SubStickX(0); break;
-                    case 0x83: axis = PAD_SubStickY(0); break;
+                    case 0x80:  axis = PAD_StickX(0);       break;
+                    case 0x81:  axis = PAD_StickY(0);       break;
+                    case 0x82:  axis = PAD_SubStickX(0);    break;
+                    case 0x83:  axis = PAD_SubStickY(0);    break;
+                    default:    axis = 0;                   break;
                 }
                 axis = axis*(s8)lib_config.input[i]/100;
                 switch (mask)
@@ -1449,7 +1450,7 @@ void lib_main(void (*start)(void))
         }
         if (thread != NULL)
         {
-            memcpy(thread->reg, cpu_reg, sizeof(cpu_reg));
+            memcpy(&thread->cpu, &cpu, sizeof(cpu));
         }
         if (arg == THREAD_YIELD_BREAK)
         {
@@ -1472,7 +1473,7 @@ void lib_main(void (*start)(void))
             lib_update();
         }
         lib_thread = thread;
-        memcpy(cpu_reg, thread->reg, sizeof(cpu_reg));
+        memcpy(&cpu, &thread->cpu, sizeof(cpu));
         if (thread->init)
         {
             register void *stack;
@@ -1546,7 +1547,7 @@ void lib_init(void)
 #else
 #define LIB_SE(f) void lib_##f(void) {}
 #endif
-#define LIB_S0(f) void lib_##f(void) {v0.ll = (s32)0;}
+#define LIB_S0(f) void lib_##f(void) {v0 = 0;}
 
 #ifdef APP_UNSM
 #ifdef APP_E0
@@ -1674,12 +1675,12 @@ LIB_SV(80308350)
 
 void lib_80308D10(void)
 {
-    v0.ll = (s32)5;
+    v0 = 5;
 }
 
 void lib_80308D18(void)
 {
-    v0.ll = (s32)11;
+    v0 = 11;
 }
 
 /*
@@ -1694,38 +1695,38 @@ LIB_SV(osWritebackDCache)
 #endif
 
 #ifdef APP_E4
-struct meme_t
+struct meme
 {
     u8  type;
     u32 id;
 };
 
-#define mq_app_vi   0x8033B010
-#define msg_app_vi  0x8033B040
-#define vq_app      0x8033B048
+#define mq_app_vi   (s32)0x8033B010
+#define msg_app_vi  (s32)0x8033B040
+#define sc_app      (s32)0x8033B048
 void lib_80248AF0(void)
 {
-    a0.i[IX] = mq_app_vi;
-    a1.i[IX] = msg_app_vi;
-    a2.i[IX] = 1;
+    a0 = mq_app_vi;
+    a1 = msg_app_vi;
+    a2 = 1;
     lib_osCreateMesgQueue();
-    a0.i[IX] = 2;
-    a1.i[IX] = vq_app;
-    a2.i[IX] = mq_app_vi;
-    a3.i[IX] = 1;
+    a0 = 2;
+    a1 = sc_app;
+    a2 = mq_app_vi;
+    a3 = 1;
     app_80246B14();
-    a0.i[IX] = 2;
-    a1.i[IX] = 0;
-    a2.i[IX] = 0;
+    a0 = 2;
+    a1 = 0;
+    a2 = 0;
     app_803219AC();
-    a0.i[IX] = 0;
+    a0 = 0;
     app_80248E08();
     __write_u16(0x8032DDF8, 32);
     if (0 == 0)
     {
-        a0.i[IX] = 0;
-        a1.i[IX] = 0x0021;
-        a2.i[IX] = 0x0000;
+        a0 = 0;
+        a1 = 0x0021;
+        a2 = 0x0000;
         app_803219AC();
     }
     else
@@ -1733,20 +1734,20 @@ void lib_80248AF0(void)
         __write_f32(0x80000400, 0);
         __write_f32(0x80000404, 0);
         __write_f32(0x80000408, 0);
-        a0.i[IX] = 0x24228081;
-        a1.i[IX] = 0x80000400;
+        a0 = 0x24228081;
+        a1 = 0x80000400;
         app_8031EB00();
     }
     while (true)
     {
         app_802494D8();
-        a0.i[IX] = mq_app_vi;
-        a1.i[IX] = 0;
-        a2.i[IX] = OS_MESG_BLOCK;
+        a0 = mq_app_vi;
+        a1 = 0;
+        a2 = OS_MESG_BLOCK;
         lib_osRecvMesg();
-        a0.i[IX] = mq_app_vi;
-        a1.i[IX] = 0;
-        a2.i[IX] = OS_MESG_BLOCK;
+        a0 = mq_app_vi;
+        a1 = 0;
+        a2 = OS_MESG_BLOCK;
         lib_osRecvMesg();
     }
 }

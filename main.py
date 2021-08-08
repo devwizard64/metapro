@@ -14,74 +14,77 @@ gpr = [
     "gp", "sp", "fp", "ra",
 ]
 
-gpr_i   = [gpr[i] + (".i[IX]"  if i != 0x00 else "") for i in range(len(gpr))]
-gpr_iu  = [gpr[i] + (".iu[IX]" if i != 0x00 else "") for i in range(len(gpr))]
-gpr_ll  = [gpr[i] + (".ll"     if i != 0x00 else "") for i in range(len(gpr))]
-gpr_llu = [gpr[i] + (".llu"    if i != 0x00 else "") for i in range(len(gpr))]
-
 cop1_fmt = {
     0x10: "f[IX]",
     0x11: "d",
     0x14: "i[IX]",
 }
 
-cpu_reg = [
-    # (0x0000000000000001, "r0"),
-    (0x0000000000000002, "at"),
-    (0x0000000000000004, "v0"),
-    (0x0000000000000008, "v1"),
-    (0x0000000000000010, "a0"),
-    (0x0000000000000020, "a1"),
-    (0x0000000000000040, "a2"),
-    (0x0000000000000080, "a3"),
-    (0x0000000000000100, "t0"),
-    (0x0000000000000200, "t1"),
-    (0x0000000000000400, "t2"),
-    (0x0000000000000800, "t3"),
-    (0x0000000000001000, "t4"),
-    (0x0000000000002000, "t5"),
-    (0x0000000000004000, "t6"),
-    (0x0000000000008000, "t7"),
-    (0x0000000000010000, "s0"),
-    (0x0000000000020000, "s1"),
-    (0x0000000000040000, "s2"),
-    (0x0000000000080000, "s3"),
-    (0x0000000000100000, "s4"),
-    (0x0000000000200000, "s5"),
-    (0x0000000000400000, "s6"),
-    (0x0000000000800000, "s7"),
-    (0x0000000001000000, "t8"),
-    (0x0000000002000000, "t9"),
-    # (0x0000000004000000, "k0"),
-    # (0x0000000008000000, "k1"),
-    (0x0000000010000000, "gp"), # [C]
-    (0x0000000020000000, "sp"),
-    (0x0000000040000000, "fp"),
-    (0x0000000080000000, "ra"),
-    (0x0001000000000000, "lo"),
-    (0x0001000000000000, "hi"),
-    (0x0000000100000000, "f0"),
-    (0x0000000200000000, "f2"),
-    (0x0000000400000000, "f4"),
-    (0x0000000800000000, "f6"),
-    (0x0000001000000000, "f8"),
-    (0x0000002000000000, "f10"),
-    (0x0000004000000000, "f12"),
-    (0x0000008000000000, "f14"),
-    (0x0000010000000000, "f16"),
-    (0x0000020000000000, "f18"),
-    (0x0000040000000000, "f20"),
-    (0x0000080000000000, "f22"),
-    (0x0000100000000000, "f24"),
-    (0x0000200000000000, "f26"),
-    (0x0000400000000000, "f28"),
-    (0x0000800000000000, "f30"),
+reg_cpu = [
+    # (1 <<  0, "r0"),
+    (1 <<  1, "at"),
+    (1 <<  2, "v0"),
+    (1 <<  3, "v1"),
+    (1 <<  4, "a0"),
+    (1 <<  5, "a1"),
+    (1 <<  6, "a2"),
+    (1 <<  7, "a3"),
+    (1 <<  8, "t0"),
+    (1 <<  9, "t1"),
+    (1 << 10, "t2"),
+    (1 << 11, "t3"),
+    (1 << 12, "t4"),
+    (1 << 13, "t5"),
+    (1 << 14, "t6"),
+    (1 << 15, "t7"),
+    (1 << 16, "s0"),
+    (1 << 17, "s1"),
+    (1 << 18, "s2"),
+    (1 << 19, "s3"),
+    (1 << 20, "s4"),
+    (1 << 21, "s5"),
+    (1 << 22, "s6"),
+    (1 << 23, "s7"),
+    (1 << 24, "t8"),
+    (1 << 25, "t9"),
+    # (1 << 26, "k0"),
+    # (1 << 27, "k1"),
+    (1 << 28, "gp"), # [C]
+    (1 << 29, "sp"),
+    (1 << 30, "fp"),
+    (1 << 31, "ra"),
+]
+
+reg_fpu = [
+    (1 << 32, "f0"),
+    (1 << 33, "f2"),
+    (1 << 34, "f4"),
+    (1 << 35, "f6"),
+    (1 << 36, "f8"),
+    (1 << 37, "f10"),
+    (1 << 38, "f12"),
+    (1 << 39, "f14"),
+    (1 << 40, "f16"),
+    (1 << 41, "f18"),
+    (1 << 42, "f20"),
+    (1 << 43, "f22"),
+    (1 << 44, "f24"),
+    (1 << 45, "f26"),
+    (1 << 46, "f28"),
+    (1 << 47, "f30"),
+]
+
+reg_lohi = [
+    (1 << 48, "lo"),
+    (1 << 48, "hi"),
 ]
 
 stack_reg = [
-    ["REG", cpu_reg],
+    ["s32", reg_cpu],
+    ["REG", reg_fpu],
+    ["s32", reg_lohi],
     ["uint ", [
-        (0x0002000000000000, "c1c"),
+        (1 << 49, "c1c"),
     ]],
 ]
 
@@ -111,6 +114,7 @@ inst_jdst = None
 inst_maxb = None
 reg_flag  = 0
 chk_flag  = 0
+rll_flag  = 0
 stack_min = 0
 # stack_max = 0
 # stack_use = False
@@ -164,46 +168,33 @@ def op_unpack():
 
 def op_process():
     op_unpack()
-    if inst == 0x1000FFFF:
-        # print("    0x%08X," % addr)
-        return [(addr, "")], False
-    if inst == 0x10000001:
+    if inst in {0x1000FFFF, 0x10000001}:
         return [(addr, "")], False
     return op_table[inst_op]()
 
 def op_maxb(jt):
     global inst_maxb
     if jt & 2:
-        if inst_maxb < inst_bdst:
-            inst_maxb = inst_bdst
+        if inst_maxb < inst_bdst:   inst_maxb = inst_bdst
     else:
-        if inst_maxb < inst_jdst:
-            inst_maxb = inst_jdst
+        if inst_maxb < inst_jdst:   inst_maxb = inst_jdst
     return jt
 
 def op_jt():
     if inst == 0x10000001:
         return 0
     # if inst_op == 0x00:
-    #     if inst_func == 0x08:
-    #         return op_maxb(1)
+    #     if inst_func == 0x08:               return op_maxb(1)
     if inst_op == 0x01:
-        if inst_rt in {0x00, 0x01}:
-            return op_maxb(2)
-        if inst_rt in {0x02, 0x03}:
-            return op_maxb(3)
+        if inst_rt in {0x00, 0x01}:         return op_maxb(2)
+        if inst_rt in {0x02, 0x03}:         return op_maxb(3)
     if inst_op == 0x11:
         if inst_rs == 0x08:
-            if inst_rt in {0x00, 0x01}:
-                return op_maxb(2)
-            if inst_rt in {0x02, 0x03}:
-                return op_maxb(3)
-    if inst_op == 0x02:
-        return op_maxb(1)
-    if inst_op in {0x04, 0x05, 0x06, 0x07}:
-        return op_maxb(2)
-    if inst_op in {0x14, 0x15, 0x16, 0x17}:
-        return op_maxb(3)
+            if inst_rt in {0x00, 0x01}:     return op_maxb(2)
+            if inst_rt in {0x02, 0x03}:     return op_maxb(3)
+    if inst_op == 0x02:                     return op_maxb(1)
+    if inst_op in {0x04, 0x05, 0x06, 0x07}: return op_maxb(2)
+    if inst_op in {0x14, 0x15, 0x16, 0x17}: return op_maxb(3)
     return 0
 
 def op_end():
@@ -214,35 +205,41 @@ def op_null():
 
 def op_shift():
     global reg_flag
-    reg_flag |= 0x0000000000000001 << inst_rd
+    global rll_flag
+    flag = 1 << inst_rd
+    reg_flag |= flag
     if inst == 0x00000000:
         return [(addr, "")], False
+    if inst_func in {0x3C, 0x3E, 0x3F}:
+        rll_flag |= flag
     if inst_func in {0x04, 0x06, 0x07}:
         mask = {
             0x04: 0x1F,
             0x06: 0x1F,
             0x07: 0x1F,
         }[inst_func]
-        rs = "(%s & 0x%02X)" % (gpr_i[inst_rs], mask)
+        rs = "(%s & 0x%02X)" % (gpr[inst_rs], mask)
     else:
         sa = inst_sa
         if inst_func in {0x3C, 0x3E, 0x3F}:
             sa += 32
         rs = "%d" % sa
-    op, gpr_rd, gpr_rt = {
-        0x00: ("<<", gpr_i, gpr_iu),
-        0x02: (">>", gpr_i, gpr_iu),
-        0x03: (">>", gpr_i, gpr_i),
-        0x04: ("<<", gpr_i, gpr_iu),
-        0x06: (">>", gpr_i, gpr_iu),
-        0x07: (">>", gpr_i, gpr_i),
-        0x3C: ("<<", gpr_ll, gpr_llu),
-        0x3E: (">>", gpr_ll, gpr_llu),
-        0x3F: (">>", gpr_ll, gpr_ll),
+    op, td, t = {
+        0x00: ("<<", "(s32)", "(u32)"),
+        0x02: (">>", "(s32)", "(u32)"),
+        0x03: (">>", "(s32)", "(s32)"),
+        0x04: ("<<", "(s32)", "(u32)"),
+        0x06: (">>", "(s32)", "(u32)"),
+        0x07: (">>", "(s32)", "(s32)"),
+        0x3C: ("<<", "(s64)", "(u64)"),
+        0x3E: (">>", "(s64)", "(u64)"),
+        0x3F: (">>", "(s64)", "(s64)"),
     }[inst_func]
-    rt = gpr_rt[inst_rt]
-    rd = gpr_rd[inst_rd]
-    return [(addr, "    %s = %s %s %s;\n" % (rd, rt, op, rs))], False
+    rt = gpr[inst_rt]
+    rd = gpr[inst_rd]
+    return [(addr, "    %s = %s(%s%s %s %s%s);\n" % (
+        rd, td, t, rt, op, t, rs
+    ))], False
 
 def op_jr():
     global addr
@@ -256,9 +253,9 @@ def op_jr():
         end = addr-4 >= inst_maxb
     else:
         line = (
-            "    switch (%s)\n"
+            "    switch ((PTR)%s)\n"
             "    {\n"
-        ) % gpr_iu[rs]
+        ) % gpr[rs]
         a = addr
         addr = addr_s
         wret = False
@@ -277,7 +274,7 @@ def op_jr():
 
 def op_jalr():
     global addr
-    rs = gpr_iu[inst_rs]
+    rs = gpr[inst_rs]
     addr += 4
     next, end = op_process()
     l = next[0][1] if len(next) > 0 else ""
@@ -289,75 +286,80 @@ def op_break():
 
 def op_mfhilo():
     global reg_flag
-    reg_flag |= 0x0000000000000001 << inst_rd
-    rd = gpr_ll[inst_rd]
+    reg_flag |= 1 << inst_rd
+    rd = gpr[inst_rd]
     src = {
-        0x10: "hi.ll",
-        0x12: "lo.ll",
+        0x10: "hi",
+        0x12: "lo",
     }[inst_func]
     return [(addr, "    %s = %s;\n" % (rd, src))], False
 
 def op_multdiv():
     global reg_flag
-    reg_flag |= 0x0001000000000000
+    reg_flag |= 1 << 48
     line = ""
     if inst_func in {0x18, 0x19}:
-        x, gpr_t = {
-            0x18: ("s64", gpr_i),
-            0x19: ("u64", gpr_iu),
+        x, t = {
+            0x18: ("s64", "(s32)"),
+            0x19: ("u64", "(u32)"),
         }[inst_func]
-        rs = gpr_t[inst_rs]
-        rt = gpr_t[inst_rt]
+        rs = gpr[inst_rs]
+        rt = gpr[inst_rt]
         line += (
             "    {\n"
-            "        %s x = %s * %s;\n"
-            "        lo.ll = (s32)(x >>  0);\n"
-            "        hi.ll = (s32)(x >> 32);\n"
+            "        %s x = %s%s * %s%s;\n"
+            "        lo = x >>  0;\n"
+            "        hi = x >> 32;\n"
             "    }\n"
-        ) % (x, rs, rt)
+        ) % (x, t, rs, t, rt)
     if inst_func in {0x1A, 0x1B, 0x1E, 0x1F}:
-        gpr_t = {
-            0x1A: gpr_i,
-            0x1B: gpr_iu,
-            0x1E: gpr_ll,
-            0x1F: gpr_llu,
+        t = {
+            0x1A: "(s32)",
+            0x1B: "(u32)",
+            0x1E: "(s64)",
+            0x1F: "(u64)",
         }[inst_func]
-        rs = gpr_t[inst_rs]
-        rt = gpr_t[inst_rt]
+        rs = gpr[inst_rs]
+        rt = gpr[inst_rt]
         line += (
-            "    if (%s != 0)\n"
+            "    if (%s%s != 0)\n"
             "    {\n"
-            "        lo.ll = (s32)(%s / %s);\n"
-            "        hi.ll = (s32)(%s %% %s);\n"
+            "        lo = %s%s / %s%s;\n"
+            "        hi = %s%s %% %s%s;\n"
             "    }\n"
-        ) % (rt, rs, rt, rs, rt)
+        ) % (t, rt, t, rs, t, rt, t, rs, t, rt)
     return [(addr, line)], False
 
 def op_arith():
     global reg_flag
-    reg_flag |= 0x0000000000000001 << inst_rd
-    op, gpr_rd, gpr_rs, gpr_rt, start, end = {
-        0x20: ("+", gpr_i,  gpr_i,  gpr_i,  "", ""),
-        0x21: ("+", gpr_i,  gpr_i,  gpr_i,  "", ""),
-        0x22: ("-", gpr_i,  gpr_i,  gpr_i,  "", ""),
-        0x23: ("-", gpr_i,  gpr_i,  gpr_i,  "", ""),
-        0x24: ("&", gpr_ll, gpr_ll, gpr_ll, "", ""),
-        0x25: ("|", gpr_ll, gpr_ll, gpr_ll, "", ""),
-        0x26: ("^", gpr_ll, gpr_ll, gpr_ll, "", ""),
-        0x27: ("|", gpr_ll, gpr_ll, gpr_ll, "~(", ")"),
-        0x2A: ("<", gpr_i,  gpr_i,  gpr_i,  "", ""),
-        0x2B: ("<", gpr_i,  gpr_iu, gpr_iu, "", ""),
-        0x2D: ("+", gpr_ll, gpr_ll, gpr_ll, "", ""),
+    global rll_flag
+    flag = 1 << inst_rd
+    reg_flag |= flag
+    if inst_func in {0x24, 0x25, 0x26, 0x27}:
+        if rll_flag & (1 << inst_rs | 1 << inst_rt):
+            rll_flag |= flag
+    if inst_func in {0x2D}:
+        rll_flag |= flag
+    op, s, tt, e = {
+        0x20: ("+", "(s32)((s32)", "(s32)", ")"),
+        0x21: ("+", "(s32)((s32)", "(s32)", ")"),
+        0x22: ("-", "(s32)((s32)", "(s32)", ")"),
+        0x23: ("-", "(s32)((s32)", "(s32)", ")"),
+        0x24: ("&", "",   "", ""),
+        0x25: ("|", "",   "", ""),
+        0x26: ("^", "",   "", ""),
+        0x27: ("|", "~(", "", ")"),
+        0x2A: ("<", "(s32)((s32)", "(s32)", ")"),
+        0x2B: ("<", "(s32)((u32)", "(u32)", ")"),
+        0x2D: ("+", "(s64)((s64)", "(s64)", ")"),
     }[inst_func]
-    rs = gpr_rs[inst_rs]
-    rt = gpr_rt[inst_rt]
-    rd = gpr_rd[inst_rd]
+    rs = gpr[inst_rs]
+    rt = gpr[inst_rt]
+    rd = gpr[inst_rd]
     if addr in xpr:
         line = "    %s = %s;\n" % (rd, xpr[addr])
     else:
-        line = "    %s = %s%s %s %s%s;\n" % (
-            rd, start, rs, op, rt, end
-        )
+        line = "    %s = %s%s %s %s%s%s;\n" % (rd, s, rs, op, tt, rt, e)
     return [(addr, line)], False
 
 def op_special():
@@ -399,8 +401,8 @@ def op_b():
         bc = "1"
         bdst = inst_jdst
     else:
-        rs = gpr_i[inst_rs]
-        rt = gpr_i[inst_rt]
+        rs = "(s32)" + gpr[inst_rs]
+        rt = "(s32)" + gpr[inst_rt]
         if inst_op in {0x01, 0x06, 0x07, 0x16, 0x17}:
             rt = "0"
         if inst_op == 0x11:
@@ -495,8 +497,15 @@ def op_bal():
 
 def op_arithi():
     global reg_flag
+    global rll_flag
     # global stack_max
-    reg_flag |= 0x0000000000000001 << inst_rt
+    flag = 1 << inst_rt
+    reg_flag |= flag
+    if inst_op in {0x0C, 0x0D, 0x0E}:
+        if rll_flag & (1 << inst_rs):
+            rll_flag |= flag
+    if inst_op in {0x19}:
+        rll_flag |= flag
     # if inst_rt == 0x1D:
     #     s = 0x10 - inst_imms
     #     if stack_max < s:
@@ -509,63 +518,64 @@ def op_arithi():
         imm = "0x%04XU" % inst_immu
     else:
         imm = "(s16)0x%04X" % inst_immu
-    op, gpr_rt, gpr_rs = {
-        0x08: ("+", gpr_i, gpr_i),
-        0x09: ("+", gpr_i, gpr_i),
-        0x0A: ("<", gpr_i, gpr_i),
-        0x0B: ("<", gpr_i, gpr_iu),
-        0x0C: ("&", gpr_ll, gpr_ll),
-        0x0D: ("|", gpr_ll, gpr_ll),
-        0x0E: ("^", gpr_ll, gpr_ll),
-        0x19: ("+", gpr_ll, gpr_ll),
+    op, s, e = {
+        0x08: ("+", "(s32)((s32)", ")"),
+        0x09: ("+", "(s32)((s32)", ")"),
+        0x0A: ("<", "(s32)((s32)", ")"),
+        0x0B: ("<", "(s32)((u32)", ")"),
+        0x0C: ("&", "", ""),
+        0x0D: ("|", "", ""),
+        0x0E: ("^", "", ""),
+        0x19: ("+", "(s64)((s64)", ")"),
     }[inst_op]
-    rs = gpr_rs[inst_rs]
-    rt = gpr_rt[inst_rt]
+    rs = gpr[inst_rs]
+    rt = gpr[inst_rt]
     if addr in xpr:
         line = "    %s = %s;\n" % (rt, xpr[addr])
     else:
-        line = "    %s = %s %s %s;\n" % (
-            rt, rs, op, imm
+        line = "    %s = %s%s %s %s%s;\n" % (
+            rt, s, rs, op, imm, e
         )
     return [(addr, line)], False
 
 def op_lui():
     global reg_flag
-    reg_flag |= 0x0000000000000001 << inst_rt
-    rt = gpr_i[inst_rt]
+    reg_flag |= 1 << inst_rt
+    rt = gpr[inst_rt]
     return [(addr, "    %s = (s32)0x%04X0000;\n" % (rt, inst_immu))], False
 
 def op_mfc1():
     global reg_flag
-    reg_flag |= 0x0000000000000001 << inst_rt
+    reg_flag |= 1 << inst_rt
     line = "    %s = f%d.iu[%d^IX];\n" % (
-        gpr_iu[inst_rt], inst_rd & ~1, inst_rd & 1
+        gpr[inst_rt], inst_rd & ~1, inst_rd & 1
     )
     return [(addr, line)], False
 
 def op_mtc1():
     global reg_flag
-    reg_flag |= 0x0000000100000000 << (inst_rd >> 1)
+    reg_flag |= (1 << 32) << (inst_rd >> 1)
     rd = {
         0x04: "iu[%d^IX]" % (inst_rd & 1), # mtc1
         0x05: "llu",                       # dmtc1
     }[inst_rs]
     line = "    f%d.%s = %s;\n" % (
-        inst_rd & ~1, rd, gpr_iu[inst_rt]
+        inst_rd & ~1, rd, gpr[inst_rt]
     )
     return [(addr, line)], False
 
 def op_cfc1():
     global reg_flag
-    reg_flag |= 0x0000000000000001 << inst_rt
-    return [(addr, "    %s = 0;\n" % gpr_iu[inst_rt])], False
+    reg_flag |= 1 << inst_rt
+    # ?
+    return [(addr, "    %s = 0;\n" % gpr[inst_rt])], False
 
 def op_ctc1():
     return [(addr, "    /* CTC1 */\n")], False
 
 def op_arithf():
     global reg_flag
-    reg_flag |= 0x0000000100000000 << (inst_fd >> 1)
+    reg_flag |= (1 << 32) << (inst_fd >> 1)
     fmt = cop1_fmt[inst_fmt]
     ft = "f%d.%s" % (inst_ft & ~1, fmt)
     fs = "f%d.%s" % (inst_fs & ~1, fmt)
@@ -590,7 +600,7 @@ def op_arithf():
 
 def op_cvt():
     global reg_flag
-    reg_flag |= 0x0000000100000000 << (inst_fd >> 1)
+    reg_flag |= (1 << 32) << (inst_fd >> 1)
     dst = {
         0x0D: "i[IX]", # trunc.w
         0x20: "f[IX]", # cvt.s
@@ -604,7 +614,7 @@ def op_cvt():
 
 def op_cmp():
     global reg_flag
-    reg_flag |= 0x0002000000000000
+    reg_flag |= 1 << 49
     op = {
         0x32: "==",
         0x3C: "<",
@@ -623,24 +633,9 @@ def op_cop1():
 
 def op_load():
     global reg_flag
+    global rll_flag
     # global stack_use
     global wret
-    rs = gpr_i[inst_rs]
-    if inst_op == 0x31:
-        reg_flag |= 0x0000000100000000 << (inst_rt >> 1)
-        rt = "f%d.iu[%d^IX] = " % (inst_rt & ~1, inst_rt & 1)
-    elif inst_op == 0x35:
-        reg_flag |= 0x0000000100000000 << (inst_rt >> 1)
-        rt = "f%d.llu = " % (inst_rt & ~1)
-    else:
-        if inst_rt == 0x00:
-            return [(addr, "")], False
-        reg_flag |= 0x0000000000000001 << inst_rt
-        if inst_op in {0x22, 0x26}:
-            rs += ", &%s" % gpr_iu[inst_rt]
-            rt = ""
-        else:
-            rt = "%s = " % gpr_i[inst_rt]
     t = {
         0x20: "s8",
         0x21: "s16",
@@ -654,6 +649,24 @@ def op_load():
         0x35: "u64",
         0x37: "s64",
     }[inst_op]
+    rs = "(PTR)" + gpr[inst_rs]
+    if inst_op == 0x31:
+        reg_flag |= (1 << 32) << (inst_rt >> 1)
+        rt = "f%d.iu[%d^IX] = " % (inst_rt & ~1, inst_rt & 1)
+    elif inst_op == 0x35:
+        reg_flag |= (1 << 32) << (inst_rt >> 1)
+        rt = "f%d.llu = " % (inst_rt & ~1)
+    else:
+        if inst_rt == 0x00:
+            return [(addr, "")], False
+        reg_flag |= 1 << inst_rt
+        if inst_op in {0x22, 0x26}:
+            rs += ", %s" % gpr[inst_rt]
+            rt = ""
+        else:
+            rt = "%s = " % gpr[inst_rt]
+            if inst_op == 0x37:
+                rll_flag |= 1 << inst_rt
     # if inst_rs == 0x1D and inst_immu >= stack_min and inst_immu < stack_max:
     #     stack_use = True
     #     k = {
@@ -675,9 +688,9 @@ def op_load():
 def op_store():
     global chk_flag
     # global stack_use
-    rs = gpr_i[inst_rs]
+    rs = "(PTR)" + gpr[inst_rs]
     if inst_op == 0x39 or inst_op == 0x3D:
-        flag = 0x000100000000 << (inst_rt >> 1)
+        flag = (1 << 32) << (inst_rt >> 1)
         # f20-f30
         if (flag & 0xFC0000000000) and not ((reg_flag | chk_flag) & flag):
             chk_flag |= flag
@@ -687,12 +700,12 @@ def op_store():
         else:
             rt = "f%d.llu" % (inst_rt & ~1)
     else:
-        flag = 0x000000000001 << inst_rt
+        flag = 1 << inst_rt
         # s0-s7, gp, s8, ra
         if (flag & 0x0000D0FF0000) and not ((reg_flag | chk_flag) & flag):
             chk_flag |= flag
             return [(addr, "")], False
-        rt = gpr_i[inst_rt]
+        rt = gpr[inst_rt]
     t = {
         0x28: "u8",
         0x29: "u16",
@@ -1000,6 +1013,7 @@ def main(argc, argv):
     global inst_maxb
     global reg_flag
     global chk_flag
+    global rll_flag
     global stack_min
     # global stack_max
     # global stack_use
@@ -1032,15 +1046,17 @@ def main(argc, argv):
         app_h += "#define APP_DCALL\n"
     if len(app.cache) > 0:
         app_h += "#define APP_CACHE\n"
-    a = ""
-    b = ""
-    i = 0
-    for flag, reg in cpu_reg:
+    s = ""
+    r = 3*[0]
+    for flag, reg in reg_cpu+reg_fpu+reg_lohi:
         if app.reg & flag:
-            m = "R_" + reg.upper()
-            a += "#define %s 0x%02X\n" % (m.ljust(15), i)
-            b += "#define %s cpu_reg[%s]\n" % (reg, m)
-            i += 1
+            if   flag & 0x00010000200000FC: i = 0
+            elif flag & 0x00020000DFFFFF03: i = 1
+            elif flag & 0x0000FFFF00000000: i = 2
+            s += "#define %s cpu.%s[%s]\n" % (
+                reg.ljust(15), ("arg", "ext", "reg")[i], r[i]
+            )
+            r[i] += 1
     app_h += (
         "%s"
         "\n"
@@ -1052,8 +1068,9 @@ def main(argc, argv):
         "#define app_main        app_%08X\n"
         "\n"
         "%s"
-        "%s"
-        "#define CPU_REG_LEN     0x%02X\n"
+        "#define CPU_ARG_LEN     %d\n"
+        "#define CPU_EXT_LEN     %d\n"
+        "#define CPU_REG_LEN     %d\n"
         "\n"
         "struct app_call\n"
         "{\n"
@@ -1064,7 +1081,7 @@ def main(argc, argv):
     ) % (
         app.header,
         argv[1], app.entry, app.bss[0], app.bss[1], app.sp, app.main,
-        a, b, i
+        s, r[0], r[1], r[2],
     )
     if len(app.cache) > 0:
         app_h += (
@@ -1203,7 +1220,8 @@ def main(argc, argv):
             ) % name
             inst_maxb = 0
             reg_flag = app.reg
-            chk_flag = 0
+            chk_flag = app.reg
+            rll_flag = 0
             stack_min = 0x00
             # stack_max = 0x10
             # stack_use = False
@@ -1225,7 +1243,9 @@ def main(argc, argv):
                     if app.reg & flag:
                         continue
                     if (reg_flag | chk_flag) & flag:
-                        app_c += "    unused %s %s;\n" % (t, r)
+                        app_c += "    unused %s %s;\n" % (
+                            "s64" if rll_flag & flag else t, r
+                        )
             for addr, line in lines:
                 if addr in btbl:
                     app_c += "_%08X:;\n" % addr

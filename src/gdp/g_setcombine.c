@@ -63,7 +63,7 @@ static void gdp_combine_cc_prim_env_shade_env(u8 *col, struct vtxf *vf)
 }
 #endif
 
-#ifdef gdp_fog
+#ifdef GSP_FOG
 static void gdp_combine_cc_fog(u8 *col, unused struct vtxf *vf)
 {
     col[0] = gdp_fog[0];
@@ -198,7 +198,7 @@ static void gdp_combine_ac_shade_env(u8 *col, unused struct vtxf *vf)
     col[3] = vf->shade[3] * gdp_env[3] / 0x100;
 }
 
-#ifdef gdp_fog
+#ifdef GSP_FOG
 static void gdp_combine_ac_fog(u8 *col, struct vtxf *vf)
 {
     col[3] = vf->shade[3];
@@ -221,7 +221,7 @@ static void gdp_triangle_default(u8 *t)
 #endif
 }
 
-#ifdef gdp_fog
+#ifdef GSP_FOG
 static void gdp_triangle_fog(u8 *t)
 {
 #ifndef GSP_LEGACY
@@ -335,15 +335,15 @@ static void gdp_g_setcombine(u32 w0, u32 w1)
     {
         ac = (ac & 0x00FFF000U) | ac >> 12;
     }
-#ifdef gdp_fog
+#ifdef GSP_FOG
     gdp_triangle =
         (gsp_geometry_mode & G_FOG) ? gdp_triangle_fog : gdp_triangle_default;
 #else
     gdp_triangle = gdp_triangle_default;
 #endif
 #ifdef APP_UNSM
-    gsp_texture_read_table[G_IM_FMT_IA << 2 | G_IM_SIZ_8b] =
-        gsp_texture_read_ia8;
+    gdp_texture_read_table[G_IM_FMT_IA << 2 | G_IM_SIZ_8b] =
+        gdp_texture_read_ia8;
 #endif
     switch (cc)
     {
@@ -405,8 +405,8 @@ static void gdp_g_setcombine(u32 w0, u32 w1)
         case CC1(PRIMITIVE, SHADE, TEXEL0, SHADE):
             gdp_combine_cc = gdp_combine_cc_special2;
             gdp_triangle   = gdp_triangle_special;
-            gsp_texture_read_table[G_IM_FMT_IA << 2 | G_IM_SIZ_8b] =
-                gsp_texture_read_ia8_special;
+            gdp_texture_read_table[G_IM_FMT_IA << 2 | G_IM_SIZ_8b] =
+                gdp_texture_read_ia8_special;
             break;
     #endif
     #ifdef APP_UNK4

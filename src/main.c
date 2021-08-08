@@ -15,7 +15,7 @@ static void start(void)
     __write_u32(0x80000300, OS_TV_NTSC);
     __dma(__tlb(APP_ENTRY), 0x00001000, 0x00100000);
     memset(__tlb(APP_BSS_ADDR), 0x00, APP_BSS_SIZE);
-    sp.ll = (s32)APP_STACK;
+    sp = (s32)APP_STACK;
     app_main();
 }
 

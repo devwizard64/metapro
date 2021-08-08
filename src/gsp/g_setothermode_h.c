@@ -5,18 +5,20 @@ static void gsp_g_setothermode_h(u32 w0, u32 w1)
 {
     uint shift = w0 >> 8 & 0xFF;
     uint mask  = w0 >> 0 & 0xFF;
-    u32  filter;
-#ifdef GSP_F3DEX2
-    mask++;
-    shift = 32-shift-mask;
+    u32  clear;
+#ifdef GSP_F3D
+    clear = ((1 << mask)-1) << shift;
 #endif
-    gdp_othermode_h &= ~(((1 << mask) - 1) << shift);
+#ifdef GSP_F3DEX2
+    clear = (u32)((s32)(1 << 31) >> mask) >> shift;
+#endif
+    gdp_othermode_h &= ~clear;
     gdp_othermode_h |= w1;
-    gdp_cycle = (gdp_othermode_h >> G_MDSFT_CYCLETYPE) & 2;
-    filter = gdp_othermode_h & (0x03 << G_MDSFT_TEXTFILT);
+    gdp_cycle = gdp_othermode_h & (2 << G_MDSFT_CYCLETYPE);
     gdp_texture_filter =
-        filter == G_TF_POINT || gdp_cycle ? GL_NEAREST : GL_LINEAR;
-    if (shift == G_MDSFT_CYCLETYPE)
+        gdp_cycle || (gdp_othermode_h & (3 << G_MDSFT_TEXTFILT)) == G_TF_POINT ?
+            GL_NEAREST : GL_LINEAR;
+    if (clear & (3 << G_MDSFT_CYCLETYPE))
     {
         gsp_change |= CHANGE_RENDERMODE;
         if (gdp_cycle)

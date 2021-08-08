@@ -166,18 +166,23 @@ a03_xpr = {
 a03_ins = {
     # reticle border
     0x802CD19C:
-        "    at.i[IX] = __read_s32((s16)0x007C + sp.i[IX]);\n"
-        "    __write_u32((s16)0x007C + sp.i[IX], at.i[IX] + 0x0028);\n"
-        "    __write_u32((s16)0x0000 + at.i[IX], 0xBA001402);\n"
-        "    __write_u32((s16)0x0004 + at.i[IX], 0x00300000);\n"
-        "    __write_u32((s16)0x0008 + at.i[IX], 0xF7000000);\n"
-        "    __write_u32((s16)0x000C + at.i[IX], 0x00010001);\n"
-        "    __write_u32((s16)0x0010 + at.i[IX], 0xF60FC3BC);\n"
-        "    __write_u32((s16)0x0014 + at.i[IX], 0x00000000);\n"
-        "    __write_u32((s16)0x0018 + at.i[IX], 0xF64FC3BC);\n"
-        "    __write_u32((s16)0x001C + at.i[IX], 0x00400000);\n"
-        "    __write_u32((s16)0x0020 + at.i[IX], 0xBA001402);\n"
-        "    __write_u32((s16)0x0024 + at.i[IX], 0x00000000);\n",
+        "{\n"
+        "    int x = 0.15F * (lib_viewport_r-lib_viewport_l);\n"
+        "    at = __read_s32((s16)0x007C + sp);\n"
+        "    __write_u32((s16)0x007C + sp, at + 0x0028);\n"
+        "    __write_u32((s16)0x0000 + at, 0xBA001402);\n"
+        "    __write_u32((s16)0x0004 + at, 0x00300000);\n"
+        "    __write_u32((s16)0x0008 + at, 0xF7000000);\n"
+        "    __write_u32((s16)0x000C + at, 0x00010001);\n"
+        "    __write_u32((s16)0x0010 + at, "
+            "0xF60003BC | ((  x-1) & 0x3FF) << 14);\n"
+        "    __write_u32((s16)0x0014 + at, 0x00000000);\n"
+        "    __write_u32((s16)0x0018 + at, 0xF64FC3BC);\n"
+        "    __write_u32((s16)0x001C + at, "
+            "0x00000000 | ((320-x) & 0x3FF) << 14);\n"
+        "    __write_u32((s16)0x0020 + at, 0xBA001402);\n"
+        "    __write_u32((s16)0x0024 + at, 0x00000000);\n"
+        "}\n",
 }
 
 a04_xpr = {
@@ -199,7 +204,7 @@ a04_xpr = {
     0x802E3890: "(int)lib_viewport_r - (22 + 16+16+12*2) + 16*1", # stars "*" x
     0x802E3898: "240 - APP_BORDER - 7 - 16", # star "*" y
     0x802E38B8: # stars "%d" x
-        "a0.i[IX] + (int)lib_viewport_r - (22 + 16+16+12*2) + 16*1",
+        "a0 + (int)lib_viewport_r - (22 + 16+16+12*2) + 16*1",
     0x802E38C8: "240 - APP_BORDER - 7 - 16", # star "%d" y
     0x802E3914: "(int)lib_viewport_r - (22 + 78)", # key "/" x
     # 0x802E391C: "", # key "/" y
@@ -225,11 +230,11 @@ a04_xpr = {
 
 a04_ins = {
     # pause
-    0x802DB3C8: "    a1.f[IX] = lib_viewport_l;\n",
+    0x802DB3C8: "    ARG_F(a1) = lib_viewport_l;\n",
     0x802DB3E4:
-        "    a1.f[IX] = (1.0F/128) * (lib_viewport_r-lib_viewport_l);\n",
+        "    ARG_F(a1) = (1.0F/128) * (lib_viewport_r-lib_viewport_l);\n",
     # hud draw power
-    0x802E3254: "    t8.i[IX] += 8;\n",
+    0x802E3254: "    t8 += 8;\n",
 }
 
 a06_ins = {

@@ -1,8 +1,8 @@
 void lib___ll_lshift(void)
 {
-    u64 a = (u64)a0.iu[IX] << 32 | (u64)a1.iu[IX];
-    u64 b = (u64)a2.iu[IX] << 32 | (u64)a3.iu[IX];
+    u64 a = (u64)a0 << 32 | (u32)a1;
+    u64 b = (u64)a2 << 32 | (u32)a3;
     u64 x = a << b;
-    v0.i[IX] = x >> 32;
-    v1.i[IX] = x >>  0;
+    v0 = x >> 32;
+    v1 = x >>  0;
 }

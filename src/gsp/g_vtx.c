@@ -25,7 +25,7 @@ static void gsp_g_vtx(u32 w0, u32 w1)
     {
         uint i;
         gsp_light_new = false;
-        for (i = gsp_lookat ? 0 : 2; i < gsp_light_no+1; i++)
+        for (i = gsp_lookat ? 0 : 2; i < gsp_light_no; i++)
         {
             struct light  *l  = &gsp_light_buf[i];
             struct lightf *lf = &gsp_lightf_buf[i];
@@ -115,7 +115,7 @@ static void gsp_g_vtx(u32 w0, u32 w1)
             f32  x = v->r;
             f32  y = v->g;
             f32  z = v->b;
-            uint n = gsp_light_no+1;
+            uint n = gsp_light_no;
             uint r = gsp_light_buf[n].col[0].r;
             uint g = gsp_light_buf[n].col[0].g;
             uint b = gsp_light_buf[n].col[0].b;

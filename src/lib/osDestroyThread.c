@@ -1,4 +1,4 @@
 void lib_osDestroyThread(void)
 {
-    thread_destroy(thread_find(a0.i[IX]));
+    thread_destroy(thread_find(a0));
 }

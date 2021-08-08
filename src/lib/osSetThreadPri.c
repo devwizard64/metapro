@@ -1,5 +1,5 @@
 void lib_osSetThreadPri(void)
 {
-    thread_find(a0.i[IX])->pri = a1.i[IX];
+    thread_find(a0)->pri = a1;
     thread_yield(THREAD_YIELD_QUEUE);
 }

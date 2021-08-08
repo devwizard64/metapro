@@ -1,4 +1,4 @@
 void lib_osAiGetLength(void)
 {
-    v0.ll = audio_size();
+    v0 = audio_size();
 }

@@ -10,7 +10,7 @@ void lib_osContGetReadData(void)
 {
     PTR pad;
     input_update();
-    pad = a0.i[IX];
+    pad = a0;
     pad_set(0, lib_pad.button, lib_pad.stick_x, lib_pad.stick_y, 1);
 #ifdef APP_UNSM
     pad_set(1, lib_pad.button, lib_pad.stick_x, lib_pad.stick_y, 1);

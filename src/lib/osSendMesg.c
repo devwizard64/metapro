@@ -1,6 +1,6 @@
 void lib_osSendMesg(void)
 {
-    PTR mq = a0.i[IX];
+    PTR mq = a0;
     PTR thread;
     s32 count;
     s32 index;
@@ -8,9 +8,9 @@ void lib_osSendMesg(void)
     PTR msg;
     if (__read_s32(MQ_COUNT) >= __read_s32(MQ_LEN))
     {
-        if (a2.i[IX] == OS_MESG_NOBLOCK)
+        if (a2 == OS_MESG_NOBLOCK)
         {
-            v0.ll = (s32)-1;
+            v0 = -1;
             return;
         }
         __write_u32(MQ_SEND, lib_thread->addr);
@@ -23,7 +23,7 @@ void lib_osSendMesg(void)
     len    = __read_s32(MQ_LEN);
     msg    = __read_s32(MQ_MSG);
     __write_u32(MQ_RECV, NULLPTR);
-    __write_u32(msg + 4*((index+count) % len), a1.i[IX]);
+    __write_u32(msg + 4*((index+count) % len), a1);
     __write_u32(MQ_COUNT, count+1);
     if (thread != NULLPTR)
     {
@@ -33,5 +33,5 @@ void lib_osSendMesg(void)
             thread_yield(THREAD_YIELD_QUEUE);
         }
     }
-    v0.ll = (s32)0;
+    v0 = 0;
 }

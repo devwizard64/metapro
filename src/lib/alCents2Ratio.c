@@ -1,6 +1,6 @@
 void lib_alCents2Ratio(void)
 {
-    s32 c = a0.i[IX];
+    s32 c = a0;
     f32 x = 1;
     f32 m;
     if (c < 0)
@@ -22,5 +22,5 @@ void lib_alCents2Ratio(void)
         c >>= 1;
     }
     while (c != 0);
-    v0.f[0^IX] = x;
+    ARG_F(v0) = x;
 }

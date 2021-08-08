@@ -37,12 +37,12 @@ void lib_sprintf(void)
     char *fmt;
     s32  *arg;
     uint  i;
-    __read_str(buf_fmt, a1.i[IX]);
-    buf_arg[0] = a2.iu[IX];
-    buf_arg[1] = a3.iu[IX];
+    __read_str(buf_fmt, a1);
+    buf_arg[0] = a2;
+    buf_arg[1] = a3;
     for (i = 2; i < lenof(buf_arg); i++)
     {
-        buf_arg[i] = __read_s32(sp.i[IX] + 0x0008 + 4*i);
+        buf_arg[i] = __read_s32(sp + 0x0008 + 4*i);
     }
     dst = buf_dst;
     fmt = buf_fmt;
@@ -65,6 +65,6 @@ void lib_sprintf(void)
         }
     }
     *dst = 0x00;
-    __write_str(a0.i[IX], buf_dst);
-    v0.ll = (s32)(dst-buf_dst);
+    __write_str(a0, buf_dst);
+    v0 = dst-buf_dst;
 }

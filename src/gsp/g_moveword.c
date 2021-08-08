@@ -17,10 +17,10 @@ static void gsp_g_moveword(u32 w0, u32 w1)
     #endif
         case G_MW_NUMLIGHT:
         #ifdef GSP_F3D
-            gsp_light_no = (w1-0x80000000) / 0x20;
+            gsp_light_no = 1 + (w1-0x80000000)/0x20;
         #endif
         #ifdef GSP_F3DEX2
-            gsp_light_no = w1 / 0x18;
+            gsp_light_no = 1 + w1/0x18;
         #endif
             break;
         /* G_MW_CLIP */

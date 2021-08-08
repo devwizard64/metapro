@@ -58,6 +58,21 @@ typedef union
 }
 REG;
 
+struct cpu
+{
+#if CPU_ARG_LEN > 0
+    s32 arg[CPU_ARG_LEN];
+#endif
+#if CPU_EXT_LEN > 0
+    s64 ext[CPU_EXT_LEN];
+#endif
+#if CPU_REG_LEN > 0
+    REG reg[CPU_REG_LEN];
+#endif
+};
+
+#define ARG_F(x)        (*((f32 *)&(x)))
+
 extern const u32 cpu_lwl_mask[];
 extern const u32 cpu_lwr_mask[];
 extern const u32 cpu_swl_mask[];
@@ -65,8 +80,8 @@ extern const u32 cpu_swr_mask[];
 extern const u8  cpu_l_shift[];
 extern const u8  cpu_r_shift[];
 
-extern u8  cpu_dram[CPU_DRAM_SIZE];
-extern REG cpu_reg[CPU_REG_LEN];
+extern u8 cpu_dram[CPU_DRAM_SIZE];
+extern struct cpu cpu;
 
 #if defined(__UNSME0_0021F4C0_C__) || defined(__UNSMC3_0020AAF0_C__)
 static inline void *__tlb(PTR addr)
@@ -105,27 +120,25 @@ static inline void *__tlb(PTR addr)
 #define __read_u32_l(addr, val)                     \
 {                                                   \
     PTR  _addr = addr;                              \
-    u32 *_val  = val;                               \
-    uint _i    = _addr & 0x03;                      \
-    _addr &= ~0x03;                                 \
-    *_val &= cpu_lwl_mask[_i];                      \
-    *_val |= __read_u32(_addr) << cpu_l_shift[_i];  \
+    uint _i    = _addr & 3;                         \
+    _addr &= ~3;                                    \
+    val &= cpu_lwl_mask[_i];                        \
+    val |= __read_u32(_addr) << cpu_l_shift[_i];    \
 }
 #define __read_u32_r(addr, val)                     \
 {                                                   \
     PTR  _addr = addr;                              \
-    u32 *_val  = val;                               \
-    uint _i    = _addr & 0x03;                      \
-    _addr &= ~0x03;                                 \
-    *_val &= cpu_lwr_mask[_i];                      \
-    *_val |= __read_u32(_addr) >> cpu_r_shift[_i];  \
+    uint _i    = _addr & 3;                         \
+    _addr &= ~3;                                    \
+    val &= cpu_lwr_mask[_i];                        \
+    val |= __read_u32(_addr) >> cpu_r_shift[_i];    \
 }
 #define __write_u32_l(addr, val)                    \
 {                                                   \
     PTR  _addr = addr;                              \
     u32  _val  = val;                               \
-    uint _i    = _addr & 0x03;                      \
-    _addr &= ~0x03;                                 \
+    uint _i    = _addr & 3;                         \
+    _addr &= ~3;                                    \
     _val <<= cpu_l_shift[_i];                       \
     _val |= __read_u32(_addr) & cpu_swl_mask[_i];   \
     __write_u32(_addr, _val);                       \
@@ -134,8 +147,8 @@ static inline void *__tlb(PTR addr)
 {                                                   \
     PTR  _addr = addr;                              \
     u32  _val  = val;                               \
-    uint _i    = _addr & 0x03;                      \
-    _addr &= ~0x03;                                 \
+    uint _i    = _addr & 3;                         \
+    _addr &= ~3;                                    \
     _val <<= cpu_r_shift[_i];                       \
     _val |= __read_u32(_addr) & cpu_swr_mask[_i];   \
     __write_u32(_addr, _val);                       \

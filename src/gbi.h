@@ -14,7 +14,7 @@
 #define G_RDPHALF_CONT          0xB1
 #define G_RDPHALF_2             0xB2
 #define G_RDPHALF_1             0xB3
-#define G_PERSPNORM             0xB4
+#define G_PERSPNORMALIZE        0xB4
 #else
 #ifdef GSP_F3DEX
 #define G_LOAD_UCODE            0xAF
@@ -133,14 +133,12 @@
 #define G_TEXTURE_ENABLE        0x00000002
 #define G_SHADE                 0x00000004
 #ifdef GSP_F3DEX2
-#define G_CULL_SHIFT            9
 #define G_CULL_FRONT            0x00000200
 #define G_CULL_BACK             0x00000400
 #define G_CULL_BOTH             0x00000600
 #define G_SHADING_SMOOTH        0x00200000
 #else
 #define G_SHADING_SMOOTH        0x00000200
-#define G_CULL_SHIFT            12
 #define G_CULL_FRONT            0x00001000
 #define G_CULL_BACK             0x00002000
 #define G_CULL_BOTH             0x00003000

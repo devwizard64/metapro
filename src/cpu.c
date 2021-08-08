@@ -40,7 +40,7 @@ static u8 *cpu_cache_table[lenof(app_cache_table)];
 
 /* todo: align */
 u8  cpu_dram[CPU_DRAM_SIZE];
-REG cpu_reg[CPU_REG_LEN];
+struct cpu cpu;
 
 void __call(PTR addr)
 {
