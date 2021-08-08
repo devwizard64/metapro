@@ -21,7 +21,7 @@ APP_SRC := $(addprefix build/$(APP)/,$(notdir $(APP_OBJ:.o=.c)))
 
 FLAG    := -I src -I build/$(APP)
 FLAG    += -Wall -Wextra -Wpedantic -fno-strict-aliasing -Ofast
-# FLAG    += -ggdb3 -D __DEBUG__
+FLAG    += -ggdb3 -D __DEBUG__
 
 ifeq ($(TARGET),native)
 	CC      := gcc -fno-pie $(FLAG) -D __NATIVE__
