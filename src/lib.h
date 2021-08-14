@@ -15,6 +15,20 @@
 #define IDOT3(m, i) ((m)[i][0]*x + (m)[i][1]*y + (m)[i][2]*z)
 #define MDOT4(m, i) (MDOT3(m, i) + (m)[3][i])
 
+#define mtxf_ortho_bg(mf, l, r, b, t, n, f)                                 \
+{                                                                           \
+    f32 _y =             (1.0F/2) * ((t)+(b));                              \
+    f32 _h = (4.0F/3.0F)*(1.0F/2) * ((t)-(b)) * lib_video_h/lib_video_w;    \
+    mtxf_ortho(mf, l, r, _y-_h, _y+_h, n, f);                               \
+}
+
+#define mtxf_ortho_fg(mf, l, r, b, t, n, f)                                 \
+{                                                                           \
+    f32 _x =             (1.0F/2) * ((r)+(l));                              \
+    f32 _w = (3.0F/4.0F)*(1.0F/2) * ((r)-(l)) * lib_video_w/lib_video_h;    \
+    mtxf_ortho(mf, _x-_w, _x+_w, b, t, n, f);                               \
+}
+
 extern u16 lib_video_w;
 extern u16 lib_video_h;
 extern f32 lib_viewport_l;

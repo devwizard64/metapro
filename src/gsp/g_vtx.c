@@ -25,27 +25,17 @@ static void gsp_g_vtx(u32 w0, u32 w1)
     {
         uint i;
         gsp_light_new = false;
-        for (i = gsp_lookat ? 0 : 2; i < gsp_light_no; i++)
+        for (i = 2; i < gsp_light_no; i++)
         {
             struct light  *l  = &gsp_light_buf[i];
             struct lightf *lf = &gsp_lightf_buf[i];
-            f32 x;
-            f32 y;
-            f32 z;
-            f32 nx;
-            f32 ny;
-            f32 nz;
-            f32 d;
-            lf->r = l->col[0].r;
-            lf->g = l->col[0].g;
-            lf->b = l->col[0].b;
-            x = l->x;
-            y = l->y;
-            z = l->z;
-            nx = IDOT3(MM, 0);
-            ny = IDOT3(MM, 1);
-            nz = IDOT3(MM, 2);
-            d = sqrtf(nx*nx + ny*ny + nz*nz);
+            f32 x = l->x;
+            f32 y = l->y;
+            f32 z = l->z;
+            f32 nx = IDOT3(MM, 0);
+            f32 ny = IDOT3(MM, 1);
+            f32 nz = IDOT3(MM, 2);
+            f32 d = sqrtf(nx*nx + ny*ny + nz*nz);
             if (d > 0)
             {
                 d = (1.0F/0x80) / d;
@@ -56,6 +46,9 @@ static void gsp_g_vtx(u32 w0, u32 w1)
             lf->x = nx;
             lf->y = ny;
             lf->z = nz;
+            lf->r = l->col[0].r;
+            lf->g = l->col[0].g;
+            lf->b = l->col[0].b;
         }
     }
     do
@@ -64,32 +57,30 @@ static void gsp_g_vtx(u32 w0, u32 w1)
         int t;
         if (gsp_geometry_mode & G_TEXTURE_GEN)
         {
-            f32 x = v->r;
-            f32 y = v->g;
-            f32 z = v->b;
-            f32 nx = MDOT3(MM, 0);
-            f32 ny = MDOT3(MM, 1);
-            f32 nz = MDOT3(MM, 2);
-            f32 d = sqrtf(nx*nx + ny*ny + nz*nz);
-            if (d > 0)
-            {
-                d = 0x4000 / d;
-                nx *= d;
-                ny *= d;
-            }
-        #if 1
             if (gsp_lookat)
             {
-            #define LOOKATY gsp_lightf_buf[0]
-            #define LOOKATX gsp_lightf_buf[1]
-                s = 0x80 * (LOOKATY.x*nx + LOOKATY.y*ny + LOOKATY.z*nz);
-                t = 0x80 * (LOOKATX.x*nx + LOOKATX.y*ny + LOOKATX.z*nz);
+            #define LOOKATY gsp_light_buf[0]
+            #define LOOKATX gsp_light_buf[1]
+                s = LOOKATX.x*v->r + LOOKATX.y*v->g + LOOKATX.z*v->b;
+                t = LOOKATY.x*v->r + LOOKATY.y*v->g + LOOKATY.z*v->b;
             #undef LOOKATY
             #undef LOOKATX
             }
             else
-        #endif
             {
+                f32 x = v->r;
+                f32 y = v->g;
+                f32 z = v->b;
+                f32 nx = MDOT3(MM, 0);
+                f32 ny = MDOT3(MM, 1);
+                f32 nz = MDOT3(MM, 2);
+                f32 d = sqrtf(nx*nx + ny*ny + nz*nz);
+                if (d > 0)
+                {
+                    d = 0x4000 / d;
+                    nx *= d;
+                    ny *= d;
+                }
                 s = ny;
                 t = nx;
             }
@@ -115,12 +106,11 @@ static void gsp_g_vtx(u32 w0, u32 w1)
             f32  x = v->r;
             f32  y = v->g;
             f32  z = v->b;
-            uint n = gsp_light_no;
-            uint r = gsp_light_buf[n].col[0].r;
-            uint g = gsp_light_buf[n].col[0].g;
-            uint b = gsp_light_buf[n].col[0].b;
+            uint r = gsp_light_buf[gsp_light_no].col[0].r;
+            uint g = gsp_light_buf[gsp_light_no].col[0].g;
+            uint b = gsp_light_buf[gsp_light_no].col[0].b;
             uint i;
-            for (i = 2; i < n; i++)
+            for (i = 2; i < gsp_light_no; i++)
             {
                 struct lightf *lf = &gsp_lightf_buf[i];
                 f32 d = lf->x*x + lf->y*y + lf->z*z;

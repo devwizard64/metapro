@@ -15,8 +15,7 @@ static void gsp_g_mtx(u32 w0, u32 w1)
     #if 1
         mtxf_ortho(mf, lib_viewport_l, lib_viewport_r, 0, 240, 0, 2);
     #else
-        f32 h = 120 * 4/3 * lib_video_h/lib_video_w;
-        mtxf_ortho(mf, 0, 320, 120-h, 120+h, 0, 2);
+        mtxf_ortho_bg(mf, 0, 320, 0, 240, 0, 2);
     #endif
     }
     else

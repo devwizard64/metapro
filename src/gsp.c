@@ -35,6 +35,8 @@
 
 #include "gbi.h"
 
+#define G_OML_CYCLE (G_AC_THRESHOLD | G_RM_OPA_SURF | G_RM_OPA_SURF2)
+
 #ifdef APP_UNSM
 #define GDP_OUTPUT_LEN  (3*0x1800)
 #define GDP_TEXTURE_LEN 0x100
@@ -782,16 +784,16 @@ static void gsp_flush_cull(void)
     }
 }
 
-#define EN_ZR ((othermode_l & Z_CMP) != 0)
-#define EN_ZW ((othermode_l & Z_UPD) != 0)
-#define EN_BL \
-    ((othermode_l & 0x0300) != CVG_DST_CLAMP && (othermode_l & FORCE_BL) != 0)
-#define EN_DE ((othermode_l & 0x0C00) == ZMODE_DEC)
-#define EN_AC ((othermode_l & CVG_X_ALPHA) != 0)
+#define EN_ZR   ((othermode_l & Z_CMP) != 0)
+#define EN_ZW   ((othermode_l & Z_UPD) != 0)
+#define EN_BL   \
+    ((othermode_l & 0x0300) != CVG_DST_CLAMP && (othermode_l & FORCE_BL))
+#define EN_DE   ((othermode_l & 0x0C00) == ZMODE_DEC)
+#define EN_AC   \
+    ((othermode_l & CVG_X_ALPHA) || (othermode_l & 3) == G_AC_THRESHOLD)
 static void gsp_flush_rendermode(void)
 {
-    u32 othermode_l =
-        gdp_cycle ? G_RM_TEX_EDGE | G_RM_TEX_EDGE2 : gdp_othermode_l;
+    u32 othermode_l = gdp_cycle ? G_OML_CYCLE : gdp_othermode_l;
 #ifdef GEKKO
     GX_SetZMode(EN_ZR, GX_LEQUAL, EN_ZW);
     GX_SetBlendMode(
@@ -1178,54 +1180,29 @@ static void gsp_flush_rect(void)
 
 static void gsp_start(void *ucode, u32 *dl);
 
-#if 0
-static void gsp_g_spnoop(unused u32 w0, unused u32 w1)
-{
-}
-#else
-#define gsp_g_spnoop            NULL
-#endif
+#include "gsp/g_spnoop.c"
 
 #ifdef GSP_F3D
 #include "gsp/g_mtx.c"
 #include "gsp/g_movemem.c"
 #include "gsp/g_vtx.c"
 #include "gsp/g_dl.c"
-
 #ifdef GSP_F3DEX
 #include "gsp/g_load_ucode.c"
 #include "gsp/g_branch_z.c"
 #include "gsp/g_tri2.c"
 #include "gsp/g_modifyvtx.c"
 #else
-
-#if 0
-static void gsp_g_rdphalf_cont(unused u32 w0, unused u32 w1)
-{
-}
-#else
-#define gsp_g_rdphalf_cont      NULL
+#include "gsp/g_rdphalf_cont.c"
 #endif
-
-#endif
-
 #include "gsp/g_rdphalf_2.c"
 #include "gsp/g_rdphalf_1.c"
-
 #ifdef GSP_F3D_20D
-#ifdef __DEBUG__
-static void gsp_g_perspnormalize(unused u32 w0, unused u32 w1)
-{
-}
-#else
-#define gsp_g_perspnormalize    NULL
+#include "gsp/g_perspnormalize.c"
 #endif
-#endif
-
 #ifdef GSP_F3DEX
 #include "gsp/g_quad.c"
 #endif
-
 #include "gsp/g_cleargeometrymode.c"
 #include "gsp/g_setgeometrymode.c"
 #include "gsp/g_enddl.c"
@@ -1240,14 +1217,7 @@ static void gsp_g_perspnormalize(unused u32 w0, unused u32 w1)
 #define gsp_g_culldl            NULL
 #endif
 #include "gsp/g_tri1.c"
-
-#ifdef __DEBUG__
-static void gsp_g_noop(unused u32 w0, unused u32 w1)
-{
-}
-#else
-#define gsp_g_noop              NULL
-#endif
+#include "gdp/g_noop.c"
 #endif
 
 #ifdef GSP_F3DEX2
@@ -1293,15 +1263,7 @@ static void gsp_g_dma_io(unused u32 w0, unused u32 w1)
 #include "gsp/g_load_ucode.c"
 #include "gsp/g_dl.c"
 #include "gsp/g_enddl.c"
-
-#if 0
-static void gsp_g_noop(unused u32 w0, unused u32 w1)
-{
-}
-#else
-#define gsp_g_noop              NULL
-#endif
-
+#include "gdp/g_noop.c"
 #include "gsp/g_rdphalf_1.c"
 #include "gsp/g_setothermode_l.c"
 #include "gsp/g_setothermode_h.c"
@@ -1677,7 +1639,7 @@ static GSP *gsp_table[] =
     /* 0xBD */  gsp_g_popmtx,
     /* 0xBE */  gsp_g_culldl,
     /* 0xBF */  gsp_g_tri1,
-    /* 0xC0 */  gsp_g_noop,
+    /* 0xC0 */  gdp_g_noop,
 #endif
 #ifdef GSP_F3DEX2
     /* 0xAF */  NULL,
@@ -1750,7 +1712,7 @@ static GSP *gsp_table[] =
     /* 0xDD */  gsp_g_load_ucode,
     /* 0xDE */  gsp_g_dl,
     /* 0xDF */  gsp_g_enddl,
-    /* 0xE0 */  gsp_g_noop,
+    /* 0xE0 */  gdp_g_noop,
     /* 0xE1 */  gsp_g_rdphalf_1,
     /* 0xE2 */  gsp_g_setothermode_l,
     /* 0xE3 */  gsp_g_setothermode_h,

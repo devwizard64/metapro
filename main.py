@@ -188,11 +188,11 @@ def op_jt():
     if inst_op == 0x01:
         if inst_rt in {0x00, 0x01}:         return op_maxb(2)
         if inst_rt in {0x02, 0x03}:         return op_maxb(3)
+    if inst_op == 0x02:                     return op_maxb(1)
     if inst_op == 0x11:
         if inst_rs == 0x08:
             if inst_rt in {0x00, 0x01}:     return op_maxb(2)
             if inst_rt in {0x02, 0x03}:     return op_maxb(3)
-    if inst_op == 0x02:                     return op_maxb(1)
     if inst_op in {0x04, 0x05, 0x06, 0x07}: return op_maxb(2)
     if inst_op in {0x14, 0x15, 0x16, 0x17}: return op_maxb(3)
     return 0
@@ -370,8 +370,7 @@ def op_regimm():
 
 def op_j():
     global wret
-    # if wret == None:
-    #     print("    0x%08X, # %06X" % (addr, addr-offs))
+    # if wret == None: print("    0x%08X, # %06X" % (addr, addr-offs))
     x = op_jal() if wret and inst_jdst not in btbl else op_b()
     wret = False
     return x
@@ -1101,17 +1100,16 @@ def main(argc, argv):
             data = data[:addr-offs] + patch + data[addr-offs + len(patch):]
         addr = start
         while addr < end:
-            f = False
+            # f = False
             while True:
                 op_unpack()
                 if inst != 0x00000000:
                     break
-                f = True
+            #     f = True
                 addr += 4
             if addr >= end:
                 break
-            # if f:
-            #     print("    0x%08X," % addr)
+            # if f: print("    0x%08X," % addr)
             dst.append(addr)
             inst_maxb = 0
             stack_min = 0x00
@@ -1235,9 +1233,7 @@ def main(argc, argv):
                 if end:
                     break
             # if stack_use:
-            #     app_c += "    u8 stack[0x%04X];\n" % (
-            #         (stack_max+0x07) & ~0x07
-            #     )
+            #     app_c += "    u8 stack[0x%04X];\n" % ((stack_max+7) & ~7)
             for t, reg in stack_reg:
                 for flag, r in reg:
                     if app.reg & flag:

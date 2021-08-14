@@ -285,8 +285,6 @@
 #define G_RM_AA_ZB_XLU_DECAL2   0x00104DD8
 #define G_RM_OPA_SURF           0x0C084000
 #define G_RM_OPA_SURF2          0x03024000
-#define G_RM_TEX_EDGE           0x0C087008
-#define G_RM_TEX_EDGE2          0x03027008
 
 #define G_DL_PUSH   0x00
 #define G_DL_NOPUSH 0x01

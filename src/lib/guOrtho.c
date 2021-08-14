@@ -10,17 +10,11 @@ void lib_guOrtho(void)
 #ifdef LIB_DYNRES
     if (n == 0 && f == 3)
     {
-        /* scale y */
-        f32 y =             (1.0F/2) * (t+b);
-        f32 h = (4.0F/3.0F)*(1.0F/2) * (t-b) * lib_video_h/lib_video_w;
-        mtxf_ortho(mf, l, r, y-h, y+h, n, f);
+        mtxf_ortho_bg(mf, l, r, b, t, n, f);
     }
     else
     {
-        /* scale x */
-        f32 x =             (1.0F/2) * (r+l);
-        f32 w = (3.0F/4.0F)*(1.0F/2) * (r-l) * lib_video_w/lib_video_h;
-        mtxf_ortho(mf, x-w, x+w, b, t, n, f);
+        mtxf_ortho_fg(mf, l, r, b, t, n, f);
     }
 #else
     mtxf_ortho(mf, l, r, b, t, n, f);
