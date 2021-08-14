@@ -5,7 +5,7 @@
 
 #ifndef __ASSEMBLER__
 
-extern void asp_update(u32 *, uint);
+extern void asp_update(u32 *al, uint size);
 
 #endif /* __ASSEMBLER__ */
 

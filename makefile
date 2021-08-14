@@ -1,5 +1,6 @@
 APP     ?= UNSME0
 TARGET  ?= native
+DEBUG   ?= 1
 
 LIBCTRU := $(DEVKITPRO)/libctru
 LIBOGC  := $(DEVKITPRO)/libogc
@@ -19,43 +20,45 @@ SRC_OBJ := \
 APP_OBJ := $(shell python3 main.py $(APP) $(BUILD)/app/)
 APP_SRC := $(addprefix build/$(APP)/,$(notdir $(APP_OBJ:.o=.c)))
 
-FLAG    := -I src -I build/$(APP)
+FLAG    := -Isrc -Ibuild/$(APP)
 FLAG    += -fno-strict-aliasing -Wall -Wextra -Wpedantic -Ofast
-FLAG    += -ggdb3 -D __DEBUG__
+ifneq ($(DEBUG),0)
+	FLAG    += -ggdb3 -D__DEBUG__
+endif
 
 ifeq ($(TARGET),native)
-	CC      := gcc -fno-pie $(FLAG) -D __NATIVE__
-	LD      := gcc -no-pie
-	LIB     := -l m -l SDL2 -l GL
+	CC      := gcc -fno-pie $(FLAG) -D__NATIVE__
+	LD      := gcc -no-pie -s
+	LIB     := -lm -lSDL2 -lGL
 else ifeq ($(TARGET),win32)
-	CC      := i686-w64-mingw32-gcc -mwindows $(FLAG) -D __NATIVE__
-	LD      := i686-w64-mingw32-gcc -mwindows
-	LIB     := -l mingw32 -l m -l SDL2main -l SDL2 -l opengl32
+	CC      := i686-w64-mingw32-gcc -mwindows $(FLAG) -D__NATIVE__
+	LD      := i686-w64-mingw32-gcc -mwindows -s
+	LIB     := -lmingw32 -lm -lSDL2main -lSDL2 -lopengl32
 else ifeq ($(TARGET),3ds)
 	CC      := arm-none-eabi-gcc -march=armv6k -mtune=mpcore
 	CC      += -mfloat-abi=hard -mtp=soft
 	LD      := $(CC) -specs=3dsx.specs
 	CC      += -mword-relocations -fomit-frame-pointer -ffunction-sections
-	CC      += -I $(LIBCTRU)/include -I $(PICAGL)/include
-	LD      += -L $(LIBCTRU)/lib -L $(PICAGL)/lib
-	CC      += $(FLAG) -D ARM11 -D _3DS -D __3DS__
-	LIB     := -l picaGL -l m -l ctru
+	CC      += -I$(LIBCTRU)/include -I$(PICAGL)/include
+	LD      += -L$(LIBCTRU)/lib -L$(PICAGL)/lib
+	CC      += $(FLAG) -DARM11 -D_3DS -D__3DS__
+	LIB     := -lpicaGL -lm -lctru
 else ifeq ($(TARGET),gcn)
 	CC      := powerpc-eabi-gcc -mogc -mcpu=750 -meabi -mhard-float
 	LD      := $(CC)
 	CC      += -ffunction-sections -fwrapv
-	CC      += -I $(LIBOGC)/include $(FLAG)
-	LD      += -L $(LIBOGC)/lib/cube
-	CC      += -D GEKKO -D __GCN__
-	LIB     := -l fat -l m -l ogc
+	CC      += -I$(LIBOGC)/include $(FLAG)
+	LD      += -L$(LIBOGC)/lib/cube
+	CC      += -DGEKKO -D__GCN__
+	LIB     := -lfat -lm -logc
 else ifeq ($(TARGET),wii)
 	CC      := powerpc-eabi-gcc -mrvl -mcpu=750 -meabi -mhard-float
 	LD      := $(CC)
 	CC      += -ffunction-sections -fwrapv
-	CC      += -I $(LIBOGC)/include $(FLAG)
-	LD      += -L $(LIBOGC)/lib/wii
-	CC      += -D GEKKO -D __WII__
-	LIB     := -l fat -l m -l ogc
+	CC      += -I$(LIBOGC)/include $(FLAG)
+	LD      += -L$(LIBOGC)/lib/wii
+	CC      += -DGEKKO -D__WII__
+	LIB     := -lfat -lm -logc
 endif
 
 .PHONY: default native win32 3ds gcn wii

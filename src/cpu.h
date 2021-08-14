@@ -18,7 +18,7 @@
 #define PATH_START  ""
 #endif
 
-#ifdef __NATIVE__
+#if defined(__NATIVE__) && defined(__DEBUG__)
 #define PATH_ROOT   PATH_START "app" SEP APP_PATH SEP
 #else
 #define PATH_ROOT   PATH_START
@@ -160,13 +160,13 @@ static inline void *__tlb(PTR addr)
 #define __break(code) thread_fault()
 #endif
 
-extern void __call(PTR);
-extern u32  __dcall(PTR);
-extern void __byteswap(void *, const void *, s32);
-extern void __wordswap(void *, const void *, s32);
-extern void __dma(void *, PTR, u32);
-extern void __eeprom_read(void *, uint);
-extern void __eeprom_write(const void *, uint);
+extern void __call(PTR addr);
+extern u32  __dcall(PTR addr);
+extern void __byteswap(void *dst, const void *src, s32 size);
+extern void __wordswap(void *dst, const void *src, s32 size);
+extern void __dma(void *dst, PTR src, u32 size);
+extern void __eeprom_read(void *data, uint size);
+extern void __eeprom_write(const void *data, uint size);
 extern void cpu_init(void);
 extern void cpu_destroy(void);
 

@@ -2,8 +2,4 @@
 __pycache__/
 *.pyc
 *.dll
-app.bin
-eeprom.bin
-dram.bin
-input.bin
-config.bin
+*.bin

@@ -7,6 +7,8 @@
 #include "types.h"
 #include "tm.h"
 
+#ifdef __DEBUG__
+
 #ifdef __NATIVE__
 #define tm_time()       clock()
 #define TM_USEC         (1000000.0F/CLOCKS_PER_SEC)
@@ -23,7 +25,7 @@ typedef u64 TM_TIME;
 typedef u8 TM_TIME;
 #endif
 
-static const char *const str_tm_time[TM_LEN] =
+static const char str_tm_time[TM_LEN][12] =
 {
     "CPU THREAD4",
     "CPU THREAD5",
@@ -84,3 +86,5 @@ void tm_draw(void)
         printf("%s:%8" FMT_d "u\n", str_tm_time[i], usec);
     }
 }
+
+#endif

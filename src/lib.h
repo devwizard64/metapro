@@ -34,15 +34,15 @@ extern u16 lib_video_h;
 extern f32 lib_viewport_l;
 extern f32 lib_viewport_r;
 
-extern void mtx_read(f32 *, const s16 *);
-extern void mtx_write(s16 *, const f32 *);
-extern void mtxf_cat(f32[4][4], f32[4][4], f32[4][4]);
-extern void mtxf_identity(f32[4][4]);
-extern void mtxf_ortho(f32[4][4], f32, f32, f32, f32, f32, f32);
-extern void thread_yield(int);
+extern void mtx_read(f32 *dst, const s16 *src);
+extern void mtx_write(s16 *dst, const f32 *src);
+extern void mtxf_cat(f32 mf[4][4], f32 a[4][4], f32 b[4][4]);
+extern void mtxf_identity(f32 mf[4][4]);
+extern void mtxf_ortho(f32 mf[4][4], f32 l, f32 r, f32 b, f32 t, f32 n, f32 f);
+extern void thread_yield(int arg);
 extern void thread_fault(void);
 extern void video_update(void);
-extern void lib_main(void (*)(void));
+extern void lib_main(void (*start)(void));
 extern void lib_init(void);
 
 #ifdef APP_UNSM
