@@ -1,33 +1,3 @@
-#ifdef __EB__
-#define __read_str(dst, src) strcpy(dst, __tlb(src))
-#define __write_str(dst, src) strcpy(__tlb(dst), src)
-#else
-#define __read_str(dst, src)    \
-{                               \
-    char *_dst = dst;           \
-    u32   _src = src;           \
-    char  _c;                   \
-    do                          \
-    {                           \
-        _c = __read_u8(_src++); \
-        *_dst++ = _c;           \
-    }                           \
-    while (_c != 0);            \
-}
-#define __write_str(dst, src)   \
-{                               \
-    u32   _dst = dst;           \
-    char *_src = src;           \
-    char  _c;                   \
-    do                          \
-    {                           \
-        _c = *_src++;           \
-        __write_u8(_dst++, _c); \
-    }                           \
-    while (_c != 0);            \
-}
-#endif
-
 void lib_sprintf(void)
 {
     char  buf_dst[0x100];

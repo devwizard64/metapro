@@ -147,10 +147,7 @@ static void gsp_g_vtx(u32 w0, u32 w1)
         #ifdef GEKKO
             z = 1 + 2*z;
         #endif
-            if (z > 1)
-            {
-                z = -1;
-            }
+            if (z > 1) z = -1;
             a = gsp_fog_o + (int)(gsp_fog_m*z);
             if (a < 0x00) a = 0x00;
             if (a > 0xFF) a = 0xFF;

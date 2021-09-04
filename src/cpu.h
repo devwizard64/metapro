@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "types.h"
 #include "app.h"
@@ -96,26 +97,26 @@ static inline void *__tlb(PTR addr)
 #define __tlb(addr) ((void *)&cpu_dram[(PTR)(addr) & 0x1FFFFFFF])
 #endif
 
-#define __read_s8(addr)  (*(s8  *)__tlb((addr) ^ AX_B))
-#define __read_u8(addr)  (*(u8  *)__tlb((addr) ^ AX_B))
-#define __read_s16(addr) (*(s16 *)__tlb((addr) ^ AX_H))
-#define __read_u16(addr) (*(u16 *)__tlb((addr) ^ AX_H))
-#define __read_s32(addr) (*(s32 *)__tlb((addr) ^ AX_W))
-#define __read_u32(addr) (*(u32 *)__tlb((addr) ^ AX_W))
-#define __read_f32(addr) (*(f32 *)__tlb((addr) ^ AX_W))
+#define __read_s8(addr)  (*(s8  *)__tlb((addr)^AX_B))
+#define __read_u8(addr)  (*(u8  *)__tlb((addr)^AX_B))
+#define __read_s16(addr) (*(s16 *)__tlb((addr)^AX_H))
+#define __read_u16(addr) (*(u16 *)__tlb((addr)^AX_H))
+#define __read_s32(addr) (*(s32 *)__tlb((addr)^AX_W))
+#define __read_u32(addr) (*(u32 *)__tlb((addr)^AX_W))
+#define __read_f32(addr) (*(f32 *)__tlb((addr)^AX_W))
 #define __read_s64(addr) \
-    ((s64)__read_s32((addr)+0x00) << 32 | __read_u32((addr)+0x04))
+    ((s64)__read_s32((addr)+0) << 32 | __read_u32((addr)+4))
 #define __read_u64(addr) \
-    ((u64)__read_u32((addr)+0x00) << 32 | __read_u32((addr)+0x04))
+    ((u64)__read_u32((addr)+0) << 32 | __read_u32((addr)+4))
 
-#define __write_u8(addr, val)  {*(u8  *)__tlb((addr) ^ AX_B) = (u8)(val);}
-#define __write_u16(addr, val) {*(u16 *)__tlb((addr) ^ AX_H) = (u16)(val);}
-#define __write_u32(addr, val) {*(u32 *)__tlb((addr) ^ AX_W) = (u32)(val);}
-#define __write_f32(addr, val) {*(f32 *)__tlb((addr) ^ AX_W) = (f32)(val);}
+#define __write_u8(addr, val)  {*(u8  *)__tlb((addr)^AX_B) = (u8)(val);}
+#define __write_u16(addr, val) {*(u16 *)__tlb((addr)^AX_H) = (u16)(val);}
+#define __write_u32(addr, val) {*(u32 *)__tlb((addr)^AX_W) = (u32)(val);}
+#define __write_f32(addr, val) {*(f32 *)__tlb((addr)^AX_W) = (f32)(val);}
 #define __write_u64(addr, val)                  \
 {                                               \
-    __write_u32((addr)+0x00, (u64)(val) >> 32); \
-    __write_u32((addr)+0x04, (u64)(val) >>  0); \
+    __write_u32((addr)+0, (u64)(val) >> 32);    \
+    __write_u32((addr)+4, (u64)(val) >>  0);    \
 }
 #define __read_u32_l(addr, val)                     \
 {                                                   \
@@ -153,6 +154,36 @@ static inline void *__tlb(PTR addr)
     _val |= __read_u32(_addr) & cpu_swr_mask[_i];   \
     __write_u32(_addr, _val);                       \
 }
+
+#ifdef __EB__
+#define __read_str(dst, src)    strcpy(dst, __tlb(src))
+#define __write_str(dst, src)   strcpy(__tlb(dst), src)
+#else
+#define __read_str(dst, src)    \
+{                               \
+    char *_dst = dst;           \
+    PTR   _src = src;           \
+    char  _c;                   \
+    do                          \
+    {                           \
+        _c = __read_u8(_src++); \
+        *_dst++ = _c;           \
+    }                           \
+    while (_c != 0);            \
+}
+#define __write_str(dst, src)   \
+{                               \
+    PTR   _dst = dst;           \
+    char *_src = src;           \
+    char  _c;                   \
+    do                          \
+    {                           \
+        _c = *_src++;           \
+        __write_u8(_dst++, _c); \
+    }                           \
+    while (_c != 0);            \
+}
+#endif
 
 #ifdef APP_UNK4
 #define __break(code)

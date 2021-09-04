@@ -49,19 +49,10 @@ void __call(PTR addr)
     do
     {
         const struct app_call *call;
-        if (addr < start->addr)
-        {
-            edebug("__call(0x%08" FMT_X "U)\n", addr);
-        }
-        if (len > 1)
-        {
-            len /= 2;
-        }
+        if (len > 1) len /= 2;
         call = start + len;
-        if (addr >= call->addr)
-        {
-            start = call;
-        }
+        if (call->addr == NULLPTR) edebug("__call(0x%08" FMT_X "U)\n", addr);
+        if (addr >= call->addr) start = call;
     }
     while (start->addr != addr);
     start->call();

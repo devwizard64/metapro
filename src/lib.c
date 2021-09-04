@@ -859,6 +859,12 @@ static void video_init(void)
     GX_SetDispCopyGamma(GX_GM_1_0);
     GX_SetColorUpdate(GX_TRUE);
     GX_CopyDisp(lib_framebuffer, GX_TRUE);
+#ifdef __DEBUG__
+    CON_Init(
+        lib_framebuffer, 20, 20,
+        lib_rmode->fbWidth, lib_rmode->xfbHeight, 2*lib_rmode->fbWidth
+    );
+#endif
     video_update_size(lib_rmode->fbWidth, lib_rmode->efbHeight);
     gsp_init();
 #endif

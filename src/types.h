@@ -1,6 +1,25 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
+#define false   0
+#define true    1
+
+#ifdef WIN32
+#define SEP     "\\"
+#else
+#define SEP     "/"
+#endif
+
+#ifdef __3DS__
+#define FMT_d   "ld"
+#define FMT_x   "lx"
+#define FMT_X   "lX"
+#else
+#define FMT_d   "d"
+#define FMT_x   "x"
+#define FMT_X   "X"
+#endif
+
 #ifndef __ASSEMBLER__
 
 #include <stddef.h>
@@ -48,11 +67,16 @@ typedef u32 PTR;
 #define forceinline
 #endif
 
-#ifdef __3DS__
-#define eexit() {svcSleepThread(3000000000LL); exit(EXIT_FAILURE);}
-#else
-#define eexit() exit(EXIT_FAILURE)
+#ifdef __NATIVE__
+#define esleep(x)
 #endif
+#ifdef __3DS__
+#define esleep(x)   svcSleepThread(1000000000LL*(x))
+#endif
+#ifdef GEKKO
+#define esleep(x)   {int _i; for (_i = 0; _i < 60*(x); _i++) VIDEO_WaitVSync();}
+#endif
+#define eexit()     {esleep(3); exit(EXIT_FAILURE);}
 
 #define wprint(...) fprintf(stderr, "warning: " __VA_ARGS__)
 #define eprint(...) {fprintf(stderr, "error: " __VA_ARGS__); eexit();}
@@ -61,30 +85,11 @@ typedef u32 PTR;
 #define wdebug wprint
 #define edebug eprint
 #else
-#define pdebug(...)
-#define wdebug(...)
-#define edebug(...)
+#define pdebug(...) {}
+#define wdebug(...) {}
+#define edebug(...) {}
 #endif
 
 #endif /* __ASSEMBLER__ */
-
-#define false   0
-#define true    1
-
-#ifdef WIN32
-#define SEP     "\\"
-#else
-#define SEP     "/"
-#endif
-
-#ifdef __3DS__
-#define FMT_d   "ld"
-#define FMT_x   "lx"
-#define FMT_X   "lX"
-#else
-#define FMT_d   "d"
-#define FMT_x   "x"
-#define FMT_X   "X"
-#endif
 
 #endif /* __TYPES_H__ */
