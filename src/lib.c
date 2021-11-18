@@ -921,6 +921,49 @@ static u64 video_time(void)
 void video_update(void)
 {
 #ifdef __NATIVE__
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
+    {
+        switch (event.type)
+        {
+            case SDL_QUIT:
+                exit(EXIT_SUCCESS);
+                break;
+        #ifndef APP_SEQ
+            case SDL_WINDOWEVENT:
+                switch (event.window.event)
+                {
+                    case SDL_WINDOWEVENT_RESIZED:
+                        video_update_size(
+                            event.window.data1, event.window.data2
+                        );
+                        break;
+                }
+                break;
+            case SDL_KEYDOWN:
+                switch (event.key.keysym.scancode)
+                {
+                #if 0
+                    case SDL_SCANCODE_F1:
+                        lib_reset = true;
+                        break;
+                #endif
+                    case SDL_SCANCODE_F4:
+                        lib_fast ^= false^true;
+                        break;
+                    case SDL_SCANCODE_F5:
+                        lib_save = true;
+                        break;
+                    case SDL_SCANCODE_F7:
+                        lib_load = true;
+                        break;
+                    default:
+                        break;
+                }
+                break;
+        #endif
+        }
+    }
 #ifndef APP_SEQ
     if (lib_fast)
     {
@@ -996,51 +1039,7 @@ static void input_destroy(void)
 #ifndef APP_SEQ
 static void input_update(void)
 {
-#ifdef __NATIVE__
-    SDL_Event event;
-    while (SDL_PollEvent(&event))
-    {
-        switch (event.type)
-        {
-            case SDL_QUIT:
-                exit(EXIT_SUCCESS);
-                break;
-        #ifndef APP_SEQ
-            case SDL_WINDOWEVENT:
-                switch (event.window.event)
-                {
-                    case SDL_WINDOWEVENT_RESIZED:
-                        video_update_size(
-                            event.window.data1, event.window.data2
-                        );
-                        break;
-                }
-                break;
-            case SDL_KEYDOWN:
-                switch (event.key.keysym.scancode)
-                {
-                #if 0
-                    case SDL_SCANCODE_F1:
-                        lib_reset = true;
-                        break;
-                #endif
-                    case SDL_SCANCODE_F4:
-                        lib_fast ^= false^true;
-                        break;
-                    case SDL_SCANCODE_F5:
-                        lib_save = true;
-                        break;
-                    case SDL_SCANCODE_F7:
-                        lib_load = true;
-                        break;
-                    default:
-                        break;
-                }
-                break;
-        #endif
-        }
-    }
-#else
+#ifndef __NATIVE__
 #ifdef __3DS__
     u32 held;
     u32 down;
