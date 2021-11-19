@@ -979,7 +979,7 @@ void video_update(void)
             time = video_time();
         }
     }
-    if (SDL_GetQueuedAudioSize(lib_audio_device) > 8192)
+    if (SDL_GetQueuedAudioSize(lib_audio_device) > 16384)
     {
         SDL_ClearQueuedAudio(lib_audio_device);
     }
