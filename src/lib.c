@@ -215,9 +215,7 @@ u16 lib_video_h    = 240;
 f32 lib_viewport_l =   0;
 f32 lib_viewport_r = 320;
 
-#if 0
 static bool lib_reset = false;
-#endif
 #ifdef __NATIVE__
 static bool lib_fast  = false;
 #endif
@@ -229,10 +227,8 @@ static struct thread *lib_thread_list  = NULL;
 static struct thread *lib_thread_queue = NULL;
 static struct thread *lib_thread       = NULL;
 static jmp_buf lib_jmp;
-#if 0
 static jmp_buf lib_nmi;
 static u8      lib_prenmi = 0;
-#endif
 
 static struct os_event lib_event_table[OS_NUM_EVENTS] = {0};
 static struct os_event lib_event_vi = {0};
@@ -810,7 +806,7 @@ static void video_init(void)
     {
         eprint("could not create context (%s)\n", SDL_GetError());
     }
-    SDL_GL_SetSwapInterval(1);
+    SDL_GL_SetSwapInterval(0);
     gsp_init();
 #endif
 #ifdef __3DS__
@@ -934,6 +930,7 @@ void video_update(void)
                 switch (event.window.event)
                 {
                     case SDL_WINDOWEVENT_RESIZED:
+                        SDL_ClearQueuedAudio(lib_audio_device);
                         video_update_size(
                             event.window.data1, event.window.data2
                         );
@@ -943,11 +940,9 @@ void video_update(void)
             case SDL_KEYDOWN:
                 switch (event.key.keysym.scancode)
                 {
-                #if 0
                     case SDL_SCANCODE_F1:
                         lib_reset = true;
                         break;
-                #endif
                     case SDL_SCANCODE_F4:
                         lib_fast ^= false^true;
                         break;
@@ -983,6 +978,10 @@ void video_update(void)
             SDL_Delay(1);
             time = video_time();
         }
+    }
+    if (SDL_GetQueuedAudioSize(lib_audio_device) > 8192)
+    {
+        SDL_ClearQueuedAudio(lib_audio_device);
     }
 #endif
 #ifdef __3DS__
@@ -1330,12 +1329,6 @@ static void audio_update(void *src, size_t size)
 #ifdef __NATIVE__
     void *data = malloc(size);
     __WORDSWAP(data, src, size);
-#ifndef APP_SEQ
-    if (lib_fast)
-    {
-        size /= 2;
-    }
-#endif
     SDL_QueueAudio(lib_audio_device, data, size);
     free(data);
 #endif
@@ -1452,7 +1445,6 @@ static void lib_update(void)
     }
 #endif
     video_update();
-#if 0
     if (lib_prenmi > 0)
     {
         if (--lib_prenmi == 0)
@@ -1466,7 +1458,6 @@ static void lib_update(void)
         lib_prenmi = 30;
         lib_event(&lib_event_table[OS_EVENT_PRENMI]);
     }
-#endif
     lib_event(&lib_event_vi);
     longjmp(lib_jmp, THREAD_YIELD_QUEUE);
 }
@@ -1544,7 +1535,6 @@ void lib_main(void (*start)(void))
             longjmp(thread->jmp, 1);
         }
     }
-#if 0
     if (setjmp(lib_nmi) != 0)
     {
         lib_thread = NULL;
@@ -1553,7 +1543,6 @@ void lib_main(void (*start)(void))
             thread_destroy(lib_thread_list);
         }
     }
-#endif
     start();
 }
 
