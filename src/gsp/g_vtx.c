@@ -21,21 +21,21 @@ static void gsp_g_vtx(u32 w0, u32 w1)
     struct vtx  *v  = &gsp_vtx_buf[index];
     struct vtxf *vf = &gsp_vtxf_buf[index];
     memcpy(v, gsp_addr(w1), size);
-    if (gsp_light_new)
+    if (gsp_new_light)
     {
         uint i;
-        gsp_light_new = false;
+        gsp_new_light = false;
         for (i = 2; i < gsp_light_no; i++)
         {
             struct light  *l  = &gsp_light_buf[i];
             struct lightf *lf = &gsp_lightf_buf[i];
-            f32 x = l->x;
-            f32 y = l->y;
-            f32 z = l->z;
-            f32 nx = IDOT3(MM, 0);
-            f32 ny = IDOT3(MM, 1);
-            f32 nz = IDOT3(MM, 2);
-            f32 d = sqrtf(nx*nx + ny*ny + nz*nz);
+            float x = l->x;
+            float y = l->y;
+            float z = l->z;
+            float nx = IDOT3(MM, 0);
+            float ny = IDOT3(MM, 1);
+            float nz = IDOT3(MM, 2);
+            float d = sqrtf(nx*nx + ny*ny + nz*nz);
             if (d > 0)
             {
                 d = (1.0F/0x80) / d;
@@ -68,13 +68,13 @@ static void gsp_g_vtx(u32 w0, u32 w1)
             }
             else
             {
-                f32 x = v->r;
-                f32 y = v->g;
-                f32 z = v->b;
-                f32 nx = MDOT3(MM, 0);
-                f32 ny = MDOT3(MM, 1);
-                f32 nz = MDOT3(MM, 2);
-                f32 d = sqrtf(nx*nx + ny*ny + nz*nz);
+                float x = v->r;
+                float y = v->g;
+                float z = v->b;
+                float nx = MDOT3(MM, 0);
+                float ny = MDOT3(MM, 1);
+                float nz = MDOT3(MM, 2);
+                float d = sqrtf(nx*nx + ny*ny + nz*nz);
                 if (d > 0)
                 {
                     d = 0x4000 / d;
@@ -94,7 +94,7 @@ static void gsp_g_vtx(u32 w0, u32 w1)
         }
         s = (gsp_texture_scale[0]*s + 0x8000) >> 16;
         t = (gsp_texture_scale[1]*t + 0x8000) >> 16;
-        if (gdp_texture_filter != GL_NEAREST)
+        if (gdp_tf != GDP_TF_POINT)
         {
             s += 32/2;
             t += 32/2;
@@ -103,17 +103,17 @@ static void gsp_g_vtx(u32 w0, u32 w1)
         vf->t = t;
         if (gsp_geometry_mode & G_LIGHTING)
         {
-            f32  x = v->r;
-            f32  y = v->g;
-            f32  z = v->b;
-            uint r = gsp_light_buf[gsp_light_no].col[0].r;
-            uint g = gsp_light_buf[gsp_light_no].col[0].g;
-            uint b = gsp_light_buf[gsp_light_no].col[0].b;
-            uint i;
+            float x = v->r;
+            float y = v->g;
+            float z = v->b;
+            uint  r = gsp_light_buf[gsp_light_no].col[0].r;
+            uint  g = gsp_light_buf[gsp_light_no].col[0].g;
+            uint  b = gsp_light_buf[gsp_light_no].col[0].b;
+            uint  i;
             for (i = 2; i < gsp_light_no; i++)
             {
                 struct lightf *lf = &gsp_lightf_buf[i];
-                f32 d = lf->x*x + lf->y*y + lf->z*z;
+                float d = lf->x*x + lf->y*y + lf->z*z;
                 if (d > 0)
                 {
                     r += d*lf->r;
@@ -134,19 +134,16 @@ static void gsp_g_vtx(u32 w0, u32 w1)
             vf->shade[1] = v->g;
             vf->shade[2] = v->b;
         }
-    #ifdef GSP_FOG
+    #ifndef GEKKO
         if (gsp_geometry_mode & G_FOG)
         {
-            f32 x = v->x;
-            f32 y = v->y;
-            f32 z = v->z;
-            f32 nz = MDOT4(gsp_mtxf_mvp, 2);
-            f32 nw = MDOT4(gsp_mtxf_mvp, 3);
-            int a;
+            float x = v->x;
+            float y = v->y;
+            float z = v->z;
+            float nz = MDOT4(gsp_mtxf_mvp, 2);
+            float nw = MDOT4(gsp_mtxf_mvp, 3);
+            int   a;
             z = nz/nw;
-        #ifdef GEKKO
-            z = 1 + 2*z;
-        #endif
             if (z > 1) z = -1;
             a = gsp_fog_o + (int)(gsp_fog_m*z);
             if (a < 0x00) a = 0x00;
@@ -167,13 +164,3 @@ static void gsp_g_vtx(u32 w0, u32 w1)
     while (count-- > 0);
 #endif
 }
-
-#ifdef __3DS__
-#ifdef __DEBUG__
-static void gsp_g_vtx_stub(unused u32 w0, unused u32 w1)
-{
-}
-#else
-#define gsp_g_vtx_stub  NULL
-#endif
-#endif

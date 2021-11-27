@@ -236,7 +236,7 @@ void cpu_init(void)
 #endif
 #ifdef __3DS__
     osSetSpeedupEnable(true);
-    romfsInit();
+    /* romfsInit(); */
 #endif
 #ifdef GEKKO
     fatInitDefault();
@@ -264,9 +264,9 @@ void cpu_init(void)
     fclose(f);
 }
 
-void cpu_destroy(void)
+void cpu_exit(void)
 {
 #ifdef __3DS__
-    romfsExit();
+    /* romfsExit(); */
 #endif
 }

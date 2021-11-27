@@ -13,7 +13,7 @@ static void gsp_g_mtx(u32 w0, u32 w1)
     if (w1 == 0x02017310)
     {
     #if 1
-        mtxf_ortho(mf, lib_viewport_l, lib_viewport_r, 0, 240, 0, 2);
+        mtxf_ortho(mf, lib_video_l, lib_video_r, 0, 240, 0, 2);
     #else
         mtxf_ortho_bg(mf, 0, 320, 0, 240, 0, 2);
     #endif
@@ -41,7 +41,7 @@ static void gsp_g_mtx(u32 w0, u32 w1)
             memcpy(src, MP, sizeof(src));
             mtxf_cat(MP, mf, src);
         }
-        gsp_change |= CHANGE_MTXF_PROJECTION;
+        gsp_flush_mp();
     }
     else
     {
@@ -63,13 +63,13 @@ static void gsp_g_mtx(u32 w0, u32 w1)
             }
             mtxf_cat(MM, mf, src);
         }
+        gsp_flush_mm();
     #ifdef APP_UNK4
         mtx_write(gsp_mtx, &MM[0][0]);
     #endif
-        gsp_change |= CHANGE_MTXF_MODELVIEW;
-        gsp_light_new = true;
+        gsp_new_light = true;
     }
-#ifdef GSP_FOG
+#ifndef GEKKO
     mtxf_cat(gsp_mtxf_mvp, MM, MP);
 #endif
 }

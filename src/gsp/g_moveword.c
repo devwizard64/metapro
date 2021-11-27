@@ -27,16 +27,15 @@ static void gsp_g_moveword(u32 w0, u32 w1)
         case G_MW_SEGMENT:
             gsp_addr_table[offset/4] = &cpu_dram[w1 & 0x1FFFFFFF];
             break;
-    #ifdef GSP_FOG
         case G_MW_FOG:
             gsp_fog_m = w1 >> 16;
             gsp_fog_o = w1 >>  0;
+            gsp_new_fog = true;
             break;
-    #endif
     #ifndef APP_UNSM
         case G_MW_LIGHTCOL:
             *(u32 *)((u8 *)gsp_light_buf + offset) = w1;
-            gsp_light_new = true;
+            gsp_new_light = true;
             break;
     #endif
     #ifndef GSP_F3D_20D

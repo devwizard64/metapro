@@ -1,14 +1,12 @@
 static void gdp_g_settile(u32 w0, u32 w1)
 {
-    uint tile;
-    gsp_texture_fmt = w0 >> 19 & 0x1F;
-    tile            = w1 >> 24 & 7;
-    if (tile == G_TX_RENDERTILE)
-    {
-        gsp_texture_flag[1]  = w1 >> 18 & 3;
-        gsp_texture_shift[1] = w1 >> 10 & 7;
-        gsp_texture_flag[0]  = w1 >>  8 & 3;
-        gsp_texture_shift[0] = w1 >>  0 & 7;
-    }
-    gsp_change |= CHANGE_TEXTURE;
+    struct tile *tile = &gdp_tile[w1 >> 24 & 7];
+    tile->line      = (w0 >>  9 & 0x1FF) << 3;
+    tile->tmem      = (w0 >>  0 & 0x1FF) << 3;
+    tile->pal       = w1 >> 20 & 0x0F;
+    tile->fmt       = w0 >> 19 & 0x1F;
+    tile->cm[0]     = w1 >>  8 & 3;
+    tile->cm[1]     = w1 >> 18 & 3;
+    tile->shift[0]  = w1 >>  0 & 7;
+    tile->shift[1]  = w1 >> 10 & 7;
 }

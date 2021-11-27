@@ -30,18 +30,6 @@
 
 /* #define INPUT_WRITE */
 
-#ifdef __3DS__
-#define CFG_STICK_X     (1 << 0)
-#define CFG_STICK_Y     (1 << 1)
-#define CFG_AUDIO       (1 << 2)
-#define CFG_HI_H        (1 << 3)
-#define CFG_AA_H        (1 << 4)
-#define CFG_AA_V        (1 << 5)
-#endif
-#ifdef GEKKO
-#define CFG_AUDIO       (1 << 0)
-#endif
-
 #define THREAD_STACK_SIZE       0x4000
 #ifdef GEKKO
 #define THREAD_STACK_END        0x10
@@ -82,6 +70,8 @@ struct os_pad
 
 struct config
 {
+    char key[2];
+    u16 version;
 #ifdef __NATIVE__
     struct
     {
@@ -93,22 +83,25 @@ struct config
 #ifdef __3DS__
     u32 input[20];
     u32 input_exit;
+    u32 input_reset;
+    u32 input_fast;
     u32 input_save;
     u32 input_load;
-    u32 flag;
+    bool wide;
 #endif
 #ifdef GEKKO
     u16 input[20];
     u16 input_exit;
+    u16 input_fast;
     u16 input_save;
     u16 input_load;
-    u16 flag;
 #endif
 };
 
 #ifndef APP_SEQ
 static const struct config lib_config_default =
 {
+    "MK", 0,
 #ifdef __NATIVE__
     {
         { 0,   0}, { 3,   0}, { 4,   0}, { 7,   0},
@@ -140,16 +133,18 @@ static const struct config lib_config_default =
         0,
         0,
     },
+    KEY_Y | KEY_START,
+    KEY_Y | KEY_SELECT,
     KEY_SELECT,
-    KEY_ZL,
-    KEY_ZR,
-    CFG_STICK_X | CFG_STICK_Y | CFG_AUDIO,
+    KEY_Y | KEY_ZL,
+    KEY_Y | KEY_ZR,
+    false,
 #endif
 #ifdef GEKKO
     {
         PAD_BUTTON_A,
         PAD_BUTTON_B | PAD_BUTTON_Y,
-        PAD_TRIGGER_L | PAD_TRIGGER_Z,
+        PAD_TRIGGER_L,
         PAD_BUTTON_START,
         0,
         0,
@@ -168,10 +163,10 @@ static const struct config lib_config_default =
         0,
         0,
     },
-    PAD_BUTTON_DOWN,
-    PAD_BUTTON_LEFT,
-    PAD_BUTTON_RIGHT,
-    CFG_AUDIO,
+    PAD_TRIGGER_Z | PAD_BUTTON_START,
+    PAD_TRIGGER_Z | PAD_BUTTON_X,
+    PAD_TRIGGER_Z | PAD_BUTTON_LEFT,
+    PAD_TRIGGER_Z | PAD_BUTTON_RIGHT,
 #endif
 };
 #endif
@@ -197,28 +192,28 @@ static u32   *lib_gsp_data   = NULL;
 static u32   *lib_asp_data   = NULL;
 static u32    lib_asp_size   = 0;
 static bool   lib_rsp_update = true;
-static f32 lib_audio_mix[12] = {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static float lib_audio_mix[12] = {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static ndspWaveBuf lib_audio_wb_table[2] = {0};
 static u8          lib_audio_wb_index    = 0;
 #endif
 #ifdef GEKKO
 static GXRModeObj *lib_rmode       = NULL;
 static void       *lib_framebuffer = NULL;
-static bool        lib_video_draw  = false;
+static u8         *lib_audio_table[2] = {0};
+static u8          lib_audio_index    = 0;
 #endif
 
 #ifndef APP_SEQ
 static struct config lib_config;
 
-u16 lib_video_w    = 320;
-u16 lib_video_h    = 240;
-f32 lib_viewport_l =   0;
-f32 lib_viewport_r = 320;
+u16 lib_video_w = 320;
+u16 lib_video_h = 240;
+f32 lib_video_l =   0;
+f32 lib_video_r = 320;
+f32 lib_video_aspect = (float)4/3;
 
 static bool lib_reset = false;
-#ifdef __NATIVE__
 static bool lib_fast  = false;
-#endif
 static bool lib_save  = false;
 static bool lib_load  = false;
 #endif
@@ -335,7 +330,9 @@ void mtxf_identity(f32 mf[4][4])
     mf[3][3] = 1;
 }
 
-void mtxf_ortho(f32 mf[4][4], f32 l, f32 r, f32 b, f32 t, f32 n, f32 f)
+void mtxf_ortho(
+    f32 mf[4][4], float l, float r, float b, float t, float n, float f
+)
 {
     mf[0][0] = 2 / (r-l);
     mf[0][1] = 0;
@@ -347,19 +344,29 @@ void mtxf_ortho(f32 mf[4][4], f32 l, f32 r, f32 b, f32 t, f32 n, f32 f)
     mf[1][3] = 0;
     mf[2][0] = 0;
     mf[2][1] = 0;
+#ifdef GEKKO
+    mf[2][2] = 1 / (n-f);
+#else
     mf[2][2] = 2 / (n-f);
+#endif
     mf[2][3] = 0;
     mf[3][0] = (l+r) / (l-r);
     mf[3][1] = (b+t) / (b-t);
+#ifdef GEKKO
+    mf[3][2] = (  f) / (n-f);
+#else
     mf[3][2] = (n+f) / (n-f);
+#endif
     mf[3][3] = 1;
 }
 
 #ifndef APP_UNK4
-static void mtxf_perspective(f32 mf[4][4], f32 fovy, f32 aspect, f32 n, f32 f)
+static void mtxf_perspective(
+    f32 mf[4][4], float fovy, float aspect, float n, float f
+)
 {
-    f32 x;
-    fovy *= (f32)(M_PI/360);
+    float x;
+    fovy *= (float)(M_PI/360);
     x = cosf(fovy) / sinf(fovy);
     mf[0][0] = x/aspect;
     mf[0][1] = 0;
@@ -381,7 +388,7 @@ static void mtxf_perspective(f32 mf[4][4], f32 fovy, f32 aspect, f32 n, f32 f)
     mf[3][0] = 0;
     mf[3][1] = 0;
 #ifdef GEKKO
-    mf[3][2] =      n*f*x;
+    mf[3][2] =   n*f*x;
 #else
     mf[3][2] = 2*n*f*x;
 #endif
@@ -392,18 +399,18 @@ static void mtxf_perspective(f32 mf[4][4], f32 fovy, f32 aspect, f32 n, f32 f)
 #ifdef APP_UNKT
 static void mtxf_lookat(
     f32 mf[4][4],
-    f32 ex, f32 ey, f32 ez,
-    f32 ax, f32 ay, f32 az,
-    f32 ux, f32 uy, f32 uz
+    float ex, float ey, float ez,
+    float ax, float ay, float az,
+    float ux, float uy, float uz
 )
 {
-    f32 d;
-    f32 lx;
-    f32 ly;
-    f32 lz;
-    f32 rx;
-    f32 ry;
-    f32 rz;
+    float d;
+    float lx;
+    float ly;
+    float lz;
+    float rx;
+    float ry;
+    float rz;
     lx = ax - ex;
     ly = ay - ey;
     lz = az - ez;
@@ -445,7 +452,7 @@ static void mtxf_lookat(
 #endif
 
 #ifndef APP_UNK4
-static void mtxf_translate(f32 mf[4][4], f32 x, f32 y, f32 z)
+static void mtxf_translate(f32 mf[4][4], float x, float y, float z)
 {
     mf[0][0] = 1;
     mf[0][1] = 0;
@@ -465,16 +472,16 @@ static void mtxf_translate(f32 mf[4][4], f32 x, f32 y, f32 z)
     mf[3][3] = 1;
 }
 
-static void mtxf_rotate(f32 mf[4][4], f32 a, f32 x, f32 y, f32 z)
+static void mtxf_rotate(f32 mf[4][4], float a, float x, float y, float z)
 {
-    f32 xx;
-    f32 yy;
-    f32 zz;
-    f32 s;
-    f32 c;
-    f32 xyc;
-    f32 yzc;
-    f32 zxc;
+    float xx;
+    float yy;
+    float zz;
+    float s;
+    float c;
+    float xyc;
+    float yzc;
+    float zxc;
     xx = x*x;
     yy = y*y;
     zz = z*z;
@@ -482,7 +489,7 @@ static void mtxf_rotate(f32 mf[4][4], f32 a, f32 x, f32 y, f32 z)
     x *= s;
     y *= s;
     z *= s;
-    a *= (f32)(M_PI/180);
+    a *= (float)(M_PI/180);
     s = sinf(a);
     c = cosf(a);
     xyc = x*y*(1-c);
@@ -506,7 +513,7 @@ static void mtxf_rotate(f32 mf[4][4], f32 a, f32 x, f32 y, f32 z)
     mf[3][3] = 1;
 }
 
-static void mtxf_scale(f32 mf[4][4], f32 x, f32 y, f32 z)
+static void mtxf_scale(f32 mf[4][4], float x, float y, float z)
 {
     mf[0][0] = x;
     mf[0][1] = 0;
@@ -689,12 +696,9 @@ static void thread_destroy(struct thread *thread)
     }
     else
     {
-        /* thread_print(); */
         thread_qunlink(thread);
         thread_lunlink(thread);
-        /* printf("free thread->stack %p\n", (void *)thread->stack); */
         free(thread->stack);
-        /* printf("free thread %p\n", (void *)thread); */
         free(thread);
     }
 }
@@ -723,15 +727,26 @@ static void lib_event(struct os_event *event)
 }
 
 #ifndef APP_SEQ
+#define video_update_wh(w, h)   \
+{                               \
+    lib_video_w = (w);          \
+    lib_video_h = (h);          \
+}
+
+#define video_update_lr()                       \
+{                                               \
+    lib_video_l = 160 - 120*lib_video_aspect;   \
+    lib_video_r = 160 + 120*lib_video_aspect;   \
+}
+
+#ifndef GEKKO
 static void video_update_size(int w, int h)
 {
-    f32 x;
-    lib_video_w = w;
-    lib_video_h = h;
-    x = 120.0F * w/h;
-    lib_viewport_l = 160 - x;
-    lib_viewport_r = 160 + x;
+    video_update_wh(w, h);
+    lib_video_aspect = (float)w/h;
+    video_update_lr();
 }
+#endif
 #endif
 
 #ifdef __3DS__
@@ -749,7 +764,7 @@ static void gsp_main(unused void *arg)
         }
     }
     while (lib_rsp_update);
-    gsp_destroy();
+    gsp_exit();
 }
 
 static void asp_main(unused void *arg)
@@ -765,20 +780,6 @@ static void asp_main(unused void *arg)
         }
     }
     while (lib_rsp_update);
-}
-#endif
-
-#ifdef GEKKO
-static void video_draw(unused u32 count)
-{
-    if (lib_video_draw)
-    {
-        lib_video_draw = false;
-        GX_SetZMode(GX_TRUE, GX_ALWAYS, GX_TRUE);
-        GX_SetColorUpdate(GX_TRUE);
-        GX_CopyDisp(lib_framebuffer, GX_TRUE);
-        GX_Flush();
-    }
 }
 #endif
 
@@ -811,7 +812,7 @@ static void video_init(void)
 #endif
 #ifdef __3DS__
     gfxInitDefault();
-    if (lib_config.flag & CFG_HI_H)
+    if (lib_config.wide)
     {
         gfxSetWide(true);
         video_update_size(800, 240);
@@ -830,19 +831,34 @@ static void video_init(void)
     lib_asp_thread = threadCreate(asp_main, NULL, 0x2000, 0x3F, -1, 1);
 #endif
 #ifdef GEKKO
-    void *fifo;
     VIDEO_Init();
     lib_rmode = VIDEO_GetPreferredMode(NULL);
+    video_update_wh(lib_rmode->fbWidth, lib_rmode->efbHeight);
+#ifdef __WII__
+    if (CONF_GetAspectRatio() == CONF_ASPECT_16_9)
+    {
+        lib_rmode->viXOrigin = (VI_MAX_WIDTH_NTSC-678)/2;
+        lib_rmode->viWidth = 678;
+        lib_video_aspect = (float)16/9;
+    }
+    else
+#endif
+    {
+        lib_video_aspect = (float)4/3;
+    }
+    video_update_lr();
     VIDEO_Configure(lib_rmode);
     lib_framebuffer = MEM_K0_TO_K1(SYS_AllocateFramebuffer(lib_rmode));
     VIDEO_SetNextFramebuffer(lib_framebuffer);
-    VIDEO_SetPostRetraceCallback(video_draw);
     VIDEO_SetBlack(false);
     VIDEO_Flush();
-    fifo = MEM_K0_TO_K1(memalign(0x20, 0x40000));
-    GX_Init(fifo, 0x40000);
+    CON_Init(
+        lib_framebuffer, 20, 20,
+        lib_rmode->fbWidth, lib_rmode->xfbHeight, 2*lib_rmode->fbWidth
+    );
+    GX_Init(MEM_K0_TO_K1(memalign(0x20, 0x40000)), 0x40000);
     GX_SetCopyClear((GXColor){0x00, 0x00, 0x00, 0xFF}, GX_MAX_Z24);
-    GX_SetDispCopyYScale((f32)lib_rmode->xfbHeight / (f32)lib_rmode->efbHeight);
+    GX_SetDispCopyYScale((float)lib_rmode->xfbHeight/lib_rmode->efbHeight);
     GX_SetDispCopySrc(0, 0, lib_rmode->fbWidth, lib_rmode->efbHeight);
     GX_SetDispCopyDst(lib_rmode->fbWidth, lib_rmode->xfbHeight);
     GX_SetCopyFilter(
@@ -855,26 +871,16 @@ static void video_init(void)
     GX_SetDispCopyGamma(GX_GM_1_0);
     GX_SetColorUpdate(GX_TRUE);
     GX_CopyDisp(lib_framebuffer, GX_TRUE);
-#ifdef __DEBUG__
-    CON_Init(
-        lib_framebuffer, 20, 20,
-        lib_rmode->fbWidth, lib_rmode->xfbHeight, 2*lib_rmode->fbWidth
-    );
-#endif
-    video_update_size(lib_rmode->fbWidth, lib_rmode->efbHeight);
     gsp_init();
 #endif
 }
 #endif
 
 #ifndef APP_SEQ
-static void video_destroy(void)
+static void video_exit(void)
 {
 #ifdef __NATIVE__
-    if (lib_window != NULL)
-    {
-        SDL_DestroyWindow(lib_window);
-    }
+    if (lib_window != NULL) SDL_DestroyWindow(lib_window);
 #endif
 #ifdef __3DS__
     lib_rsp_update = false;
@@ -940,20 +946,11 @@ void video_update(void)
             case SDL_KEYDOWN:
                 switch (event.key.keysym.scancode)
                 {
-                    case SDL_SCANCODE_F1:
-                        lib_reset = true;
-                        break;
-                    case SDL_SCANCODE_F4:
-                        lib_fast ^= false^true;
-                        break;
-                    case SDL_SCANCODE_F5:
-                        lib_save = true;
-                        break;
-                    case SDL_SCANCODE_F7:
-                        lib_load = true;
-                        break;
-                    default:
-                        break;
+                    case SDL_SCANCODE_F1:   lib_reset = true;       break;
+                    case SDL_SCANCODE_F4:   lib_fast ^= false^true; break;
+                    case SDL_SCANCODE_F5:   lib_save = true;        break;
+                    case SDL_SCANCODE_F7:   lib_load = true;        break;
+                    default: break;
                 }
                 break;
         #endif
@@ -985,12 +982,19 @@ void video_update(void)
     }
 #endif
 #ifdef __3DS__
-    gspWaitForVBlank();
+    if (!lib_fast) gspWaitForVBlank();
 #endif
 #ifdef GEKKO
-    VIDEO_WaitVSync();
+    if (!lib_fast) VIDEO_WaitVSync();
 #endif
 }
+
+#ifdef __WII__
+static void input_power(void)
+{
+    SYS_ResetSystem(SYS_POWEROFF, 0, 0);
+}
+#endif
 
 #ifndef APP_SEQ
 static void input_init(void)
@@ -1000,6 +1004,9 @@ static void input_init(void)
 #endif
 #ifdef GEKKO
     PAD_Init();
+#ifdef __WII__
+    SYS_SetPowerCallback(input_power);
+#endif
 #endif
 #ifdef INPUT_WRITE
     lib_input_data = lib_input = malloc(sizeof(*lib_input)*30*60*60*2);
@@ -1024,13 +1031,10 @@ static void input_init(void)
 #endif
 
 #ifndef APP_SEQ
-static void input_destroy(void)
+static void input_exit(void)
 {
 #ifdef __NATIVE__
-    if (lib_joystick != NULL)
-    {
-        SDL_JoystickClose(lib_joystick);
-    }
+    if (lib_joystick != NULL) SDL_JoystickClose(lib_joystick);
 #endif
 }
 #endif
@@ -1057,20 +1061,18 @@ static void input_update(void)
     held = PAD_ButtonsHeld(0);
     down = PAD_ButtonsDown(0);
 #endif
-#define INPUT_COMBO(d, h, m) (((d) & (m)) && ((h) & (m)) == (m))
-    if (INPUT_COMBO(down, held, lib_config.input_exit))
-    {
-        exit(EXIT_SUCCESS);
-    }
-    if (INPUT_COMBO(down, held, lib_config.input_save))
-    {
-        lib_save = true;
-    }
-    if (INPUT_COMBO(down, held, lib_config.input_load))
-    {
-        lib_load = true;
-    }
-#undef INPUT_COMBO
+#define COMBO(mask) ((down & (mask)) && (held & (mask)) == (mask))
+    if (COMBO(lib_config.input_exit))   exit(EXIT_SUCCESS);
+    if (COMBO(lib_config.input_fast))   lib_fast ^= false^true;
+#ifdef GEKKO
+    if (SYS_ResetButtonDown())
+#else
+    if (COMBO(lib_config.input_reset))
+#endif
+    lib_reset = true;
+    if (COMBO(lib_config.input_save))   lib_save  = true;
+    if (COMBO(lib_config.input_load))   lib_load  = true;
+#undef COMBO
 #endif
     if (lib_input_size > 0)
     {
@@ -1101,10 +1103,7 @@ static void input_update(void)
         );
         lib_input++;
         lib_input_size -= sizeof(*lib_input);
-        if (lib_input_size == 0)
-        {
-            free(lib_input_data);
-        }
+        if (lib_input_size == 0) free(lib_input_data);
     }
     else
     {
@@ -1130,22 +1129,14 @@ static void input_update(void)
                 {
                     if (mul != 0)
                     {
-                        int axis =
-                            SDL_JoystickGetAxis(lib_joystick, id) *
-                            mul/(0x100*100);
+                        int axis = SDL_JoystickGetAxis(lib_joystick, id);
+                        axis = axis*mul/(0x100*100);
                         switch (mask)
                         {
-                            case 0x0080:
-                                lib_pad.stick_x = axis;
-                                break;
-                            case 0x0040:
-                                lib_pad.stick_y = axis;
-                                break;
+                            case 0x0080:    lib_pad.stick_x = axis; break;
+                            case 0x0040:    lib_pad.stick_y = axis; break;
                             default:
-                                if (axis > 40)
-                                {
-                                    lib_pad.button |= mask;
-                                }
+                                if (axis > 40) lib_pad.button |= mask;
                                 break;
                         }
                     }
@@ -1165,44 +1156,31 @@ static void input_update(void)
             if (keys[SDL_SCANCODE_C])       lib_pad.button |= 0x4000;
             if (keys[SDL_SCANCODE_Z])       lib_pad.button |= 0x2000;
             if (keys[SDL_SCANCODE_RETURN])  lib_pad.button |= 0x1000;
-            if (keys[SDL_SCANCODE_LCTRL])   lib_pad.button |= 0x0010;
+            if (keys[SDL_SCANCODE_I])       lib_pad.button |= 0x0800;
+            if (keys[SDL_SCANCODE_K])       lib_pad.button |= 0x0400;
+            if (keys[SDL_SCANCODE_J])       lib_pad.button |= 0x0200;
+            if (keys[SDL_SCANCODE_L])       lib_pad.button |= 0x0100;
+            if (keys[SDL_SCANCODE_Q])       lib_pad.button |= 0x0020;
+            if (keys[SDL_SCANCODE_E])       lib_pad.button |= 0x0010;
             if (keys[SDL_SCANCODE_W])       lib_pad.button |= 0x0008;
             if (keys[SDL_SCANCODE_S])       lib_pad.button |= 0x0004;
             if (keys[SDL_SCANCODE_A])       lib_pad.button |= 0x0002;
             if (keys[SDL_SCANCODE_D])       lib_pad.button |= 0x0001;
-            if (keys[SDL_SCANCODE_LEFT])
+            switch (keys[SDL_SCANCODE_LEFT] | keys[SDL_SCANCODE_RIGHT] << 1)
             {
-                if (!keys[SDL_SCANCODE_RIGHT])
-                {
-                    lib_pad.stick_x = -80;
-                }
+                case 1: lib_pad.stick_x = -80;  break;
+                case 2: lib_pad.stick_x =  80;  break;
             }
-            else if (keys[SDL_SCANCODE_RIGHT])
+            switch (keys[SDL_SCANCODE_DOWN] | keys[SDL_SCANCODE_UP]    << 1)
             {
-                lib_pad.stick_x = 80;
-            }
-            if (keys[SDL_SCANCODE_DOWN])
-            {
-                if (!keys[SDL_SCANCODE_UP])
-                {
-                    lib_pad.stick_y = -80;
-                }
-            }
-            else if (keys[SDL_SCANCODE_UP])
-            {
-                lib_pad.stick_y = 80;
+                case 1: lib_pad.stick_y = -80;  break;
+                case 2: lib_pad.stick_y =  80;  break;
             }
         }
     #else
     #ifdef __3DS__
-        if (lib_config.flag & CFG_STICK_X)
-        {
-            lib_pad.stick_x = stick.dx/2;
-        }
-        if (lib_config.flag & CFG_STICK_Y)
-        {
-            lib_pad.stick_y = stick.dy/2;
-        }
+        lib_pad.stick_x = stick.dx/2;
+        lib_pad.stick_y = stick.dy/2;
     #endif
         for (mask = 0x8000, i = 0; i < 20; i++, mask >>= 1)
         {
@@ -1224,10 +1202,7 @@ static void input_update(void)
                     case 0x0080:    lib_pad.stick_x = axis; break;
                     case 0x0040:    lib_pad.stick_y = axis; break;
                     default:
-                        if (axis > 40)
-                        {
-                            lib_pad.button |= mask;
-                        }
+                        if (axis > 40) lib_pad.button |= mask;
                         break;
                 }
             }
@@ -1237,13 +1212,11 @@ static void input_update(void)
             {
                 switch (i)
                 {
-                    case 0x10:  lib_pad.stick_x = -80;  break;
-                    case 0x11:  lib_pad.stick_x =  80;  break;
-                    case 0x12:  lib_pad.stick_y = -80;  break;
-                    case 0x13:  lib_pad.stick_y =  80;  break;
-                    default:
-                        lib_pad.button |= mask;
-                        break;
+                    case 16:    lib_pad.stick_x = -80;  break;
+                    case 17:    lib_pad.stick_x =  80;  break;
+                    case 18:    lib_pad.stick_y = -80;  break;
+                    case 19:    lib_pad.stick_y =  80;  break;
+                    default:    lib_pad.button |= mask; break;
                 }
             }
         }
@@ -1308,7 +1281,7 @@ static void audio_init(void)
 #endif
 }
 
-static void audio_destroy(void)
+static void audio_exit(void)
 {
 #ifdef __NATIVE__
     if (lib_audio_device != 0)
@@ -1337,10 +1310,7 @@ static void audio_update(void *src, size_t size)
     if (wb->status == NDSP_WBUF_DONE || wb->status == NDSP_WBUF_FREE)
     {
         lib_audio_wb_index ^= 1;
-        if (wb->data_pcm16 != NULL)
-        {
-            linearFree(wb->data_pcm16);
-        }
+        if (wb->data_pcm16 != NULL) linearFree(wb->data_pcm16);
         wb->data_pcm16 = linearAlloc(size);
         wb->nsamples = size / (2*sizeof(s16));
         __WORDSWAP(wb->data_pcm16, src, size);
@@ -1349,7 +1319,15 @@ static void audio_update(void *src, size_t size)
     }
 #endif
 #ifdef GEKKO
-    AUDIO_InitDMA((u32)src, size);
+    u8 **data = &lib_audio_table[lib_audio_index];
+    size_t len = (size+0x1F) & ~0x1F;
+    lib_audio_index ^= 1;
+    if (*data != NULL) free(*data);
+    *data = memalign(0x20, len);
+    __WORDSWAP(*data, src, size);
+    memset(*data+size, 0x00, len-size);
+    DCFlushRange(*data, len);
+    AUDIO_InitDMA((u32)*data, len);
     AUDIO_StartDMA();
 #endif
 }
@@ -1362,20 +1340,18 @@ static void config_init(void)
     {
         fread(&lib_config, 1, sizeof(lib_config), f);
         fclose(f);
+        if (memcmp(&lib_config, &lib_config_default, 4) == 0) return;
+    }
+    memcpy(&lib_config, &lib_config_default, sizeof(lib_config));
+    f = fopen(PATH_CONFIG, "wb");
+    if (f != NULL)
+    {
+        fwrite(&lib_config, 1, sizeof(lib_config), f);
+        fclose(f);
     }
     else
     {
-        memcpy(&lib_config, &lib_config_default, sizeof(lib_config));
-        f = fopen(PATH_CONFIG, "wb");
-        if (f != NULL)
-        {
-            fwrite(&lib_config, 1, sizeof(lib_config), f);
-            fclose(f);
-        }
-        else
-        {
-            wdebug("could not write '" PATH_CONFIG "'\n");
-        }
+        wdebug("could not write '" PATH_CONFIG "'\n");
     }
 }
 #endif
@@ -1546,19 +1522,19 @@ void lib_main(void (*start)(void))
     start();
 }
 
-static void lib_destroy(void)
+static void lib_exit(void)
 {
-    cpu_destroy();
-    audio_destroy();
+    cpu_exit();
+    audio_exit();
 #ifndef APP_SEQ
-    input_destroy();
-    video_destroy();
+    input_exit();
+    video_exit();
 #endif
 }
 
 void lib_init(void)
 {
-    atexit(lib_destroy);
+    atexit(lib_exit);
 #ifndef APP_SEQ
     video_init();
     input_init();

@@ -4,14 +4,14 @@ import struct
 import importlib
 
 gpr = [
-    "0",  "at", "v0", "v1",
-    "a0", "a1", "a2", "a3",
-    "t0", "t1", "t2", "t3",
-    "t4", "t5", "t6", "t7",
-    "s0", "s1", "s2", "s3",
-    "s4", "s5", "s6", "s7",
-    "t8", "t9", "k0", "k1",
-    "gp", "sp", "fp", "ra",
+    "0",    "at",   "v0",   "v1",
+    "a0",   "a1",   "a2",   "a3",
+    "t0",   "t1",   "t2",   "t3",
+    "t4",   "t5",   "t6",   "t7",
+    "s0",   "s1",   "s2",   "s3",
+    "s4",   "s5",   "s6",   "s7",
+    "t8",   "t9",   "k0",   "k1",
+    "gp",   "sp",   "r30",  "ra",
 ]
 
 cop1_fmt = {
@@ -51,7 +51,7 @@ reg_cpu = [
     # (1 << 27, "k1"),
     (1 << 28, "gp"), # [C]
     (1 << 29, "sp"),
-    (1 << 30, "fp"),
+    (1 << 30, "r30"),
     (1 << 31, "ra"),
 ]
 
@@ -543,9 +543,13 @@ def op_arithf():
     fs = "f%d.%s" % (inst_fs & ~1, fmt)
     fd = "f%d.%s" % (inst_fd & ~1, fmt)
     if inst_func in {0x04, 0x05, 0x06, 0x07}:
+        sqrt, fabs = {
+            0x10: ("sqrtf(", "fabsf("),
+            0x11: ("sqrt(",  "fabs("),
+        }[inst_fmt]
         start, end = {
-            0x04: ("sqrtf(", ")"),
-            0x05: ("fabsf(", ")"),
+            0x04: (sqrt, ")"),
+            0x05: (fabs, ")"),
             0x06: ("", ""),
             0x07: ("-", ""),
         }[inst_func]

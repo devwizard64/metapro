@@ -11,9 +11,7 @@
 #include "app.h"
 #include "lib.h"
 
-#ifdef GEKKO
-#define PATH_START  "cardb:" SEP
-#elif defined(__3DS__) && defined(__DEBUG__)
+#if defined(__3DS__) && defined(__DEBUG__)
 #define PATH_START  "sdmc:" SEP "3ds" SEP
 #else
 #define PATH_START  ""
@@ -199,7 +197,7 @@ extern void __dma(void *dst, PTR src, u32 size);
 extern void __eeprom_read(void *data, uint size);
 extern void __eeprom_write(const void *data, uint size);
 extern void cpu_init(void);
-extern void cpu_destroy(void);
+extern void cpu_exit(void);
 
 #endif /* __ASSEMBLER__ */
 

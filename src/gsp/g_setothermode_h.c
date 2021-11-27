@@ -15,16 +15,12 @@ static void gsp_g_setothermode_h(u32 w0, u32 w1)
     gdp_othermode_h &= ~clear;
     gdp_othermode_h |= w1;
     gdp_cycle = gdp_othermode_h & (2 << G_MDSFT_CYCLETYPE);
-    gdp_texture_filter =
-        gdp_cycle || (gdp_othermode_h & (3 << G_MDSFT_TEXTFILT)) == G_TF_POINT ?
-            GL_NEAREST : GL_LINEAR;
+    gdp_tf =
+        !gdp_cycle && (gdp_othermode_h & G_TF_BILERP) ?
+            GDP_TF_BILERP : GDP_TF_POINT;
     if (clear & (3 << G_MDSFT_CYCLETYPE))
     {
-        gsp_change |= CHANGE_RENDERMODE;
-        if (gdp_cycle)
-        {
-            gdp_combine_cc = gdp_combine_cc_shade;
-            gdp_combine_ac = gdp_combine_ac_shade;
-        }
+        gdp_rect = 0;
+        gdp_flush_rm();
     }
 }

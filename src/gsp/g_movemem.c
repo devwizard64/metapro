@@ -35,15 +35,12 @@ static void gsp_g_movemem(u32 w0, u32 w1)
             memcpy(dst, gsp_addr(w1), size);
             if (index == G_MV_VIEWPORT)
             {
-                gsp_change |= CHANGE_VIEWPORT;
+                gsp_flush_vp();
             }
             else if (index >= G_MV_LOOKATY && index < G_MV_L7+2)
             {
-                if (index < G_MV_LOOKATX+2)
-                {
-                    gsp_lookat = true;
-                }
-                gsp_light_new = true;
+                if (index < G_MV_LOOKATX+2) gsp_lookat = true;
+                gsp_new_light = true;
             }
         }
     }
@@ -61,14 +58,11 @@ static void gsp_g_movemem(u32 w0, u32 w1)
             switch (index)
             {
                 case G_MV_VIEWPORT:
-                    gsp_change |= CHANGE_VIEWPORT;
+                    gsp_flush_vp();
                     break;
                 case G_MV_LIGHT:
-                    if (offset < G_MVO_L0)
-                    {
-                        gsp_lookat = true;
-                    }
-                    gsp_light_new = true;
+                    if (offset < G_MVO_L0) gsp_lookat = true;
+                    gsp_new_light = true;
                     break;
             }
         }

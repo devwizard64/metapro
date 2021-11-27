@@ -6,7 +6,7 @@
 #ifndef __ASSEMBLER__
 
 extern void gsp_init(void);
-extern void gsp_destroy(void);
+extern void gsp_exit(void);
 extern void gsp_cache(void);
 extern void gsp_update(void *ucode, u32 *dl);
 

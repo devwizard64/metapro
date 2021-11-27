@@ -13,6 +13,6 @@ static void gsp_g_setothermode_l(u32 w0, u32 w1)
     gdp_othermode_l |= w1;
     if (clear & (0x1FFFFFFF << G_MDSFT_RENDERMODE | 3 << G_MDSFT_ALPHACOMPARE))
     {
-        gsp_change |= CHANGE_RENDERMODE;
+        gdp_flush_rm();
     }
 }

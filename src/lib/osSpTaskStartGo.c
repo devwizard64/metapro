@@ -23,7 +23,10 @@ void lib_osSpTaskStartGo(void)
         SDL_GL_SwapWindow(lib_window);
     #endif
     #ifdef GEKKO
-        lib_video_draw = true;
+        GX_SetZMode(GX_TRUE, GX_ALWAYS, GX_TRUE);
+        GX_SetColorUpdate(GX_TRUE);
+        GX_CopyDisp(lib_framebuffer, GX_TRUE);
+        GX_Flush();
     #endif
     #endif
         lib_event(&lib_event_table[OS_EVENT_DP]);

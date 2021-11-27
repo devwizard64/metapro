@@ -17,28 +17,31 @@
 
 #define mtxf_ortho_bg(mf, l, r, b, t, n, f)                                 \
 {                                                                           \
-    f32 _y =             (1.0F/2) * ((t)+(b));                              \
-    f32 _h = (4.0F/3.0F)*(1.0F/2) * ((t)-(b)) * lib_video_h/lib_video_w;    \
+    float _y = (1.0F/2) * ((t)+(b));                                        \
+    float _h = (1.0F/2) * ((t)-(b)) / ((3.0F/4.0F)*lib_video_aspect);       \
     mtxf_ortho(mf, l, r, _y-_h, _y+_h, n, f);                               \
 }
 
 #define mtxf_ortho_fg(mf, l, r, b, t, n, f)                                 \
 {                                                                           \
-    f32 _x =             (1.0F/2) * ((r)+(l));                              \
-    f32 _w = (3.0F/4.0F)*(1.0F/2) * ((r)-(l)) * lib_video_w/lib_video_h;    \
+    float _x = (1.0F/2) * ((r)+(l));                                        \
+    float _w = (1.0F/2) * ((r)-(l)) * ((3.0F/4.0F)*lib_video_aspect);       \
     mtxf_ortho(mf, _x-_w, _x+_w, b, t, n, f);                               \
 }
 
 extern u16 lib_video_w;
 extern u16 lib_video_h;
-extern f32 lib_viewport_l;
-extern f32 lib_viewport_r;
+extern f32 lib_video_l;
+extern f32 lib_video_r;
+extern f32 lib_video_aspect;
 
 extern void mtx_read(f32 *dst, const s16 *src);
 extern void mtx_write(s16 *dst, const f32 *src);
 extern void mtxf_cat(f32 mf[4][4], f32 a[4][4], f32 b[4][4]);
 extern void mtxf_identity(f32 mf[4][4]);
-extern void mtxf_ortho(f32 mf[4][4], f32 l, f32 r, f32 b, f32 t, f32 n, f32 f);
+extern void mtxf_ortho(
+    f32 mf[4][4], float l, float r, float b, float t, float n, float f
+);
 extern void thread_yield(int arg);
 extern void thread_fault(void);
 extern void video_update(void);

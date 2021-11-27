@@ -1,6 +1,7 @@
 APP     ?= UNSME0
 TARGET  ?= native
 DEBUG   ?= 1
+OPT     ?= -O2
 
 LIBCTRU := $(DEVKITPRO)/libctru
 LIBOGC  := $(DEVKITPRO)/libogc
@@ -21,7 +22,7 @@ APP_OBJ := $(shell python3 main.py $(APP) $(BUILD)/app/)
 APP_SRC := $(addprefix build/$(APP)/,$(notdir $(APP_OBJ:.o=.c)))
 
 FLAG    := -Isrc -Ibuild/$(APP)
-FLAG    += -fno-strict-aliasing -Wall -Wextra -Wpedantic -Ofast
+FLAG    += -fno-strict-aliasing -Wall -Wextra -Wpedantic $(OPT)
 ifneq ($(DEBUG),0)
 	FLAG    += -ggdb3 -D__DEBUG__
 endif
