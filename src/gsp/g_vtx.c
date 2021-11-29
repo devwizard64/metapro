@@ -134,7 +134,7 @@ static void gsp_g_vtx(u32 w0, u32 w1)
             vf->shade[1] = v->g;
             vf->shade[2] = v->b;
         }
-    #ifndef GEKKO
+    #if defined(GSP_SWFOG) || defined(__NATIVE__)
         if (gsp_geometry_mode & G_FOG)
         {
             float x = v->x;

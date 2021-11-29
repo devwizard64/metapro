@@ -13,7 +13,7 @@ static void gsp_g_mtx(u32 w0, u32 w1)
     if (w1 == 0x02017310)
     {
     #if 1
-        mtxf_ortho(mf, lib_video_l, lib_video_r, 0, 240, 0, 2);
+        mtxf_ortho(mf, video_l, video_r, 0, 240, 0, 2);
     #else
         mtxf_ortho_bg(mf, 0, 320, 0, 240, 0, 2);
     #endif
@@ -69,7 +69,7 @@ static void gsp_g_mtx(u32 w0, u32 w1)
     #endif
         gsp_new_light = true;
     }
-#ifndef GEKKO
+#if defined(GSP_SWFOG) || defined(__NATIVE__)
     mtxf_cat(gsp_mtxf_mvp, MM, MP);
 #endif
 }

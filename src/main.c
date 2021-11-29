@@ -1,6 +1,3 @@
-#include <stdlib.h>
-#include <string.h>
-
 #include "types.h"
 #include "app.h"
 #include "demo.h"
@@ -19,7 +16,7 @@ static void start(void)
     app_main();
 }
 
-int main(void)
+int main(unused int argc, unused char *argv[])
 {
     lib_init();
     demo_main();

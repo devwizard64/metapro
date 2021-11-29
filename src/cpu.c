@@ -1,11 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#ifdef GEKKO
-#include <fat.h>
-#endif
-
 #include "types.h"
 #include "app.h"
 #include "cpu.h"
@@ -38,8 +30,7 @@ static PTR cpu_dcall_table[lenof(app_dcall_table)];
 static u8 *cpu_cache_table[lenof(app_cache_table)];
 #endif
 
-/* todo: align */
-u8  cpu_dram[CPU_DRAM_SIZE];
+u8 cpu_dram[CPU_DRAM_SIZE];
 struct cpu cpu;
 
 void __call(PTR addr)
@@ -234,12 +225,12 @@ void cpu_init(void)
 #ifdef APP_CACHE
     uint  i;
 #endif
+#if defined(GEKKO) || defined(__NDS__)
+    fatInitDefault();
+#endif
 #ifdef __3DS__
     osSetSpeedupEnable(true);
     /* romfsInit(); */
-#endif
-#ifdef GEKKO
-    fatInitDefault();
 #endif
     f = fopen(PATH_APP, "rb");
     if (f == NULL)

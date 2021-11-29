@@ -3,7 +3,7 @@ void lib_guPerspective(void)
     f32 mf[4][4];
     float y = ARG_F(a2);
 #ifdef LIB_DYNRES
-    float a = lib_video_aspect;
+    float a = video_aspect;
 #else
     float a = ARG_F(a3);
 #endif

@@ -3,31 +3,22 @@
 
 #ifndef __ASSEMBLER__
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "types.h"
 #include "app.h"
 #include "lib.h"
 
-#if defined(__3DS__) && defined(__DEBUG__)
-#define PATH_START  "sdmc:" SEP "3ds" SEP
-#else
-#define PATH_START  ""
-#endif
-
 #if defined(__NATIVE__) && defined(__DEBUG__)
-#define PATH_ROOT   PATH_START "app" SEP APP_PATH SEP
+#define PATH_ROOT   "app" SEP APP_PATH SEP
+#elif defined(__3DS__) && defined(__DEBUG__)
+#define PATH_ROOT   "sdmc:" SEP "3ds" SEP
 #else
-#define PATH_ROOT   PATH_START
+#define PATH_ROOT   ""
 #endif
 
-#define PATH_APP    PATH_ROOT  "app.bin"
-#define PATH_EEPROM PATH_ROOT  "eeprom.bin"
-#define PATH_DRAM   PATH_ROOT  "dram.bin"
-#define PATH_INPUT  PATH_ROOT  "input.bin"
-#define PATH_CONFIG PATH_START "config.bin"
+#define PATH_APP    PATH_ROOT "app.bin"
+#define PATH_EEPROM PATH_ROOT "eeprom.bin"
+#define PATH_DRAM   PATH_ROOT "dram.bin"
+#define PATH_INPUT  PATH_ROOT "input.bin"
 
 #ifdef __EB__
 #define IX      1
@@ -44,7 +35,7 @@
 #endif
 #define AX_W    0
 
-#define CPU_DRAM_SIZE   0x00400000
+#define CPU_DRAM_SIZE   0x400000
 
 typedef union
 {

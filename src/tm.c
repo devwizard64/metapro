@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#ifdef __NATIVE__
-#include <time.h>
-#endif
-
 #include "types.h"
 #include "tm.h"
 
@@ -14,15 +8,15 @@
 #define TM_USEC         (1000000.0F/CLOCKS_PER_SEC)
 typedef clock_t TM_TIME;
 #endif
+#if defined(GEKKO) || defined(__NDS__)
+#define tm_time()       0
+#define TM_USEC         0.0F
+typedef u8 TM_TIME;
+#endif
 #ifdef __3DS__
 #define tm_time()       svcGetSystemTick()
 #define TM_USEC         (1000000.0F/SYSCLOCK_ARM11)
 typedef u64 TM_TIME;
-#endif
-#ifdef GEKKO
-#define tm_time()       0
-#define TM_USEC         0.0F
-typedef u8 TM_TIME;
 #endif
 
 static const char str_tm_time[TM_LEN][12] =

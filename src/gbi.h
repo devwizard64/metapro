@@ -347,6 +347,13 @@
 #define G_TX_RENDERTILE 0x00
 #define G_TX_LOADTILE   0x07
 
+#define G_TX_NOMIRROR   0
+#define G_TX_WRAP       0
+#define G_TX_MIRROR     1
+#define G_TX_CLAMP      2
+#define G_TX_NOMASK     0
+#define G_TX_NOLOD      0
+
 #ifdef GSP_F3DEX2
 #define G_BGLT_LOADBLOCK        0x0033
 #define G_BGLT_LOADTILE         0xFFF4

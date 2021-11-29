@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <math.h>
-
 #include "types.h"
 #include "cpu.h"
 
@@ -254,6 +248,9 @@ static ASP *const asp_table[] =
 
 void asp_update(u32 *al, uint size)
 {
+#if !(defined(APP_UNSM) /* && defined(APP_E0) */) || defined(__NDS__)
+    return;
+#endif
 #ifdef ASP_NAUDIO
     while (size > 0)
 #else

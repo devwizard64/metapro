@@ -1,14 +1,23 @@
 void lib_osContGetReadData(void)
 {
+    PTR pad;
+    uint i;
+    for (i = 0; i < 4; i++)
+    {
+        os_pad[i].button  = 0;
+        os_pad[i].stick_x = 0;
+        os_pad[i].stick_y = 0;
+        os_pad[i].errno_  = CONT_NO_RESPONSE_ERROR;
+    }
     input_update();
-    os_cont_pad(a0, 0, lib_pad.button, lib_pad.stick_x, lib_pad.stick_y, 0);
-#ifdef APP_UNSM
-    os_cont_pad(a0, 1, lib_pad.button, lib_pad.stick_x, lib_pad.stick_y, 0);
-    os_cont_pad(a0, 2, lib_pad.button, lib_pad.stick_x, lib_pad.stick_y, 0);
-    os_cont_pad(a0, 3, lib_pad.button, lib_pad.stick_x, lib_pad.stick_y, 0);
-#else
-    os_cont_pad(a0, 1, 0, 0, 0, CONT_NO_RESPONSE_ERROR);
-    os_cont_pad(a0, 2, 0, 0, 0, CONT_NO_RESPONSE_ERROR);
-    os_cont_pad(a0, 3, 0, 0, 0, CONT_NO_RESPONSE_ERROR);
-#endif
+    contdemo_update();
+    pad = a0;
+    for (i = 0; i < 4; i++)
+    {
+        __write_u16(pad+0, os_pad[i].button);
+        __write_u8 (pad+2, os_pad[i].stick_x);
+        __write_u8 (pad+3, os_pad[i].stick_y);
+        __write_u8 (pad+4, os_pad[i].errno_);
+        pad += 6;
+    }
 }

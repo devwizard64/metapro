@@ -1,5 +1,5 @@
 void lib_osViSetEvent(void)
 {
-    lib_event_vi.mq  = a0;
-    lib_event_vi.msg = a1;
+    os_event_vi.mq  = a0;
+    os_event_vi.msg = a1;
 }

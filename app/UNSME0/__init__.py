@@ -114,23 +114,23 @@ a00_pat = {
 }
 
 a00_xpr = {
-    0x80256F2C: "(int)lib_video_l + 28", # credits str l
-    0x80256F68: "(int)lib_video_l + 28", # credits str l
-    0x80256FA0: "(int)lib_video_l + 28", # credits str l
-    0x80256FF0: "(int)lib_video_r - 28", # credits str r
-    0x8027A904: "(int)lib_video_l + 30 + 6*5", # "press" x
+    0x80256F2C: "(int)video_l + 28", # credits str l
+    0x80256F68: "(int)video_l + 28", # credits str l
+    0x80256FA0: "(int)video_l + 28", # credits str l
+    0x80256FF0: "(int)video_r - 28", # credits str r
+    0x8027A904: "(int)video_l + 30 + 6*5", # "press" x
     0x8027A90C: "APP_BORDER + 12 + 18", # "press" y
-    0x8027A918: "(int)lib_video_l + 30 + 6*5", # "start" x
+    0x8027A918: "(int)video_l + 30 + 6*5", # "start" x
     0x8027A920: "APP_BORDER + 12", # "start" y
     0x8027B2D4: # transition fadeout radius
-        "(int)(lib_video_r-lib_video_l)",
+        "(int)(video_r-video_l)",
     0x8027B338: # transition fadein radius
-        "(int)(lib_video_r-lib_video_l)",
+        "(int)(video_r-video_l)",
 }
 
 a00_ins = {
     # obj cull
-    0x8027D5C8: "    f18.f[IX] *= lib_video_aspect;\n",
+    0x8027D5C8: "    f18.f[IX] *= video_aspect;\n",
 }
 
 a02_pat = {
@@ -144,30 +144,30 @@ a03_pat = {
 }
 
 a03_xpr = {
-    0x802CB900: "(int)lib_video_l", # transition v0 x
-    0x802CB944: "(int)lib_video_r", # transition v1 x
-    0x802CB988: "(int)lib_video_r", # transition v2 x
-    0x802CB9CC: "(int)lib_video_l", # transition v3 x
+    0x802CB900: "(int)video_l", # transition v0 x
+    0x802CB944: "(int)video_r", # transition v1 x
+    0x802CB988: "(int)video_r", # transition v2 x
+    0x802CB9CC: "(int)video_l", # transition v3 x
     0x802CCDE0: "0x0080 + 0x0028", # reticle dl
     0x802CCE0C: # reticle v0 u
-        "(int)(-3.6F * (lib_video_r-lib_video_l))",
-    0x802CCE30: "(int)lib_video_l", # reticle v0 x
+        "(int)(-3.6F * (video_r-video_l))",
+    0x802CCE30: "(int)video_l", # reticle v0 x
     0x802CCE4C: # reticle v1 u
-        "(int)( 3.6F * (lib_video_r-lib_video_l))",
-    0x802CCE70: "(int)lib_video_r", # reticle v1 x
+        "(int)( 3.6F * (video_r-video_l))",
+    0x802CCE70: "(int)video_r", # reticle v1 x
     0x802CCE8C: # reticle v2 u
-        "(int)( 3.6F * (lib_video_r-lib_video_l))",
-    0x802CCEB0: "(int)lib_video_r", # reticle v2 x
+        "(int)( 3.6F * (video_r-video_l))",
+    0x802CCEB0: "(int)video_r", # reticle v2 x
     0x802CCECC: # reticle v3 u
-        "(int)(-3.6F * (lib_video_r-lib_video_l))",
-    0x802CCEF0: "(int)lib_video_l", # reticle v3 x
+        "(int)(-3.6F * (video_r-video_l))",
+    0x802CCEF0: "(int)video_l", # reticle v3 x
 }
 
 a03_ins = {
     # reticle border
     0x802CD19C:
         "{\n"
-        "    int x = 0.15F * (lib_video_r-lib_video_l);\n"
+        "    int x = 0.15F * (video_r-video_l);\n"
         "    at = __read_s32((s16)0x007C + sp);\n"
         "    __write_u32((s16)0x007C + sp, at + 0x0028);\n"
         "    __write_u32((s16)0x0000 + at, 0xBA001402);\n"
@@ -186,12 +186,12 @@ a03_ins = {
 }
 
 a04_xpr = {
-    0x802DB708: "(int)lib_video_r - 30", # pause red coin
-    0x802E3754: "(int)lib_video_l + 22 + 16*0", # lives "," x
+    0x802DB708: "(int)video_r - 30", # pause red coin
+    0x802E3754: "(int)video_l + 22 + 16*0", # lives "," x
     0x802E375C: "240 - APP_BORDER - 7 - 16", # life "," y
-    0x802E3768: "(int)lib_video_l + 22 + 16*1", # life "*" x
+    0x802E3768: "(int)video_l + 22 + 16*1", # life "*" x
     0x802E3770: "240 - APP_BORDER - 7 - 16", # life "*" y
-    0x802E3784: "(int)lib_video_l + 22 + 16*2", # life "%d" x
+    0x802E3784: "(int)video_l + 22 + 16*2", # life "%d" x
     0x802E378C: "240 - APP_BORDER - 7 - 16", # life "%d" y
     # 0x802E37B8: "(int)(320)/2 + 8 + 16*0", # coin "+" x
     0x802E37C0: "240 - APP_BORDER - 7 - 16", # coin "+" y
@@ -199,40 +199,40 @@ a04_xpr = {
     0x802E37D4: "240 - APP_BORDER - 7 - 16", # coin "*" y
     # 0x802E37E8: "(int)(320)/2 + 8 + 16*2", # coin "%d" x
     0x802E37F0: "240 - APP_BORDER - 7 - 16", # coin "%d" y
-    0x802E386C: "(int)lib_video_r - (22 + 16+16+12*2) + 16*0", # stars "-" x
+    0x802E386C: "(int)video_r - (22 + 16+16+12*2) + 16*0", # stars "-" x
     0x802E3874: "240 - APP_BORDER - 7 - 16", # star "-" y
-    0x802E3890: "(int)lib_video_r - (22 + 16+16+12*2) + 16*1", # stars "*" x
+    0x802E3890: "(int)video_r - (22 + 16+16+12*2) + 16*1", # stars "*" x
     0x802E3898: "240 - APP_BORDER - 7 - 16", # star "*" y
     0x802E38B8: # stars "%d" x
-        "a0 + (int)lib_video_r - (22 + 16+16+12*2) + 16*1",
+        "a0 + (int)video_r - (22 + 16+16+12*2) + 16*1",
     0x802E38C8: "240 - APP_BORDER - 7 - 16", # star "%d" y
-    0x802E3914: "(int)lib_video_r - (22 + 78)", # key "/" x
+    0x802E3914: "(int)video_r - (22 + 78)", # key "/" x
     # 0x802E391C: "", # key "/" y
     0x802E3A20: # time "time" x
-        "(int)lib_video_r - (22 + 12*1+3 + 9 + 12*2+1 + 10 + 10 + 12*5-1)",
+        "(int)video_r - (22 + 12*1+3 + 9 + 12*2+1 + 10 + 10 + 12*5-1)",
     0x802E3A28: "240 - APP_BORDER - 7 - 16 - 8 - 16", # time "time" y
     0x802E3A34: # time "%0d" x
-        "(int)lib_video_r - (22 + 12*1+3 + 9 + 12*2+1 + 10 + 10)",
+        "(int)video_r - (22 + 12*1+3 + 9 + 12*2+1 + 10 + 10)",
     0x802E3A38: "240 - APP_BORDER - 7 - 16 - 8 - 16", # time "%0d" y
     0x802E3A4C: # time "%02d" x
-        "(int)lib_video_r - (22 + 12*1+3 + 9 + 12*2+1)",
+        "(int)video_r - (22 + 12*1+3 + 9 + 12*2+1)",
     0x802E3A50: "240 - APP_BORDER - 7 - 16 - 8 - 16", # time "%02d" y
-    0x802E3A64: "(int)lib_video_r - (22 + 12*1+3)", # time "%d" x
+    0x802E3A64: "(int)video_r - (22 + 12*1+3)", # time "%d" x
     0x802E3A68: "240 - APP_BORDER - 7 - 16 - 8 - 16", # time "%d" y
     0x802E3AAC: # time ' x
-        "(int)lib_video_r - (22 + 12*1+3 + 9 + 12*2+1 + 10)",
+        "(int)video_r - (22 + 12*1+3 + 9 + 12*2+1 + 10)",
     0x802E3AB0: "APP_BORDER + 7 + 16 + 1", # time ' y
-    0x802E3AC0: "(int)lib_video_r - (22 + 12*1+3 + 9)", # time " x
+    0x802E3AC0: "(int)video_r - (22 + 12*1+3 + 9)", # time " x
     0x802E3AC4: "APP_BORDER + 7 + 16 + 1", # time " y
-    0x802E3B58: "(int)lib_video_r - (22 + 16+16)", # camera x
+    0x802E3B58: "(int)video_r - (22 + 16+16)", # camera x
     0x802E3B60: "240 - APP_BORDER - 7 - 20", # camera y
 }
 
 a04_ins = {
     # pause
-    0x802DB3C8: "    ARG_F(a1) = lib_video_l;\n",
+    0x802DB3C8: "    ARG_F(a1) = video_l;\n",
     0x802DB3E4:
-        "    ARG_F(a1) = (1.0F/128) * (lib_video_r-lib_video_l);\n",
+        "    ARG_F(a1) = (1.0F/128) * (video_r-video_l);\n",
     # hud draw power
     0x802E3254: "    t8 += 8;\n",
 }

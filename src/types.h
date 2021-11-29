@@ -10,7 +10,7 @@
 #define SEP     "/"
 #endif
 
-#ifdef __3DS__
+#if defined(__NDS__) || defined(__3DS__)
 #define FMT_d   "ld"
 #define FMT_x   "lx"
 #define FMT_X   "lX"
@@ -22,9 +22,22 @@
 
 #ifndef __ASSEMBLER__
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <stddef.h>
+#include <string.h>
+#include <malloc.h>
+
+#include <math.h>
+
 #ifdef __NATIVE__
 #include <stdint.h>
+#include <time.h>
+
+#include <SDL2/SDL.h>
+#include <GL/gl.h>
+#include <GL/glext.h>
+
 typedef  int8_t  s8;
 typedef uint8_t  u8;
 typedef  int16_t s16;
@@ -35,14 +48,25 @@ typedef  int64_t s64;
 typedef uint64_t u64;
 typedef u8       bool;
 #endif
+
+#ifdef GEKKO
+#include <gccore.h>
+#include <fat.h>
+#endif
+
+#ifdef __NDS__
+#include <nds.h>
+#include <fat.h>
+#endif
+
 #ifdef __3DS__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
 #include <3ds.h>
 #pragma GCC diagnostic pop
-#endif
-#ifdef GEKKO
-#include <gccore.h>
+#include <GL/gl.h>
+#include <GL/picaGL.h>
+#define glVertex3s(x, y, z) glVertex3f(x, y, z)
 #endif
 
 typedef unsigned int    uint;
@@ -67,17 +91,7 @@ typedef u32 PTR;
 #define forceinline
 #endif
 
-#ifdef __NATIVE__
-#define esleep(x)
-#endif
-#ifdef __3DS__
-#define esleep(x)   svcSleepThread(1000000000LL*(x))
-#endif
-#ifdef GEKKO
-#define esleep(x)   {int _i; for (_i = 0; _i < 60*(x); _i++) VIDEO_WaitVSync();}
-#endif
-#define eexit()     {esleep(3); exit(EXIT_FAILURE);}
-
+extern void eexit(void);
 #define wprint(...) fprintf(stderr, "warning: " __VA_ARGS__)
 #define eprint(...) {fprintf(stderr, "error: " __VA_ARGS__); eexit();}
 #ifdef __DEBUG__
