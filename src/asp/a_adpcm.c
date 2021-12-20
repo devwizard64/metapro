@@ -23,7 +23,7 @@ static void asp_a_adpcm(u32 w0, u32 w1)
     }
     else
     {
-        __WORDSWAP(dmemout, (flag & A_LOOP) ? asp_loop : addr, 0x20);
+        wordswap(dmemout, (flag & A_LOOP) ? asp_loop : addr, 0x20);
     }
     dmemout += 0x10;
     while (count > 0)
@@ -69,5 +69,5 @@ static void asp_a_adpcm(u32 w0, u32 w1)
         count -= 0x20;
     }
     dmemout -= 0x10;
-    __WORDSWAP(addr, dmemout, 0x20);
+    wordswap(addr, dmemout, 0x20);
 }

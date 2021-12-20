@@ -63,7 +63,7 @@ static void asp_a_envmixer(u32 w0, u32 w1)
     else
     {
         /* probably not the right address */
-        __WORDSWAP(asp_s16(0x0F90), addr, 0x50);
+        wordswap(asp_s16(0x0F90), addr, 0x50);
         Wet = *asp_s16(0x0F90);
         Dry = *asp_s16(0x0F92);
         LTrg = *asp_s16(0x0F94) << 16 | *asp_u16(0x0F96);
@@ -162,5 +162,5 @@ static void asp_a_envmixer(u32 w0, u32 w1)
     *asp_u16(0x0FA2) = LAdderStart;
     *asp_s16(0x0FA2) = RAdderStart >> 16;
     *asp_u16(0x0FA4) = RAdderStart;
-    __WORDSWAP(addr, asp_s16(0x0F90), 0x50);
+    wordswap(addr, asp_s16(0x0F90), 0x50);
 }

@@ -1,7 +1,4 @@
-#ifdef __DEBUG__
-static void gdp_g_setcimg(unused u32 w0, unused u32 w1)
+static void gdp_g_setcimg(unused u32 w0, u32 w1)
 {
+    gdp_cimg = gsp_addr(w1);
 }
-#else
-#define gdp_g_setcimg           NULL
-#endif

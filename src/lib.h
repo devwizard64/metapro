@@ -3,372 +3,207 @@
 
 #include "types.h"
 #include "app.h"
+#include "cpu.h"
+#include "sys.h"
 
-#define THREAD_YIELD_NULL       0
-#define THREAD_YIELD_QUEUE      1
-#define THREAD_YIELD_BREAK      2
-#define THREAD_YIELD_DESTROY    3
+#include "ultra64.h"
 
 #ifndef __ASSEMBLER__
 
-#define MDOT3(m, i) ((m)[0][i]*x + (m)[1][i]*y + (m)[2][i]*z)
-#define IDOT3(m, i) ((m)[i][0]*x + (m)[i][1]*y + (m)[i][2]*z)
-#define MDOT4(m, i) (MDOT3(m, i) + (m)[3][i])
+#define LIB_SE(f) static inline void lib_##f(void) {edebug(#f "\n");}
 
-#define mtxf_ortho_bg(mf, l, r, b, t, n, f)                         \
-{                                                                   \
-    float _y = (1.0F/2) * ((t)+(b));                                \
-    float _h = (1.0F/2) * ((t)-(b)) / ((3.0F/4.0F)*video_aspect);   \
-    mtxf_ortho(mf, l, r, _y-_h, _y+_h, n, f);                       \
-}
-
-#define mtxf_ortho_fg(mf, l, r, b, t, n, f)                         \
-{                                                                   \
-    float _x = (1.0F/2) * ((r)+(l));                                \
-    float _w = (1.0F/2) * ((r)-(l)) * ((3.0F/4.0F)*video_aspect);   \
-    mtxf_ortho(mf, _x-_w, _x+_w, b, t, n, f);                       \
-}
-
-extern u16 video_w;
-extern u16 video_h;
-extern f32 video_l;
-extern f32 video_r;
-extern f32 video_aspect;
-
-#ifdef __NATIVE__
-extern SDL_Window *window;
+#ifndef __CartRomHandle
+#define __CartRomHandle         0
 #endif
-#ifdef GEKKO
-extern void *framebuffer;
+#ifndef __DriveRomHandle
+#define __DriveRomHandle        0
 #endif
 
-extern void mtx_read(f32 *dst, const s16 *src);
-extern void mtx_write(s16 *dst, const f32 *src);
-extern void mtxf_cat(f32 mf[4][4], f32 a[4][4], f32 b[4][4]);
-extern void mtxf_identity(f32 mf[4][4]);
-extern void mtxf_ortho(
-    f32 mf[4][4], float l, float r, float b, float t, float n, float f
-);
-
-extern void thread_yield(int arg);
-extern void thread_fault(void);
-
-extern void lib_main(void (*start)(void));
-extern void lib_init(void);
-
-#ifdef APP_UNSM
-#ifdef APP_E0
-extern void lib_osSetTime(void);
-extern void lib_osMapTLB(void);
-extern void lib_osUnmapTLBAll(void);
-extern void lib_sprintf(void);
-extern void lib_osCreateMesgQueue(void);
-extern void lib_osSetEventMesg(void);
-extern void lib_osViSetEvent(void);
-extern void lib_osCreateThread(void);
-extern void lib_osRecvMesg(void);
-extern void lib_osSpTaskLoad(void);
+/* UNSME0 */
+#define lib_osSetTime()
+#define lib_osMapTLB()
+#define lib_osUnmapTLBAll()
+#define lib_osCreateMesgQueue() {mesg_init(__dram(a0), a1, a2);}
+#define lib_osSetEventMesg()                \
+{                                           \
+    os_event_table[a0].mq  = __dram(a1);    \
+    os_event_table[a0].msg = a2;            \
+}
+#define lib_osViSetEvent()          \
+{                                   \
+    os_event_vi.mq  = __dram(a0);   \
+    os_event_vi.msg = a1;           \
+}
+#define lib_osCreateThread() \
+    {thread_init(a0, a1, a2, a3, *__s32(sp+0x10), *__s32(sp+0x14));}
+#define lib_osRecvMesg() {v0 = mesg_recv(__dram(a0), a1, a2);}
+#define lib_osSpTaskLoad()
 extern void lib_osSpTaskStartGo(void);
-extern void lib_osSpTaskYield(void);
-extern void lib_osSendMesg(void);
-extern void lib_osSpTaskYielded(void);
-extern void lib_osStartThread(void);
-extern void lib_osWritebackDCacheAll(void);
-extern void lib_osCreateViManager(void);
-extern void lib_osViSetMode(void);
-extern void lib_osViBlack(void);
-extern void lib_osViSetSpecialFeatures(void);
-extern void lib_osCreatePiManager(void);
-extern void lib_osSetThreadPri(void);
+#define lib_osSpTaskYield()
+#define lib_osSendMesg() {v0 = mesg_send(__dram(a0), a1, a2);}
+#define lib_osSpTaskYielded() {v0 = 0;}
+#define lib_osStartThread() {thread_start(thread_find(a0));}
+#define lib_osWritebackDCacheAll()
+#define lib_osCreateViManager()
+#define lib_osViSetMode()
+#define lib_osViBlack()
+#define lib_osViSetSpecialFeatures()
+#define lib_osCreatePiManager()
+#define lib_osSetThreadPri() \
+    {thread_find(a0)->pri = a1; thread_yield(THREAD_YIELD_QUEUE);}
 extern void lib_osInitialize(void);
-extern void lib_osViSwapBuffer(void);
-extern void lib_sqrtf(void);
-extern void lib_osContStartReadData(void);
+#define lib_osViSwapBuffer() {video_buf = a0;}
+#define lib_osContStartReadData() \
+    {v0 = mesg_send(__dram(a0), 0, OS_MESG_NOBLOCK);}
 extern void lib_osContGetReadData(void);
 extern void lib_osContInit(void);
-extern void lib_osEepromProbe(void);
-extern void lib___ull_div(void);
-extern void lib___ll_lshift(void);
-extern void lib___ll_mul(void);
-extern void lib_osInvalDCache(void);
+#define lib_osEepromProbe() {v0 = EEPROM_TYPE;}
+#define lib___ull_rem()                 \
+{                                       \
+    u64 _a = (u64)a0 << 32 | (u32)a1;   \
+    u64 _b = (u64)a2 << 32 | (u32)a3;   \
+    u64 _x = _a % _b;                   \
+    v0 = _x >> 32;                      \
+    v1 = _x >>  0;                      \
+}
+#define lib___ull_div()                 \
+{                                       \
+    u64 _a = (u64)a0 << 32 | (u32)a1;   \
+    u64 _b = (u64)a2 << 32 | (u32)a3;   \
+    u64 _x = _a / _b;                   \
+    v0 = _x >> 32;                      \
+    v1 = _x >>  0;                      \
+}
+#define lib___ll_lshift()               \
+{                                       \
+    s64 _a = (s64)a0 << 32 | (u32)a1;   \
+    s64 _b = (s64)a2 << 32 | (u32)a3;   \
+    s64 _x = _a << _b;                  \
+    v0 = _x >> 32;                      \
+    v1 = _x >>  0;                      \
+}
+#define lib___ll_div()                  \
+{                                       \
+    s64 _a = (s64)a0 << 32 | (u32)a1;   \
+    s64 _b = (s64)a2 << 32 | (u32)a3;   \
+    s64 _x = _a / _b;                   \
+    v0 = _x >> 32;                      \
+    v1 = _x >>  0;                      \
+}
+#define lib___ll_mul()                  \
+{                                       \
+    s64 _a = (s64)a0 << 32 | (u32)a1;   \
+    s64 _b = (s64)a2 << 32 | (u32)a3;   \
+    s64 _x = _a * _b;                   \
+    v0 = _x >> 32;                      \
+    v1 = _x >>  0;                      \
+}
+#define lib_osInvalDCache()
 extern void lib_osPiStartDma(void);
-extern void lib_bzero(void);
-extern void lib_osInvalICache(void);
-extern void lib_osEepromLongRead(void);
-extern void lib_osEepromLongWrite(void);
-extern void lib_bcopy(void);
+#define lib_osInvalICache()
+#define lib_osEepromLongRead() \
+    {byteswap(__dram(a2), &eeprom[a1], a3); v0 = 0;}
+#define lib_osEepromLongWrite() \
+    {byteswap(&eeprom[a1], __dram(a2), a3); eeprom_write(); v0 = 0;}
 extern void lib_guOrtho(void);
 extern void lib_guPerspective(void);
-extern void lib_osGetTime(void);
-extern void lib___d_to_ull(void);
-extern void lib___ull_to_d(void);
-extern void lib_cosf(void);
-extern void lib_sinf(void);
-extern void lib_guTranslate(void);
-extern void lib_guRotate(void);
-extern void lib_guScale(void);
-extern void lib_osAiSetFrequency(void);
-extern void lib_alSeqFileNew(void);
-extern void lib_osWritebackDCache(void);
-extern void lib_osAiGetLength(void);
-extern void lib_osAiSetNextBuffer(void);
-extern void lib_osVirtualToPhysical(void);
-#endif
+#define lib_osGetTime() {v0 = 0; v1 = 0;}
+LIB_SE(__d_to_ull)
+LIB_SE(__ull_to_d)
+#define lib_osAiSetFrequency() {v0 = AUDIO_FREQ;}
+#define lib_osWritebackDCache()
+#define lib_osAiGetLength() {v0 = audio_size();}
+#define lib_osAiSetNextBuffer() {audio_update(__dram(a0), a1); v0 = 0;}
+#define lib_osVirtualToPhysical() {v0 = __tlb(a0);}
 
-#ifdef APP_C3
-extern void lib_osInitialize(void);
-extern void lib_osAiGetLength(void);
-extern void lib_osAiSetFrequency(void);
-extern void lib_osAiSetNextBuffer(void);
-extern void lib_osInvalDCache(void);
-extern void lib_osInvalICache(void);
-extern void lib_osWritebackDCacheAll(void);
-extern void lib_osContStartReadData(void);
-extern void lib_osContGetReadData(void);
-extern void lib_osContInit(void);
-extern void lib_osVirtualToPhysical(void);
-extern void lib_sqrtf(void);
-extern void lib_cosf(void);
-extern void lib_guOrtho(void);
-extern void lib_guPerspective(void);
-extern void lib_sinf(void);
-extern void lib_bcopy(void);
-extern void lib_bzero(void);
-extern void lib___ull_div(void);
-extern void lib___ll_lshift(void);
-extern void lib___ll_mul(void);
-extern void lib_80304094(void);
-extern void lib_803040C0(void);
-extern void lib_sprintf(void);
-extern void lib_80304B38(void);
-extern void lib_osCreateMesgQueue(void);
-extern void lib_osRecvMesg(void);
-extern void lib_osSendMesg(void);
-extern void lib_osSetEventMesg(void);
-extern void lib_80304F80(void);
-extern void lib_osSpTaskLoad(void);
-extern void lib_osSpTaskStartGo(void);
-extern void lib_osSpTaskYield(void);
-extern void lib_osSpTaskYielded(void);
-extern void lib_osCreateThread(void);
-extern void lib_osSetThreadPri(void);
-extern void lib_osStartThread(void);
-extern void lib___osGetCurrFaultedThread(void);
-extern void lib_osGetTime(void);
-extern void lib_osSetTime(void);
-extern void lib_osMapTLB(void);
-extern void lib_osUnmapTLBAll(void);
-extern void lib_osCreateViManager(void);
-extern void lib_osViSetEvent(void);
-extern void lib_osViSetMode(void);
-extern void lib_osViSetSpecialFeatures(void);
-extern void lib_osViSwapBuffer(void);
-extern void lib_osViBlack(void);
-extern void lib_guScale(void);
-extern void lib_guTranslate(void);
-extern void lib_guRotate(void);
-extern void lib_osEepromProbe(void);
-extern void lib_osEepromLongWrite(void);
-extern void lib_osEepromLongRead(void);
-extern void lib___osDisableInt(void);
-extern void lib___osRestoreInt(void);
-extern void lib_osCreatePiManager(void);
+/* UNSMC3 */
+#define lib_UNSMC3_80304B38()
+#define lib_osGetCount() {v0 = 0;}
+LIB_SE(__osGetCurrFaultedThread)
+#define lib___osDisableInt() {v0 = 0;}
+#define lib___osRestoreInt() {}
 extern void lib_osEPiStartDma(void);
-extern void lib_80308350(void);
-extern void lib_osPiStartDma(void);
-extern void lib_80308D10(void);
-extern void lib_80308D18(void);
-#endif
+#define lib_osCartRomInit() {v0 = __CartRomHandle;}
+#define lib_UNSMC3_80308D10() {v0 = 5;}
+#define lib_UNSMC3_80308D18() {v0 = 11;}
 
-#ifdef APP_E4
-extern void lib_80248AF0(void);
-extern void lib_80278074(void);
-extern void lib_80278974(void);
-extern void lib_80278B98(void);
-extern void lib_8027E490(void);
-extern void lib_8027E520(void);
-extern void lib_8027E5CC(void);
-extern void lib_osCreateMesgQueue(void);
-extern void lib_osSetEventMesg(void);
-extern void lib_osViSetEvent(void);
-extern void lib_osCreateThread(void);
-extern void lib_osRecvMesg(void);
-extern void lib_osSpTaskLoad(void);
-extern void lib_osSpTaskStartGo(void);
-extern void lib_osSpTaskYield(void);
-extern void lib_osSendMesg(void);
-extern void lib_osSpTaskYielded(void);
-extern void lib_osStartThread(void);
-extern void lib_osWritebackDCacheAll(void);
-extern void lib_osCreateViManager(void);
-extern void lib_osViSetMode(void);
-extern void lib_osViBlack(void);
-extern void lib_osViSetSpecialFeatures(void);
-extern void lib_osCreatePiManager(void);
-extern void lib_osSetThreadPri(void);
-extern void lib_osInitialize(void);
-extern void lib_sqrtf(void);
-extern void lib_osInvalDCache(void);
-extern void lib_osPiStartDma(void);
-extern void lib_osAiSetFrequency(void);
-extern void lib_alSeqFileNew(void);
-extern void lib_osWritebackDCache(void);
-extern void lib_osAiGetLength(void);
-extern void lib_osAiSetNextBuffer(void);
-#endif
-#endif
+/* UNKTE0 */
+#define lib_osPfsIsPlug() {*__u8(a1) = 0x00; v0 = 0;}
+LIB_SE(osPfsInitPak)
+LIB_SE(osPfsNumFiles)
+LIB_SE(osPfsFileState)
+LIB_SE(osPfsFreeBlocks)
+LIB_SE(osSyncPrintf)
+LIB_SE(osPfsFindFile)
+LIB_SE(osPfsDeleteFile)
+LIB_SE(osPfsReadWriteFile)
+LIB_SE(osPfsAllocateFile)
 
-#ifdef APP_UNKT
-#ifdef APP_E0
-extern void lib_osCreateThread(void);
-extern void lib_osInitialize(void);
-extern void lib_osStartThread(void);
-extern void lib_osCreateViManager(void);
-extern void lib_osViSetMode(void);
-extern void lib_osViBlack(void);
-extern void lib_osViSetSpecialFeatures(void);
-extern void lib_osCreatePiManager(void);
-extern void lib_osSetThreadPri(void);
-extern void lib_osCreateMesgQueue(void);
-extern void lib_osViSetEvent(void);
-extern void lib_osSetEventMesg(void);
-extern void lib_osSpTaskLoad(void);
-extern void lib_osSpTaskStartGo(void);
-extern void lib_osContInit(void);
-extern void lib_osContStartReadData(void);
-extern void lib_osContGetReadData(void);
-extern void lib_osRecvMesg(void);
-extern void lib_osWritebackDCacheAll(void);
-extern void lib_osSendMesg(void);
-extern void lib_osViSwapBuffer(void);
-extern void lib_bzero(void);
-extern void lib_osInvalICache(void);
-extern void lib_osInvalDCache(void);
-extern void lib_osPiStartDma(void);
-extern void lib_osSpTaskYield(void);
-extern void lib_osSpTaskYielded(void);
-extern void lib_osGetTime(void);
-extern void lib___ull_rem(void);
-extern void lib___ull_div(void);
-extern void lib___ll_div(void);
-extern void lib___ll_mul(void);
-extern void lib___osGetCurrFaultedThread(void);
-extern void lib_sqrtf(void);
-extern void lib_guOrtho(void);
-extern void lib_osSetTime(void);
-extern void lib_osEepromProbe(void);
-extern void lib_osPfsIsPlug(void);
-extern void lib_osPfsInitPak(void);
-extern void lib_osPfsNumFiles(void);
-extern void lib_osPfsFileState(void);
-extern void lib_osPfsFreeBlocks(void);
-extern void lib_guRotate(void);
-extern void lib_guScale(void);
-extern void lib_guPerspective(void);
-extern void lib_guLookAtF(void);
-extern void lib_guLookAt(void);
-extern void lib_guTranslate(void);
-extern void lib_osSyncPrintf(void);
-extern void lib_guMtxCatL(void);
-extern void lib_osPfsFindFile(void);
-extern void lib_osPfsDeleteFile(void);
-extern void lib_osEepromLongWrite(void);
-extern void lib_osEepromLongRead(void);
-extern void lib_osPfsReadWriteFile(void);
-extern void lib_osPfsAllocateFile(void);
-extern void lib_osAiSetFrequency(void);
-extern void lib_osAiGetLength(void);
-extern void lib_osAiSetNextBuffer(void);
-extern void lib_osGetCount(void);
-extern void lib_osWritebackDCache(void);
-extern void lib_bcopy(void);
-extern void lib_osVirtualToPhysical(void);
-extern void lib_osSetTimer(void);
-extern void lib_sinf(void);
-extern void lib_cosf(void);
-extern void lib_guMtxCatF(void);
-#endif
-#endif
+/* UCZLJ0 */
+#define lib_osDriveRomInit() {v0 = __DriveRomHandle;}
+LIB_SE(__osPiGetAccess)
+LIB_SE(__osPiRelAccess)
+#define lib_osDestroyThread() {thread_destroy(thread_find(a0));}
+#define lib_osViGetCurrentFramebuffer() {v0 = video_buf;}
+#define lib_osGetThreadId() {v0 = thread_find(a0)->id;}
+#define lib_osSetIntMask() {v0 = 0;}
+#define lib_osGetMemSize() {v0 = MIN(0x800000, CPU_DRAM_SIZE);}
+#define lib_osEPiReadIo() {dma(__dram(a2), a1, 4); v0 = 0;}
+#define lib_osSetTimer()                                \
+{                                                       \
+    timer_init(                                         \
+        a0, (u64)a2 << 32 | (u32)a3,                    \
+        (u64)*__u32(sp+0x10) << 32 | *__u32(sp+0x14),   \
+        __dram(*__u32(sp+0x18)), *__u32(sp+0x1C)        \
+    );                                                  \
+}
 
-#ifdef APP_UNK4
-#ifdef APP_E0
-extern void lib_osSendMesg(void);
-extern void lib_osStopThread(void);
-extern void lib_osRecvMesg(void);
-extern void lib_osSetIntMask(void);
-extern void lib_sinf(void);
-extern void lib_osSpTaskLoad(void);
-extern void lib_osSpTaskStartGo(void);
-extern void lib_osDestroyThread(void);
-extern void lib___ull_div(void);
-extern void lib___ll_mul(void);
-extern void lib_bzero(void);
-extern void lib___osMotorAccess(void);
-extern void lib_osMotorInit(void);
-extern void lib_osContReset(void);
-extern void lib_osEepromWrite(void);
-extern void lib_osCreateThread(void);
-extern void lib_osContStartReadData(void);
-extern void lib_osContGetReadData(void);
-extern void lib_osEepromLongRead(void);
-extern void lib_osVirtualToPhysical(void);
-extern void lib_osWritebackDCache(void);
-extern void lib_osInitialize(void);
-extern void lib_osViGetNextFramebuffer(void);
-extern void lib_osEPiLinkHandle(void);
-extern void lib_osViBlack(void);
-extern void lib_osSpTaskYield(void);
-extern void lib_80030794(void);
-extern void lib_guMtxIdentF(void);
-extern void lib_osViSetMode(void);
-extern void lib_osPfsAllocateFile(void);
-extern void lib_osGetCount(void);
-extern void lib_osEepromProbe(void);
-extern void lib_osPfsFindFile(void);
-extern void lib_osCreatePiManager(void);
-extern void lib_osSetEventMesg(void);
-extern void lib_sqrtf(void);
-extern void lib_osAfterPreNMI(void);
-extern void lib_osContStartQuery(void);
+#define lib___osMotorAccess() {v0 = 0;}
+#define lib_osMotorInit() {v0 = 0;}
+#define lib_osStopTimer() {timer_destroy(timer_find(a0));}
+#define lib_osAfterPreNMI() {v0 = 0;}
+#define lib_osContStartQuery() {v0 = mesg_send(__dram(a0), 0, OS_MESG_NOBLOCK);}
 extern void lib_osContGetQuery(void);
-extern void lib__Printf(void);
-extern void lib_osEPiStartDma(void);
-extern void lib_memcpy(void);
-extern void lib_osCreateMesgQueue(void);
-extern void lib_osInvalICache(void);
-extern void lib_osInvalDCache(void);
-extern void lib_osEepromLongWrite(void);
-extern void lib_osSetThreadPri(void);
-extern void lib_osGetThreadPri(void);
-extern void lib_osViSwapBuffer(void);
-extern void lib_guMtxXFMF(void);
-extern void lib_guMtxCatF(void);
-extern void lib_osSpTaskYielded(void);
-extern void lib_osGetTime(void);
-extern void lib_osAiSetFrequency(void);
-extern void lib_guNormalize(void);
-extern void lib___osGetActiveQueue(void);
-extern void lib_alCopy(void);
-extern void lib_osPfsDeleteFile(void);
-extern void lib_cosf(void);
-extern void lib_osSetTime(void);
-extern void lib_osViSetEvent(void);
-extern void lib_osCartRomInit(void);
-extern void lib_guS2DInitBg(void);
-extern void lib_80035D30(void);
-extern void lib_alCents2Ratio(void);
-extern void lib_osDpSetNextBuffer(void);
-extern void lib_osCreateViManager(void);
-extern void lib_osWritebackDCacheAll(void);
-extern void lib_osStartThread(void);
-extern void lib_osViSetYScale(void);
-extern void lib_osAiSetNextBuffer(void);
-extern void lib_osEepromRead(void);
-extern void lib_osViGetCurrentFramebuffer(void);
-/* ext */
-extern void lib_osAiGetLength(void);
-#endif
-#endif
+LIB_SE(__osGetActiveQueue)
+LIB_SE(osDpGetStatus)
+LIB_SE(osDpSetStatus)
+#define lib_osContSetCh() {v0 = 0;}
+LIB_SE(__osSpGetStatus)
+LIB_SE(__osSpSetStatus)
+LIB_SE(__ull_to_f)
+#define lib_osViSetYScale()
+
+LIB_SE(UCZLJ0_801C9E28)
+LIB_SE(UCZLJ0_801C9EC0)
+LIB_SE(UCZLJ0_801C9F90)
+LIB_SE(UCZLJ0_801C9FFC)
+LIB_SE(UCZLJ0_801CA030)
+LIB_SE(UCZLJ0_801CA070)
+LIB_SE(UCZLJ0_801CA1F0)
+LIB_SE(UCZLJ0_801CA740)
+LIB_SE(LeoReset)
+LIB_SE(LeoResetClear)
+LIB_SE(LeoLBAToByte)
+LIB_SE(UCZLJ0_801CC190)
+LIB_SE(LeoSpdlMotor)
+#define lib_LeoDriveExist() {v0 = 0;}
+LIB_SE(UCZLJ0_801CE630)
+LIB_SE(LeoByteToLBA)
+LIB_SE(UCZLJ0_801CF0B0)
+LIB_SE(UCZLJ0_801CFBB0)
+LIB_SE(LeoCJCreateLeoManager)
+LIB_SE(LeoCACreateLeoManager)
+LIB_SE(UCZLJ0_801D2CB0)
+
+/* UNK4E0 */
+#define lib_osStopThread() {thread_stop(thread_find(a0));}
+#define lib_osEepromWrite() \
+    {byteswap(&eeprom[a1], __dram(a2), 8); eeprom_write(); v0 = 0;}
+#define lib_osViGetNextFramebuffer() {v0 = video_buf;}
+#define lib_osEPiLinkHandle() {v0 = 0;}
+#define lib_osGetThreadPri() {v0 = thread_find(a0)->pri;}
+LIB_SE(osDpSetNextBuffer)
+LIB_SE(osEepromRead)
 
 #endif /* __ASSEMBLER__ */
 

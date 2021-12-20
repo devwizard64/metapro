@@ -66,6 +66,8 @@ reg   = (
 )
 
 header = (
+    "#define EEPROM_TYPE             2\n"
+    "#define AUDIO_FREQ              32000\n"
     "#define GSP_F3DEX\n"
     "#define GSP_F3DEX2\n"
     "#define GSP_FOG\n"
@@ -79,25 +81,16 @@ lib = {
     0x8002D440: "osStopThread",
     0x8002D500: "osRecvMesg",
     0x8002D640: "osSetIntMask",
-    0x8002D6E0: "sinf",
     0x8002D9BC: "osSpTaskLoad",
     0x8002DB4C: "osSpTaskStartGo",
     0x8002DB90: "osDestroyThread",
+    0x8002DCCC: "__ull_rem",
     0x8002DD08: "__ull_div",
+    0x8002DDAC: "__ll_div",
     0x8002DE08: "__ll_mul",
-    0x8002E1A8: "8002E1A8",
-    0x8002E1B4: "8002E1B4",
-    0x8002E1C0: "8002E1C0",
-    0x8002E1E0: "8002E1E0",
-    0x8002E234: "8002E234",
-    0x8002E374: "8002E374",
-    0x8002E3D0: "8002E3D0",
-    0x8002E3F0: "8002E3F0",
-    0x8002E428: "8002E428",
-    0x8002E8B0: "bzero",
     0x8002F040: "__osMotorAccess",
     0x8002F2B4: "osMotorInit",
-    0x8002F4D0: "osContReset",
+    0x8002F4D0: "osContInit",
     0x8002F810: "osEepromWrite",
     0x8002FBE0: "osCreateThread",
     0x8002FD30: "osContStartReadData",
@@ -106,41 +99,22 @@ lib = {
     0x8002FFA0: "osVirtualToPhysical",
     0x80030020: "osWritebackDCache",
     0x800300A0: "osInitialize",
-    0x800301EC: "800301EC",
     0x80030410: "osViGetNextFramebuffer",
     0x80030590: "osEPiLinkHandle",
     0x800305E0: "osViBlack",
     0x800306A0: "osSpTaskYield",
-    0x80030794: "80030794",
-    0x80030C10: "guMtxIdentF",
+    0x80030794: "osPfsReadWriteFile",
     0x80030D80: "osViSetMode",
     0x80030DF0: "osPfsAllocateFile",
     0x800314D0: "osGetCount",
     0x80032060: "osEepromProbe",
     0x800320D0: "osPfsFindFile",
     0x80032280: "osCreatePiManager",
-    0x80032834: "80032834",
-    0x80032870: "80032870",
-    0x800328AC: "800328AC",
-    0x800328F4: "800328F4",
-    0x8003293C: "8003293C",
-    0x8003295C: "8003295C",
     0x80032AB0: "osSetEventMesg",
-    0x80032B20: "sqrtf",
     0x80032B30: "osAfterPreNMI",
     0x80032B50: "osContStartQuery",
     0x80032BD4: "osContGetQuery",
-    0x80032C70: "80032C70",
-    0x80032CA8: "80032CA8",
-    0x80032E18: "80032E18",
-    0x80032F68: "80032F68",
-    0x800330CC: "800330CC",
-    0x8003319C: "8003319C",
-    0x800331E4: "800331E4",
-    0x80033248: "80033248",
-    0x80033270: "_Printf",
     0x800338C0: "osEPiStartDma",
-    0x80033A40: "memcpy",
     0x80033AE0: "osCreateMesgQueue",
     0x80033B10: "osInvalICache",
     0x80033B90: "osInvalDCache",
@@ -148,22 +122,15 @@ lib = {
     0x80033EE0: "osSetThreadPri",
     0x80033FC0: "osGetThreadPri",
     0x80033FE0: "osViSwapBuffer",
-    0x80034030: "guMtxXFMF",
-    0x800340D0: "guMtxCatF",
     0x80034470: "osSpTaskYielded",
     0x80034610: "osGetTime",
     0x80034AF0: "osAiSetFrequency",
-    0x80034C50: "guNormalize",
     0x80034CF0: "__osGetActiveQueue",
-    0x80035010: "alCopy",
     0x800350F0: "osPfsDeleteFile",
-    0x80035810: "cosf",
     0x80035980: "osSetTime",
     0x800359B0: "osViSetEvent",
     0x80035A20: "osCartRomInit",
-    0x80035B20: "guS2DInitBg",
-    0x80035D30: "80035D30",
-    0x80037080: "alCents2Ratio",
+    0x80035D30: "osPfsInitPak",
     0x80038880: "osDpSetNextBuffer",
     0x80038980: "osCreateViManager",
     0x80038CA0: "osWritebackDCacheAll",
@@ -188,18 +155,11 @@ a00_pat = {
     0x8002013C: [0x00000000, 0x00000000],
     0x80020804: [0x00000000, 0x00000000],
 }
+
 a00_ins = {
     # 8001FD64
-    0x8002013C:
-        "    t8 = v0;\n"
-        "    lib_osAiGetLength();\n"
-        "    t9 = v0;\n"
-        "    v0 = t8;\n",
-    0x80020804:
-        "    t9 = v0;\n"
-        "    lib_osAiGetLength();\n"
-        "    t6 = v0;\n"
-        "    v0 = t9;\n",
+    0x8002013C: "    t9 = audio_size();\n",
+    0x80020804: "    t6 = audio_size();\n",
 }
 
 a01_ins = {
@@ -210,8 +170,20 @@ a01_ins = {
 }
 
 segment = [
-    # 0x80039230
     [0x00001050, 0x80000450, 0x8002D2F0, [], a00_pat, {}, a00_ins],
+    [0x0002E2E0, 0x8002D6E0, 0x8002D8A0, [], {}, {}, {}],
+    [0x0002F4B0, 0x8002E8B0, 0x8002E950, [], {}, {}, {}],
+    [0x00031810, 0x80030C10, 0x80030C98, [], {}, {}, {}],
+    [0x00033720, 0x80032B20, 0x80032B30, [], {}, {}, {}],
+    [0x00033800, 0x80032C00, 0x800338C0, [], {}, {}, {}],
+    [0x00034640, 0x80033A40, 0x80033AE0, [], {}, {}, {}],
+    [0x00034C30, 0x80034030, 0x80034240, [], {}, {}, {}],
+    [0x00035850, 0x80034C50, 0x80034CE0, [], {}, {}, {}],
+    [0x00035C10, 0x80035010, 0x80035090, [], {}, {}, {}],
+    [0x00036410, 0x80035810, 0x80035980, [], {}, {}, {}],
+    [0x00036720, 0x80035B20, 0x80035CA0, [], {}, {}, {}],
+    [0x00037C80, 0x80037080, 0x800370D0, [], {}, {}, {}],
+    [0x00038530, 0x80037930, 0x80038830, [], {}, {}, {}],
     [0x00043790, 0x8009B540, 0x800BE3E0, [], {}, {}, a01_ins],
     [0x0007EC10, 0x800F61A0, 0x80123E90, [], {}, {}, {}],
     [0x000B1B40, 0x80151100, 0x80190310, [], {}, {}, {}],

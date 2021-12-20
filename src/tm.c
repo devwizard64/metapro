@@ -73,11 +73,11 @@ void tm_update(void)
 void tm_draw(void)
 {
     uint i;
-    puts("********************************");
+    pdebug("********************************\n");
     for (i = 0; i < TM_LEN; i++)
     {
         u32 usec = TM_USEC*tm_table[i];
-        printf("%s:%8" FMT_d "u\n", str_tm_time[i], usec);
+        pdebug("%s:%8" FMT_d "u\n", str_tm_time[i], usec);
     }
 }
 

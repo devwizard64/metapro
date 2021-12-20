@@ -1,7 +1,10 @@
 #include "types.h"
 #include "app.h"
 #include "cpu.h"
-#include "lib.h"
+#include "sys.h"
+#include "mtx.h"
+
+/* #define GSP_DEBUG */
 
 #ifdef WIN32
 #define GSP_SWFOG
@@ -17,10 +20,12 @@ extern void glFogCoordf(GLfloat);
 #include "gbi.h"
 
 #ifdef GSP_F3DEX
-#define GSP_VTX_LEN     0x20
+#define GSP_GFX_LEN     18
+#define GSP_VTX_LEN     32
 #define GSP_TRI_LEN     2
 #else
-#define GSP_VTX_LEN     0x10
+#define GSP_GFX_LEN     10
+#define GSP_VTX_LEN     16
 #define GSP_TRI_LEN     10
 #endif
 
@@ -45,8 +50,8 @@ extern void glFogCoordf(GLfloat);
 #define I4_IH           IA8_I
 #define I4_IL           IA8_A
 
-#define MP gsp_mtxf_projection
-#define MM (*gsp_mtxf_modelview)
+#define MP gsp_mtx_projection
+#define MM (*gsp_mtx_modelview)
 
 #if defined(__NATIVE__) || defined(__3DS__)
 #define GDP_TF_POINT    GL_NEAREST
@@ -56,8 +61,16 @@ extern void glFogCoordf(GLfloat);
 #define GDP_TX_DECAL    GL_DECAL
 #define GDP_TX_BLEND    GL_BLEND
 typedef GLuint GDP_TF;
-typedef GLint  GDP_FMT;
 typedef GLint  GDP_TX;
+typedef struct gdp_txarg
+{
+    GLint internalFormat;
+#ifdef __NATIVE__
+    GLenum format;
+    GLenum type;
+#endif
+}
+GDP_TXARG;
 #endif
 #ifdef GEKKO
 #define GDP_TF_POINT    GX_NEAR
@@ -67,8 +80,12 @@ typedef GLint  GDP_TX;
 #define GDP_TX_DECAL    GX_DECAL
 #define GDP_TX_BLEND    GX_BLEND
 typedef u8 GDP_TF;
-typedef u8 GDP_FMT;
 typedef u8 GDP_TX;
+typedef struct gdp_txarg
+{
+    u8 fmt;
+}
+GDP_TXARG;
 #endif
 #ifdef __NDS__
 #define GDP_TF_POINT    0
@@ -78,8 +95,12 @@ typedef u8 GDP_TX;
 #define GDP_TX_DECAL    POLY_DECAL
 #define GDP_TX_BLEND    POLY_MODULATION
 typedef u8  GDP_TF;
-typedef u8  GDP_FMT;
 typedef int GDP_TX;
+typedef struct gdp_txarg
+{
+    u8 type;
+}
+GDP_TXARG;
 #endif
 
 struct tile
@@ -97,8 +118,8 @@ struct tile
 struct txtcache
 {
     struct txtcache *next;
-    struct tile tile;
     u8 *timg;
+    u8 fmt;
     GDP_TF tf;
 #if defined(__NATIVE__) || defined(__3DS__)
     GLuint name;
@@ -217,6 +238,26 @@ struct lightf
 
 struct obj_bg
 {
+#ifdef __EB__
+    u16 image_x;
+    u16 image_w;
+    s16 frame_x;
+    u16 frame_w;
+    u16 image_y;
+    u16 image_h;
+    s16 frame_y;
+    u16 frame_h;
+    PTR image_ptr;
+    u16 image_load;
+    u8  image_fmt;
+    u8  image_siz;
+    u16 image_pal;
+    u16 image_flip;
+    u16 scale_w;
+    u16 scale_h;
+    s32 image_y_orig;
+    u32 pad;
+#else
     u16 image_w;
     u16 image_x;
     u16 frame_w;
@@ -225,7 +266,7 @@ struct obj_bg
     u16 image_y;
     u16 frame_h;
     s16 frame_y;
-    u32 image_ptr;
+    PTR image_ptr;
     u8  image_siz;
     u8  image_fmt;
     u16 image_load;
@@ -235,10 +276,27 @@ struct obj_bg
     u16 scale_w;
     s32 image_y_orig;
     u32 pad;
+#endif
 };
 
 struct obj_sprite
 {
+#ifdef __EB__
+    s16 obj_x;
+    u16 scale_w;
+    u16 image_w;
+    u16 pad_x;
+    s16 obj_y;
+    u16 scale_h;
+    u16 image_h;
+    u16 pad_y;
+    u16 image_stride;
+    u16 image_adrs;
+    u8  image_fmt;
+    u8  image_siz;
+    u8  image_pal;
+    u8  image_flag;
+#else
     u16 scale_w;
     s16 obj_x;
     u16 pad_x;
@@ -253,10 +311,21 @@ struct obj_sprite
     u8  image_pal;
     u8  image_siz;
     u8  image_fmt;
+#endif
 };
 
 struct obj_mtx
 {
+#ifdef __EB__
+    s32 a;
+    s32 b;
+    s32 c;
+    s32 d;
+    s16 x;
+    s16 y;
+    u16 base_scale_x;
+    u16 base_scale_y;
+#else
     s32 a;
     s32 b;
     s32 c;
@@ -265,43 +334,63 @@ struct obj_mtx
     s16 x;
     u16 base_scale_y;
     u16 base_scale_x;
+#endif
 };
 
 struct obj_sub_mtx
 {
+#ifdef __EB__
+    s16 x;
+    s16 y;
+    u16 base_scale_x;
+    u16 base_scale_y;
+#else
     s16 y;
     s16 x;
     u16 base_scale_y;
     u16 base_scale_x;
+#endif
 };
 
 struct obj_txtr
 {
+#ifdef __EB__
     u32 type;
-    u32 image;
-    u16 twidth; /* tsize for block, pnum for tlut */
+    PTR image;
     u16 tmem; /* phead for tlut */
-    u16 sid;
+    u16 twidth; /* tsize for block, pnum for tlut */
     u16 theight; /* tline for block */
+    u16 sid;
     u32 flag;
     u32 mask;
+#else
+    u32 type;
+    PTR image;
+    u16 twidth;
+    u16 tmem;
+    u16 sid;
+    u16 theight;
+    u32 flag;
+    u32 mask;
+#endif
 };
 
 typedef void GSP(u32 w0, u32 w1);
-typedef void *GDP_TEXTURE(GDP_FMT *fmt, const u8 *src, uint w, uint h);
-typedef void GDP_TRIANGLE(const u8 *t);
+typedef void *GDP_TEXTURE(GDP_TXARG *arg, const u8 *src, uint w, uint h);
 typedef void GDP_COMBINE(u8 *col, struct vtxf *vf);
+typedef void GDP_TRIANGLE(const u8 *t);
 
-static GDP_TRIANGLE *gdp_triangle;
 static GDP_COMBINE *gdp_combine_cc;
 static GDP_COMBINE *gdp_combine_ac;
+static GDP_TRIANGLE *gdp_triangle;
 static struct txtcache *gdp_txtcache;
 static GDP_TF gdp_tf;
 
 static u8 gdp_tmem[0x1000];
 static struct tile gdp_tile[8];
-static u8 *gdp_timg;
-static u16 gdp_timg_w;
+static u16 *gdp_cimg;
+static u8  *gdp_timg;
+static u16  gdp_timg_w;
 
 static u8  gdp_env[4];
 static u8  gdp_prim[4];
@@ -313,6 +402,7 @@ static u16 gdp_fill;
 
 static u32 gdp_texrect[4];
 
+static u16 gdp_texture_size[2];
 static f32 gdp_texture_scale[2];
 
 static u32 gdp_combine_w0;
@@ -325,19 +415,19 @@ static u8  gdp_rect;
 static struct vp     gsp_viewport;
 static struct light  gsp_light_buf[10];
 static struct lightf gsp_lightf_buf[10];
-static struct vtx    gsp_vtx_buf[GSP_VTX_LEN];
-static struct vtxf   gsp_vtxf_buf[GSP_VTX_LEN];
+static struct vtx    gsp_vtx_buf[GSP_VTX_LEN+4];
+static struct vtxf   gsp_vtxf_buf[GSP_VTX_LEN+4];
 #ifdef APP_UNK4
 static s16  gsp_mtx[32];
 #endif
 static f32  MP[4][4];
-static f32  gsp_mtxf_modelview_stack[16][4][4];
+static f32  gsp_mtx_modelview_stack[16][4][4];
 #if defined(GSP_SWFOG) || defined(__NATIVE__)
-static f32  gsp_mtxf_mvp[4][4];
+static f32  gsp_mtx_mvp[4][4];
 #endif
 static f32  MM[4][4];
 static u8  *gsp_addr_table[16];
-static u32 *gsp_dl_stack[10];
+static u32 *gsp_dl_stack[GSP_GFX_LEN];
 static s8   gsp_dl_index;
 static u16  gsp_texture_scale[2];
 static u32  gsp_geometry_mode;
@@ -362,10 +452,14 @@ static int gsp_polyfmt;
 #endif
 
 #ifndef __NDS__
-static const u8 gdp_rect_tri[][3] = {{0, 1, 2}, {0, 2, 3}};
+static const u8 gdp_rect_tri[][3] =
+{
+    {GSP_VTX_LEN+0, GSP_VTX_LEN+1, GSP_VTX_LEN+2},
+    {GSP_VTX_LEN+0, GSP_VTX_LEN+2, GSP_VTX_LEN+3},
+};
 #endif
 
-#if 0
+#ifdef GSP_DEBUG
 static const char *const str_im_fmt[] = {"RGBA", "YUV", "CI", "IA", "I"};
 #endif
 
@@ -391,29 +485,27 @@ static void *gsp_addr(PTR addr)
 #define gdp_texture_ci4    NULL
 #define gdp_texture_ci8    NULL
 #else
-static void *gdp_texture_ci(GDP_FMT *fmt, u8 *src, uint w, uint h)
+static void *gdp_texture_ci(GDP_TXARG *arg, u8 *src, uint w, uint h)
 {
     void *dst;
     if ((gdp_othermode_h & (1 << G_MDSFT_TEXTLUT)) == 0)
     {
-        dst = gdp_texture_rgba16(fmt, src, w, h);
+        dst = gdp_texture_rgba16(arg, src, w, h);
     }
     else
     {
-        dst = gdp_texture_ia16(fmt, src, w, h);
+        dst = gdp_texture_ia16(arg, src, w, h);
     }
     free(src);
     return dst;
 }
 
-static void *gdp_texture_ci4(
-    GDP_FMT *fmt, const u8 *src, uint w, uint h
-)
+static void *gdp_texture_ci4(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf = malloc(2*w*h);
     u16 *tlut = (u16 *)&gdp_tmem[0x800 + 0x80*gdp_tile[0].pal];
     u16 *dst = buf;
-    uint len = w*h;
+    uint len = w*h/2;
     do
     {
         dst[0] = tlut[src[0] >> 4       ];
@@ -423,12 +515,10 @@ static void *gdp_texture_ci4(
         len -= 1;
     }
     while (len > 0);
-    return gdp_texture_ci(fmt, buf, w, h);
+    return gdp_texture_ci(arg, buf, w, h);
 }
 
-static void *gdp_texture_ci8(
-    GDP_FMT *fmt, const u8 *src, uint w, uint h
-)
+static void *gdp_texture_ci8(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf = malloc(2*w*h);
     u16 *tlut = (u16 *)&gdp_tmem[0x800 + 0x80*gdp_tile[0].pal];
@@ -442,7 +532,7 @@ static void *gdp_texture_ci8(
         len -= 1;
     }
     while (len > 0);
-    return gdp_texture_ci(fmt, buf, w, h);
+    return gdp_texture_ci(arg, buf, w, h);
 }
 #endif
 
@@ -470,13 +560,33 @@ static GDP_TEXTURE *gdp_texture_table[] =
     /* I    32 */ NULL,
 };
 
+static const f32 gdp_texture_shift_table[] =
+{
+    /*  0 */ 1.0F / (32 << 0),
+    /*  1 */ 1.0F / (32 << 1),
+    /*  2 */ 1.0F / (32 << 2),
+    /*  3 */ 1.0F / (32 << 3),
+    /*  4 */ 1.0F / (32 << 4),
+    /*  5 */ 1.0F / (32 << 5),
+    /*  6 */ 1.0F / (32 << 6),
+    /*  7 */ 1.0F / (32 << 7),
+    /*  8 */ 1.0F / (32 << 8),
+    /*  9 */ 1.0F / (32 << 9),
+    /* 10 */ 1.0F / (32 << 0),
+    /* -5 */ 1.0F / (32 >> 5),
+    /* -4 */ 1.0F / (32 >> 4),
+    /* -3 */ 1.0F / (32 >> 3),
+    /* -2 */ 1.0F / (32 >> 2),
+    /* -1 */ 1.0F / (32 >> 1),
+};
+
 #if defined(__NATIVE__) || defined(__3DS__)
 static const GLuint gdp_texture_cm_table[] =
 {
     /* 0x00 G_TX_NOMIRROR | G_TX_WRAP  */ GL_REPEAT,
     /* 0x01 G_TX_MIRROR   | G_TX_WRAP  */ GL_MIRRORED_REPEAT,
     /* 0x02 G_TX_NOMIRROR | G_TX_CLAMP */ GL_CLAMP_TO_EDGE,
-    /* 0x03 G_TX_MIRROR   | G_TX_CLAMP */ GL_CLAMP_TO_EDGE,
+    /* 0x03 G_TX_MIRROR   | G_TX_CLAMP */ GL_MIRRORED_REPEAT,
 };
 #endif
 #ifdef GEKKO
@@ -485,11 +595,11 @@ static const u8 gdp_texture_cm_table[] =
     /* 0x00 G_TX_NOMIRROR | G_TX_WRAP  */ GX_REPEAT,
     /* 0x01 G_TX_MIRROR   | G_TX_WRAP  */ GX_MIRROR,
     /* 0x02 G_TX_NOMIRROR | G_TX_CLAMP */ GX_CLAMP,
-    /* 0x03 G_TX_MIRROR   | G_TX_CLAMP */ GX_CLAMP,
+    /* 0x03 G_TX_MIRROR   | G_TX_CLAMP */ GX_MIRROR,
 };
 #endif
 #ifdef __NDS__
-static int gsp_texture_size(int x)
+static int gdp_texture_sizeno(int x)
 {
     if (x <=   8) return TEXTURE_SIZE_8;
     if (x <=  16) return TEXTURE_SIZE_16;
@@ -501,8 +611,8 @@ static int gsp_texture_size(int x)
     return TEXTURE_SIZE_1024;
 }
 
-static void *gsp_texture_resize(
-    void *buf, unused GDP_FMT fmt, uint dw, uint dh, uint sw, uint sh
+static void *gdp_texture_resize(
+    void *buf, unused GDP_TXARG *arg, uint dw, uint dh, uint sw, uint sh
 )
 {
     void *data = malloc(2*dw*dh);
@@ -542,27 +652,23 @@ static void *gsp_texture_resize(
 }
 #endif
 
-static void gsp_flush_texture(void)
+static void gdp_set_texture(
+    void *timg, void *src, uint fmt, GDP_TF tf, uint w, uint h,
+    uint cms, uint cmt
+)
 {
-#define cms gdp_texture_cm_table[tile->cm[0]]
-#define cmt gdp_texture_cm_table[tile->cm[1]]
-    struct tile *tile = &gdp_tile[0];
-    uint w = tile->lr[0] - tile->ul[0];
-    uint h = tile->lr[1] - tile->ul[1];
     struct txtcache *txtcache;
     GDP_TEXTURE *texture;
-    gdp_texture_scale[0] = (1.0F/32) / w;
-    gdp_texture_scale[1] = (1.0F/32) / h;
     txtcache = gdp_txtcache;
     while (txtcache != NULL)
     {
         if
         (
-            txtcache->timg == gdp_timg &&
+            txtcache->timg == timg &&
+            txtcache->fmt  == fmt  &&
         #ifndef __NDS__
-            txtcache->tf   == gdp_tf   &&
+            txtcache->tf   == tf
         #endif
-            memcmp(&txtcache->tile, tile, sizeof(struct tile)) == 0
         )
         {
         #if defined(__NATIVE__) || defined(__NDS__) || defined(__3DS__)
@@ -576,10 +682,9 @@ static void gsp_flush_texture(void)
         }
         txtcache = txtcache->next;
     }
-    texture = gdp_texture_table[tile->fmt];
+    texture = gdp_texture_table[fmt];
     if (texture != NULL)
     {
-        u8 *src = &gdp_tmem[tile->tmem];
     #if defined(__NATIVE__) || defined(__NDS__) || defined(__3DS__)
         u8 *buf;
     #ifdef __NDS__
@@ -588,48 +693,64 @@ static void gsp_flush_texture(void)
         int param;
     #endif
     #endif
-        GDP_FMT fmt;
+        GDP_TXARG arg;
         txtcache = malloc(sizeof(struct txtcache));
         txtcache->next = gdp_txtcache;
         gdp_txtcache = txtcache;
-        memcpy(&txtcache->tile, tile, sizeof(struct tile));
-        txtcache->timg = gdp_timg;
-        txtcache->tf = gdp_tf;
+        txtcache->timg = timg;
+        txtcache->fmt  = fmt;
+        txtcache->tf   = tf;
     #if defined(__NATIVE__) || defined(__NDS__) || defined(__3DS__)
-        buf = texture(&fmt, src, w, h);
+        buf = texture(&arg, src, w, h);
     #ifndef __NDS__
         glFlush();
     #endif
         glGenTextures(1, &txtcache->name);
         glBindTexture(GL_TEXTURE_2D, txtcache->name);
     #ifdef __NDS__
-        sizex = gsp_texture_size(w);
-        sizey = gsp_texture_size(h);
+        sizex = gdp_texture_sizeno(w);
+        sizey = gdp_texture_sizeno(h);
         if (8U << sizex != w || 8U << sizey != h)
         {
-            buf = gsp_texture_resize(buf, fmt, 8U << sizex, 8U << sizey, w, h);
+            buf = gdp_texture_resize(buf, &arg, 8U << sizex, 8U << sizey, w, h);
         }
         param = TEXGEN_OFF;
-        if (!(tile->cm[0] & G_TX_CLAMP ))   param |= GL_TEXTURE_WRAP_S;
-        if (!(tile->cm[1] & G_TX_CLAMP ))   param |= GL_TEXTURE_WRAP_T;
-        if ( (tile->cm[0] & G_TX_MIRROR))   param |= GL_TEXTURE_FLIP_S;
-        if ( (tile->cm[1] & G_TX_MIRROR))   param |= GL_TEXTURE_FLIP_T;
-        glTexImage2D(GL_TEXTURE_2D, 0, fmt, sizex, sizey, 0, param, buf);
+        if (!(cms & G_TX_CLAMP ))   param |= GL_TEXTURE_WRAP_S;
+        if (!(cmt & G_TX_CLAMP ))   param |= GL_TEXTURE_WRAP_T;
+        if ( (cms & G_TX_MIRROR))   param |= GL_TEXTURE_FLIP_S;
+        if ( (cmt & G_TX_MIRROR))   param |= GL_TEXTURE_FLIP_T;
+        glTexImage2D(GL_TEXTURE_2D, 0, arg.type, sizex, sizey, 0, param, buf);
     #else
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gdp_tf);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gdp_tf);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, cms);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, cmt);
-        glTexImage2D(
-            GL_TEXTURE_2D, 0, fmt, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf
+        glTexParameteri(
+            GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, gdp_texture_cm_table[cms]
         );
+        glTexParameteri(
+            GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, gdp_texture_cm_table[cmt]
+        );
+    #ifdef __NATIVE__
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, arg.internalFormat, w, h, 0, arg.format, arg.type,
+            buf
+        );
+    #endif
+    #ifdef __3DS__
+        glTexImage2D(
+            GL_TEXTURE_2D, 0, arg.internalFormat, w, h, 0, GL_RGBA,
+            GL_UNSIGNED_BYTE, buf
+        );
+    #endif
     #endif
         free(buf);
     #endif
     #ifdef GEKKO
-        txtcache->buf = texture(&fmt, src, w, h);
+        txtcache->buf = texture(&arg, src, w, h);
         GX_InitTexObj(
-            &txtcache->obj, txtcache->buf, w, h, fmt, cms, cmt, GX_FALSE
+            &txtcache->obj, txtcache->buf, w, h, arg.fmt,
+            gdp_texture_cm_table[cms],
+            gdp_texture_cm_table[cmt],
+            GX_FALSE
         );
         GX_InitTexObjFilterMode(&txtcache->obj, gdp_tf, gdp_tf);
         GX_InvalidateTexAll();
@@ -638,15 +759,41 @@ static void gsp_flush_texture(void)
     }
     else
     {
-    #if 0
+    #ifdef GSP_DEBUG
         wdebug(
             "unknown texture fmt G_IM_FMT_%s, G_IM_SIZ_%db\n",
-            str_im_fmt[tile->fmt >> 2], 4 << (tile->fmt & 3)
+            str_im_fmt[fmt >> 2], 4 << (fmt & 3)
         );
     #endif
     }
-#undef cms
-#undef cmt
+}
+
+static void gsp_flush_texture(void)
+{
+    struct tile *tile = &gdp_tile[0];
+    void *src = &gdp_tmem[tile->tmem << 3];
+    uint w = gdp_texture_size[0];
+    uint h = gdp_texture_size[1];
+    if (w == 0)
+    {
+        if (tile->line > 0)
+        {
+            uint x = tile->line << 4;
+            w = x >> (tile->fmt & 3);
+            h = h / x;
+        }
+        else
+        {
+            w = tile->lr[0] - tile->ul[0];
+            h = tile->lr[1] - tile->ul[1];
+        }
+    }
+    gdp_texture_scale[0] = gdp_texture_shift_table[tile->shift[0]] / w;
+    gdp_texture_scale[1] = gdp_texture_shift_table[tile->shift[1]] / h;
+    gdp_set_texture(
+        gdp_timg, src, tile->fmt, gdp_tf, w, h,
+        tile->cm[0], tile->cm[1]
+    );
 }
 
 static void gsp_flush_fog(void)
@@ -823,10 +970,44 @@ static void gsp_start_rect(void)
     if (gdp_rect == 0)
     {
         f32 mf[4][4];
-        mtxf_identity(mf);
+        mtx_identity(mf);
         gsp_set_mm(mf);
         gsp_set_vp(0, 1280, 0, 960);
         gsp_set_cull(G_CULL_BACK);
+    }
+}
+
+static void gsp_start_fillrect(void)
+{
+    gsp_start_rect();
+    if (gdp_rect != 1)
+    {
+        f32 mf[4][4];
+        gdp_rect = 1;
+        if (gdp_cycle) gdp_set_cc(0xFCFFFFFF, 0xFFFE793C);
+        mtx_ortho(mf, 0, 1280, 960, 0, 0, 2);
+        gsp_set_mp(mf);
+    }
+}
+
+static void gsp_start_texrect(void)
+{
+    gsp_start_rect();
+    if (gdp_rect != 2)
+    {
+        f32 mf[4][4];
+        gdp_rect = 2;
+        if (gdp_cycle) gdp_set_cc(0xFC121824, 0xFF33FFFF);
+        mtx_ortho(
+            mf,
+        #ifdef VIDEO_DYNRES
+            4*video_l, 4*video_r,
+        #else
+            0, 1280,
+        #endif
+            960, 0, 0, 2
+        );
+        gsp_set_mp(mf);
     }
 }
 #endif
@@ -849,23 +1030,17 @@ static void gsp_flush_rect(void)
 static void gsp_fillrect(u32 w0, u32 w1)
 {
 #ifndef __NDS__
-    int xh = w0 >> 12 & 0x0FFF;
-    int yh = w0 >>  0 & 0x0FFF;
-    int xl = w1 >> 12 & 0x0FFF;
-    int yl = w1 >>  0 & 0x0FFF;
+    struct vtx  *v  = &gsp_vtx_buf[GSP_VTX_LEN];
+    struct vtxf *vf = &gsp_vtxf_buf[GSP_VTX_LEN];
+    int xh = w0 >> 12 & 0xFFF;
+    int yh = w0 >>  0 & 0xFFF;
+    int xl = w1 >> 12 & 0xFFF;
+    int yl = w1 >>  0 & 0xFFF;
     uint r = RGBA16_R(gdp_fill);
     uint g = RGBA16_G(gdp_fill);
     uint b = RGBA16_B(gdp_fill);
     uint i;
-    gsp_start_rect();
-    if (gdp_rect != 1)
-    {
-        f32 mf[4][4];
-        gdp_rect = 1;
-        if (gdp_cycle) gdp_set_cc(0xFCFFFFFF, 0xFFFE793C);
-        mtxf_ortho(mf, 0, 1280, 960, 0, 0, 2);
-        gsp_set_mp(mf);
-    }
+    gsp_start_fillrect();
     if (gdp_cycle)
     {
         xh = (xh & ~3) + 4;
@@ -873,15 +1048,15 @@ static void gsp_fillrect(u32 w0, u32 w1)
     }
     for (i = 0; i < 4; i++)
     {
-        struct vtx  *v  = &gsp_vtx_buf[i];
-        struct vtxf *vf = &gsp_vtxf_buf[i];
-        v->x = i == 0 || i == 3 ? xl : xh;
-        v->y = i == 2 || i == 3 ? yl : yh;
-        v->z = 0;
-        vf->shade[0] = r;
-        vf->shade[1] = g;
-        vf->shade[2] = b;
-        vf->shade[3] = 0xFF;
+        v[i].x = i == 0 || i == 3 ? xl : xh;
+        v[i].y = i == 2 || i == 3 ? yl : yh;
+        v[i].z = 0;
+        v[i].s = 0;
+        v[i].t = 0;
+        vf[i].shade[0] = r;
+        vf[i].shade[1] = g;
+        vf[i].shade[2] = b;
+        vf[i].shade[3] = 0xFF;
     }
     gdp_tri(gdp_rect_tri[0]);
     gdp_tri(gdp_rect_tri[1]);
@@ -894,34 +1069,20 @@ static void gsp_fillrect(u32 w0, u32 w1)
 static void gsp_texrect(void)
 {
 #ifndef __NDS__
-    int   xh   = (s16)(gdp_texrect[0] >> 8) >> 4;
-    int   yh   = (s16)(gdp_texrect[0] << 4) >> 4;
-    int   xl   = (s16)(gdp_texrect[1] >> 8) >> 4;
-    int   yl   = (s16)(gdp_texrect[1] << 4) >> 4;
-    float ul   = (1.0F/32)        * (s16)(gdp_texrect[2] >> 16);
-    float vl   = (1.0F/32)        * (s16)(gdp_texrect[2] >>  0);
+    struct vtx  *v  = &gsp_vtx_buf[GSP_VTX_LEN];
+    struct vtxf *vf = &gsp_vtxf_buf[GSP_VTX_LEN];
+    int   xh = (s16)(gdp_texrect[0] >> 8) >> 4;
+    int   yh = (s16)(gdp_texrect[0] << 4) >> 4;
+    int   xl = (s16)(gdp_texrect[1] >> 8) >> 4;
+    int   yl = (s16)(gdp_texrect[1] << 4) >> 4;
+    float sl = (s16)(gdp_texrect[2] >> 16);
+    float tl = (s16)(gdp_texrect[2] >>  0);
+    float sh;
+    float th;
     float dsdx = (32/4.0F/0x0400) * (s16)(gdp_texrect[3] >> 16);
     float dtdy = (32/4.0F/0x0400) * (s16)(gdp_texrect[3] >>  0);
-    float uh;
-    float vh;
     uint  i;
-    gsp_start_rect();
-    if (gdp_rect != 2)
-    {
-        f32 mf[4][4];
-        gdp_rect = 2;
-        if (gdp_cycle) gdp_set_cc(0xFC121824, 0xFF33FFFF);
-        mtxf_ortho(
-            mf,
-        #ifdef LIB_DYNRES
-            4*video_l, 4*video_r,
-        #else
-            0, 1280,
-        #endif
-            960, 0, 0, 2
-        );
-        gsp_set_mp(mf);
-    }
+    gsp_start_texrect();
     if (gdp_cycle)
     {
         xh = (xh & ~3) + 4;
@@ -932,98 +1093,134 @@ static void gsp_texrect(void)
     {
         if (gdp_tf != GDP_TF_POINT)
         {
-            ul += 32*0.5F;
-            vl += 32*0.5F;
+            sl += 32*0.5F;
+            tl += 32*0.5F;
         }
     }
-    uh = ul + dsdx*(xh-xl);
-    vh = vl + dtdy*(yh-yl);
+    sh = sl + dsdx*(xh-xl);
+    th = tl + dtdy*(yh-yl);
     if (gdp_texrect[0] >> 24 & 1)
     {
-        gsp_vtxf_buf[0].s = uh;
-        gsp_vtxf_buf[0].t = vl;
-        gsp_vtxf_buf[2].s = ul;
-        gsp_vtxf_buf[2].t = vh;
+        vf[0].s = sh;
+        vf[0].t = tl;
+        vf[2].s = sl;
+        vf[2].t = th;
     }
     else
     {
-        gsp_vtxf_buf[0].s = ul;
-        gsp_vtxf_buf[0].t = vh;
-        gsp_vtxf_buf[2].s = uh;
-        gsp_vtxf_buf[2].t = vl;
+        vf[0].s = sl;
+        vf[0].t = th;
+        vf[2].s = sh;
+        vf[2].t = tl;
     }
-    gsp_vtxf_buf[1].s = uh;
-    gsp_vtxf_buf[1].t = vh;
-    gsp_vtxf_buf[3].s = ul;
-    gsp_vtxf_buf[3].t = vl;
+    vf[1].s = sh;
+    vf[1].t = th;
+    vf[3].s = sl;
+    vf[3].t = tl;
     for (i = 0; i < 4; i++)
     {
-        struct vtx  *v  = &gsp_vtx_buf[i];
-        struct vtxf *vf = &gsp_vtxf_buf[i];
-        v->x = i == 0 || i == 3 ? xl : xh;
-        v->y = i == 2 || i == 3 ? yl : yh;
-        v->z = 0;
-        vf->shade[0] = 0xFF;
-        vf->shade[1] = 0xFF;
-        vf->shade[2] = 0xFF;
-        vf->shade[3] = 0xFF;
+        v[i].x = i == 0 || i == 3 ? xl : xh;
+        v[i].y = i == 2 || i == 3 ? yl : yh;
+        v[i].z = 0;
+        vf[i].shade[0] = 0xFF;
+        vf[i].shade[1] = 0xFF;
+        vf[i].shade[2] = 0xFF;
+        vf[i].shade[3] = 0xFF;
     }
     gdp_tri(gdp_rect_tri[0]);
     gdp_tri(gdp_rect_tri[1]);
 #endif
 }
 
-static void gsp_start(void *ucode, u32 *dl)
+#ifdef GSP_F3DEX2
+static void gsp_bg(struct obj_bg *bg)
 {
-    u32 i;
-#ifdef GSP_F3DEX
-    i = (u8 *)ucode - cpu_dram;
-    switch (i)
+    struct vtx  *v  = &gsp_vtx_buf[GSP_VTX_LEN];
+    struct vtxf *vf = &gsp_vtxf_buf[GSP_VTX_LEN];
+    struct tile *tile = &gdp_tile[0];
+    void *timg = gsp_addr(bg->image_ptr);
+    void *src;
+    int  xl = bg->frame_x;
+    int  yl = bg->frame_y;
+    int  xh = xl + bg->image_w*bg->scale_w/0x400;
+    int  yh = yl + bg->image_h*bg->scale_h/0x400;
+    uint w = bg->image_w/4;
+    uint h = bg->image_h/4;
+    uint size = w*h << bg->image_siz >> 1;
+    uint i;
+    gdp_texture_scale[0] = 1;
+    gdp_texture_scale[1] = 1;
+    tile->pal = bg->image_pal;
+    src = malloc(size);
+    byteswap(src, timg, size);
+    gdp_set_texture(
+        timg, src, bg->image_fmt << 2 | bg->image_siz, gdp_tf, w, h,
+        G_TX_WRAP, G_TX_WRAP
+    );
+    free(src);
+    gdp_set_sc(bg->frame_x, bg->frame_y, bg->frame_w, bg->frame_h);
+    gsp_start_texrect();
+    for (i = 0; i < 4; i++)
     {
+        v[i].x  = i == 0 || i == 3 ? xl : xh;
+        v[i].y  = i == 2 || i == 3 ? yl : yh;
+        v[i].z  = 0;
+        vf[i].s = i == 0 || i == 3 ?  0 :  1;
+        vf[i].t = i == 2 || i == 3 ?  0 :  1;
+        vf[i].shade[0] = 0xFF;
+        vf[i].shade[1] = 0xFF;
+        vf[i].shade[2] = 0xFF;
+        vf[i].shade[3] = 0xFF;
+    }
+    gdp_tri(gdp_rect_tri[0]);
+    gdp_tri(gdp_rect_tri[1]);
+}
+#endif
+
+#ifdef GSP_F3DEX2
+static void gsp_start_F3DEX2(void);
+static void gsp_start_S2DEX2(void);
+#endif
+static void gsp_start(PTR ucode, u32 *dl)
+{
+    uint i;
+    switch (ucode)
+    {
+#ifdef GSP_F3DEX
     #ifdef APP_UNKT
     #ifdef APP_E0
         /* F3DEX */
-        case 0x000D9040:
-            break;
+        case 0x000D9040:    break;
         /* F3DLX */
-        case 0x000DA420:
-            break;
+        case 0x000DA420:    break;
+    #endif
+    #endif
+    #ifdef APP_UCZL
+    #if defined(APP_J0) || defined(APP_E0)
+        case 0x000E3F70:    gsp_start_F3DEX2(); break;
+        case 0x000E5300:    gsp_start_S2DEX2(); break;
     #endif
     #endif
     #ifdef APP_UNK4
     #ifdef APP_E0
-        case 0x00039E90:
-            /* pdebug("notice: using F3DEX2\n"); */
-            goto meme;
+        case 0x00039E90:    gsp_start_F3DEX2(); break;
         case 0x0003B220:
             pdebug("notice: using L3DEX2\n");
-        meme:
-            memcpy(&gsp_table[0x01], gsp_table_3d, sizeof(gsp_table_3d));
-            gsp_table[G_MTX]     = gsp_g_mtx;
-            gsp_table[G_MOVEMEM] = gsp_g_movemem;
-            gsp_table[G_TEXRECT] = gdp_g_texrect;
+            gsp_start_F3DEX2();
             break;
-        case 0x0003C3B0:
-            /* pdebug("notice: using S2DEX2\n"); */
-            memcpy(&gsp_table[0x01], gsp_table_2d, sizeof(gsp_table_2d));
-            gsp_table[G_OBJ_RECTANGLE_R] = gsp_g_obj_rectangle_r;
-            gsp_table[G_OBJ_MOVEMEM]     = gsp_g_obj_movemem;
-            gsp_table[G_RDPHALF_0]       = gsp_g_rdphalf_0;
-            break;
+        case 0x0003C3B0:    gsp_start_S2DEX2(); break;
     #endif
     #endif
         default:
-            eprint("unknown ucode 0x%08" FMT_X "\n", i);
+            edebug("unknown ucode 0x%08" FMT_X "\n", ucode);
             break;
-    }
-#else
-    (void)ucode;
 #endif
-    gdp_triangle = gdp_tri;
+    }
     gdp_combine_cc = gdp_combine_cc_0;
     gdp_combine_ac = gdp_combine_ac_0;
+    gdp_triangle = gdp_tri;
     gdp_rect = 0;
-    gsp_mtxf_modelview = gsp_mtxf_modelview_stack;
+    gsp_mtx_modelview = gsp_mtx_modelview_stack;
     for (i = 0; i < lenof(gsp_addr_table); i++) gsp_addr_table[i] = cpu_dram;
     gsp_dl_stack[0] = dl;
     gsp_dl_index = 0;
@@ -1078,30 +1275,30 @@ static void gsp_start(void *ucode, u32 *dl)
 #include "gsp/g_tri1.c"
 #include "gsp/g_tri2.c"
 
-static void gsp_g_quad(unused u32 w0, unused u32 w1)
-{
-    puts("G_QUAD");
-    exit(EXIT_FAILURE);
-}
+#define gsp_g_quad              gsp_g_tri2
 
 static void gsp_g_special_3(unused u32 w0, unused u32 w1)
 {
-    puts("G_SPECIAL_3");
-    exit(EXIT_FAILURE);
+    edebug("G_SPECIAL_3\n");
 }
 
 static void gsp_g_special_2(unused u32 w0, unused u32 w1)
 {
-    puts("G_SPECIAL_2");
-    exit(EXIT_FAILURE);
+    edebug("G_SPECIAL_2\n");
 }
 
+#ifdef APP_UNK4
 #include "gsp/g_special_1.c"
+#else
+static void gsp_g_special_1(unused u32 w0, unused u32 w1)
+{
+    edebug("G_SPECIAL_1\n");
+}
+#endif
 
 static void gsp_g_dma_io(unused u32 w0, unused u32 w1)
 {
-    puts("G_DMA_IO");
-    exit(EXIT_FAILURE);
+    edebug("G_DMA_IO\n");
 }
 
 #include "gsp/g_texture.c"
@@ -1121,121 +1318,32 @@ static void gsp_g_dma_io(unused u32 w0, unused u32 w1)
 
 static void gsp_g_obj_rectangle(unused u32 w0, unused u32 w1)
 {
-    puts("G_OBJ_RECTANGLE");
-    exit(EXIT_FAILURE);
+    edebug("G_OBJ_RECTANGLE\n");
 }
 
 static void gsp_g_obj_sprite(unused u32 w0, unused u32 w1)
 {
-    puts("G_OBJ_SPRITE");
-    exit(EXIT_FAILURE);
+    edebug("G_OBJ_SPRITE\n");
 }
 
 static void gsp_g_select_dl(unused u32 w0, unused u32 w1)
 {
-    puts("G_SELECT_DL");
-    exit(EXIT_FAILURE);
+    edebug("G_SELECT_DL\n");
 }
 
-static void gsp_g_obj_loadtxtr(unused u32 w0, unused u32 w1)
-{
-    /*
-    puts("G_OBJ_LOADTXTR");
-    exit(EXIT_FAILURE);
-    */
-}
-
-static void gsp_g_obj_ldtx_sprite(unused u32 w0, unused u32 w1)
-{
-    puts("G_OBJ_LDTX_SPRITE");
-    exit(EXIT_FAILURE);
-}
-
-static void gsp_g_obj_ldtx_rect(unused u32 w0, unused u32 w1)
-{
-    puts("G_OBJ_LDTX_RECT");
-    exit(EXIT_FAILURE);
-}
-
-static void gsp_g_obj_ldtx_rect_r(unused u32 w0, unused u32 w1)
-{
-    puts("G_OBJ_LDTX_RECT_R");
-    exit(EXIT_FAILURE);
-}
-
-static void gsp_g_bg_1cyc(unused u32 w0, unused u32 w1)
-{
-    /*
-    struct obj_bg *bg = gsp_addr(w1);
-    printf(
-        "image_x     = %f\n"
-        "image_w     = %f\n"
-        "frame_x     = %f\n"
-        "frame_w     = %f\n"
-        "image_y     = %f\n"
-        "image_h     = %f\n"
-        "frame_y     = %f\n"
-        "frame_h     = %f\n"
-        "image_ptr   = 0x%08" FMT_X "\n"
-        "image_load  = 0x%04X\n"
-        "image_fmt   = G_IM_FMT_%s\n"
-        "image_siz   = G_IM_SIZ_%db\n"
-        "image_pal   = 0x%04X\n"
-        "image_flip  = 0x%04X\n"
-        "scale_w     = %f\n"
-        "scale_h     = %f\n",
-        (1.0F/32) * bg->image_x,
-        (1.0F/ 4) * bg->image_w,
-        (1.0F/ 4) * bg->frame_x,
-        (1.0F/ 4) * bg->frame_w,
-        (1.0F/32) * bg->image_y,
-        (1.0F/ 4) * bg->image_h,
-        (1.0F/ 4) * bg->frame_y,
-        (1.0F/ 4) * bg->frame_h,
-        bg->image_ptr,
-        bg->image_load,
-        str_im_fmt[bg->image_fmt],
-        4 << bg->image_siz,
-        bg->image_pal,
-        bg->image_flip,
-        (1.0F/0x400) * bg->scale_w,
-        (1.0F/0x400) * bg->scale_h
-    );
-    exit(EXIT_FAILURE);
-    */
-}
-
-static void gsp_g_bg_copy(unused u32 w0, unused u32 w1)
-{
-    /*
-    puts("G_BG_COPY");
-    exit(EXIT_FAILURE);
-    */
-}
-
-static void gsp_g_obj_rendermode(unused u32 w0, u32 w1)
-{
-    gsp_obj_rendermode = w1;
-}
+#include "gsp/g_obj_loadtxtr.c"
+#include "gsp/g_bg_1cyc.c"
+#include "gsp/g_bg_copy.c"
+#include "gsp/g_obj_rendermode.c"
 
 static void gsp_g_obj_rectangle_r(unused u32 w0, unused u32 w1)
 {
-    puts("G_OBJ_RECTANGLE_R");
-    exit(EXIT_FAILURE);
+    edebug("G_OBJ_RECTANGLE_R\n");
 }
 
 static void gsp_g_obj_movemem(unused u32 w0, unused u32 w1)
 {
-    puts("G_OBJ_MOVEMEM");
-    exit(EXIT_FAILURE);
-}
-
-static void gsp_g_rdphalf_0(unused u32 w0, unused u32 w1)
-{
-    /*
-    puts("G_RDPHALF_0");
-    exit(EXIT_FAILURE);
-    */
+    edebug("G_OBJ_MOVEMEM\n");
 }
 #endif
 
@@ -1602,7 +1710,7 @@ static GSP *gsp_table[] =
 };
 
 #ifdef GSP_F3DEX2
-static GSP *const gsp_table_3d[] =
+static GSP *const gsp_table_F3DEX2[] =
 {
     /* 0x01 */  gsp_g_vtx,
     /* 0x02 */  gsp_g_modifyvtx,
@@ -1617,19 +1725,130 @@ static GSP *const gsp_table_3d[] =
     /* 0x0B */  NULL,
 };
 
-static GSP *const gsp_table_2d[] =
+static GSP *const gsp_table_S2DEX2[] =
 {
     /* 0x01 */  gsp_g_obj_rectangle,
     /* 0x02 */  gsp_g_obj_sprite,
     /* 0x03 */  gsp_g_culldl,
     /* 0x04 */  gsp_g_select_dl,
     /* 0x05 */  gsp_g_obj_loadtxtr,
-    /* 0x06 */  gsp_g_obj_ldtx_sprite,
-    /* 0x07 */  gsp_g_obj_ldtx_rect,
-    /* 0x08 */  gsp_g_obj_ldtx_rect_r,
+    /* 0x06 */  gsp_g_obj_loadtxtr,
+    /* 0x07 */  gsp_g_obj_loadtxtr,
+    /* 0x08 */  gsp_g_obj_loadtxtr,
     /* 0x09 */  gsp_g_bg_1cyc,
     /* 0x0A */  gsp_g_bg_copy,
     /* 0x0B */  gsp_g_obj_rendermode,
+};
+
+static void gsp_start_F3DEX2(void)
+{
+    memcpy(&gsp_table[0x01], gsp_table_F3DEX2, sizeof(gsp_table_F3DEX2));
+    gsp_table[G_MTX]     = gsp_g_mtx;
+    gsp_table[G_MOVEMEM] = gsp_g_movemem;
+}
+
+static void gsp_start_S2DEX2(void)
+{
+    memcpy(&gsp_table[0x01], gsp_table_S2DEX2, sizeof(gsp_table_S2DEX2));
+    gsp_table[G_OBJ_RECTANGLE_R] = gsp_g_obj_rectangle_r;
+    gsp_table[G_OBJ_MOVEMEM]     = gsp_g_obj_movemem;
+}
+#endif
+
+static void gsp_write(void)
+{
+#ifdef __NATIVE__
+    /*
+    u16 *buf = malloc(4*video_w*video_h);
+    uint y;
+    uint x;
+    glReadPixels(
+        0, 0, video_w, video_h, GL_RGBA, GL_UNSIGNED_SHORT_5_5_5_1, buf
+    );
+    for (y = 0; y < 240; y++)
+    {
+        for (x = 0; x < 320; x++)
+        {
+            uint dx = (    x) * video_w/320;
+            uint dy = (240-y) * video_h/240;
+            gdp_cimg[(320*y+x)^(AX_B>>1)] = buf[video_w*dy+dx];
+        }
+    }
+    free(buf);
+    */
+#endif
+}
+
+#ifdef GSP_DEBUG
+static const u8 gsp_cmd[] =
+{
+#ifdef GSP_F3DEX2
+    0x00, 0x04, 0xB2, 0xBE, 0xB0, 0xBF, 0xB1, 0xB5,
+    0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+    0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
+    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
+    0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F,
+    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
+    0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
+    0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
+    0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,
+    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
+    0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F,
+    0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67,
+    0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F,
+    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77,
+    0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,
+    0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,
+    0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F,
+    0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97,
+    0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F,
+    0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7,
+    0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF,
+    0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7,
+    0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF,
+    0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7,
+    0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF,
+    0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xBB,
+    0xBD, 0xB7, 0x01, 0xBC, 0x03, 0xAF, 0x06, 0xB8,
+    0xC0, 0xB3, 0xB9, 0xBA, 0xE4, 0xE5, 0xE6, 0xE7,
+    0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF,
+    0xF0, 0xB4, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7,
+    0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF,
+#else
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+    0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
+    0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27,
+    0x28, 0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F,
+    0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37,
+    0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
+    0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46, 0x47,
+    0x48, 0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0x4E, 0x4F,
+    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
+    0x58, 0x59, 0x5A, 0x5B, 0x5C, 0x5D, 0x5E, 0x5F,
+    0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67,
+    0x68, 0x69, 0x6A, 0x6B, 0x6C, 0x6D, 0x6E, 0x6F,
+    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77,
+    0x78, 0x79, 0x7A, 0x7B, 0x7C, 0x7D, 0x7E, 0x7F,
+    0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,
+    0x88, 0x89, 0x8A, 0x8B, 0x8C, 0x8D, 0x8E, 0x8F,
+    0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97,
+    0x98, 0x99, 0x9A, 0x9B, 0x9C, 0x9D, 0x9E, 0x9F,
+    0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0xA6, 0xA7,
+    0xA8, 0xA9, 0xAA, 0xAB, 0xAC, 0xAD, 0xAE, 0xAF,
+    0xB0, 0xB1, 0xB2, 0xB3, 0xB4, 0xB5, 0xB6, 0xB7,
+    0xB8, 0xB9, 0xBA, 0xBB, 0xBC, 0xBD, 0xBE, 0xBF,
+    0xC0, 0xC1, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7,
+    0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF,
+    0xD0, 0xD1, 0xD2, 0xD3, 0xD4, 0xD5, 0xD6, 0xD7,
+    0xD8, 0xD9, 0xDA, 0xDB, 0xDC, 0xDD, 0xDE, 0xDF,
+    0xE0, 0xE1, 0xE2, 0xE3, 0xE4, 0xE5, 0xE6, 0xE7,
+    0xE8, 0xE9, 0xEA, 0xEB, 0xEC, 0xED, 0xEE, 0xEF,
+    0xF0, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5, 0xF6, 0xF7,
+    0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF,
+#endif
 };
 #endif
 
@@ -1685,9 +1904,9 @@ void gsp_cache(void)
     gsp_new_cache = true;
 }
 
-void gsp_update(void *ucode, u32 *dl)
+void gsp_update(PTR ucode, u32 *dl)
 {
-#ifdef GSP_CACHE
+#ifdef APP_UNK4
     if (gsp_new_cache)
 #endif
     {
@@ -1706,14 +1925,19 @@ void gsp_update(void *ucode, u32 *dl)
         }
     }
 #if defined(__NATIVE__) || defined(__3DS__)
+    glViewport(0, 0, video_w, video_h);
+    glScissor(0, 0, video_w, video_h);
     glDepthMask(GL_TRUE);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 #endif
 #ifdef GEKKO
+    GX_SetViewport(0, 0, video_w, video_h, 0, 1);
+    GX_SetScissor(0, 0, video_w, video_h);
     GX_InvVtxCache();
     gsp_decal = false;
 #endif
 #ifdef __NDS__
+    glViewport(0, 0, video_w-1, video_h-1);
     gsp_polyfmt =
         POLY_ID(0) | POLY_ALPHA(31) | POLY_CULL_NONE | POLY_MODULATION;
 #endif
@@ -1729,10 +1953,10 @@ void gsp_update(void *ucode, u32 *dl)
         void (*cmd)(u32, u32);
         u32 w0 = gsp_dl_stack[gsp_dl_index][0];
         u32 w1 = gsp_dl_stack[gsp_dl_index][1];
-    #if 0
-        printf(
-            "0x%08X: %08X %08X\n",
-            (uint)((u8 *)gsp_dl_stack[gsp_dl_index]-cpu_dram), w0, w1
+    #ifdef GSP_DEBUG
+        pdebug(
+            "0x%08X: (%02X) %08X %08X\n",
+            __ptr(gsp_dl_stack[gsp_dl_index]), gsp_cmd[w0 >> 24], w0, w1
         );
     #endif
         gsp_dl_stack[gsp_dl_index] += 2;
@@ -1743,11 +1967,11 @@ void gsp_update(void *ucode, u32 *dl)
         }
         else
         {
-            edebug("invalid Gfx {{0x%08" FMT_X ", 0x%08" FMT_X "}}\n", w0, w1);
+            wdebug("invalid Gfx {{0x%08" FMT_X ", 0x%08" FMT_X "}}\n", w0, w1);
         }
     }
     while (gsp_dl_index >= 0);
-
+    gsp_write();
 #ifdef __NATIVE__
     SDL_GL_SwapWindow(window);
 #endif
@@ -1763,5 +1987,51 @@ void gsp_update(void *ucode, u32 *dl)
 #endif
 #ifdef __3DS__
     pglSwapBuffers();
+#endif
+}
+
+void gsp_image(unused void *img)
+{
+#ifdef __NATIVE__
+    /*
+    void *buf;
+    GLuint name;
+    buf = malloc(2*320*240);
+    wordswap(buf, img, 2*320*240);
+    glViewport(0, 0, video_w, video_h);
+    glScissor(0, 0, video_w, video_h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glDisable(GL_DEPTH_TEST);
+    glDepthMask(GL_FALSE);
+    glDisable(GL_ALPHA_TEST);
+    glDisable(GL_BLEND);
+    glPolygonOffset(0, 0);
+    glDisable(GL_FOG);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_TEXTURE_2D);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glGenTextures(1, &name);
+    glBindTexture(GL_TEXTURE_2D, name);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, GL_RGBA, 320, 240, 0, GL_RGBA,
+        GL_UNSIGNED_SHORT_5_5_5_1, buf
+    );
+    glBegin(GL_QUADS);
+    glTexCoord2f(0, 1); glVertex3s(-1, -1, 0);
+    glTexCoord2f(1, 1); glVertex3s( 1, -1, 0);
+    glTexCoord2f(1, 0); glVertex3s( 1,  1, 0);
+    glTexCoord2f(0, 0); glVertex3s(-1,  1, 0);
+    glEnd();
+    glDeleteTextures(1, &name);
+    SDL_GL_SwapWindow(window);
+    free(buf);
+    */
 #endif
 }

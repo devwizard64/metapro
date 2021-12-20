@@ -9,14 +9,8 @@ static void asp_a_mixer(u32 w0, u32 w1)
         do
         {
             s32 x = *dmemout + ((*dmemin*gain) >> 15);
-            if (x < -0x8000)
-            {
-                x = -0x8000;
-            }
-            if (x >  0x7FFF)
-            {
-                x =  0x7FFF;
-            }
+            if (x < -0x8000) x = -0x8000;
+            if (x > +0x7FFF) x = +0x7FFF;
             *dmemout = x;
             dmemin  += 1;
             dmemout += 1;

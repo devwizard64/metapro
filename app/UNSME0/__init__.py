@@ -1,5 +1,4 @@
-def patch(data):
-    return data
+patch = None
 
 entry = 0x80246000
 bss   = [0x8033A580, 0x0002CEE0]
@@ -19,10 +18,11 @@ reg   = (
 )
 
 header = (
-    "#define LIB_DYNRES\n"
+    "#define EEPROM_TYPE             1\n"
+    "#define VIDEO_DYNRES\n"
+    "#define AUDIO_FREQ              32000\n"
     "#define GSP_F3D\n"
     "#define GSP_F3D_20D\n"
-    "#define GSP_CACHE\n"
     "#define ASP_MAIN\n"
     "#define ASP_MAIN1\n"
     "#ifdef GEKKO\n"
@@ -38,7 +38,6 @@ lib = {
     0x803223B0: "osSetTime",
     0x803223E0: "osMapTLB",
     0x803224A0: "osUnmapTLBAll",
-    0x803224F0: "sprintf",
     0x803225A0: "osCreateMesgQueue",
     0x803225D0: "osSetEventMesg",
     0x80322640: "osViSetEvent",
@@ -59,33 +58,26 @@ lib = {
     0x803236F0: "osSetThreadPri",
     0x803237D0: "osInitialize",
     0x80323A00: "osViSwapBuffer",
-    0x80323A50: "sqrtf",
     0x80323A60: "osContStartReadData",
     0x80323B24: "osContGetReadData",
     0x80323CC0: "osContInit",
     0x80324080: "osEepromProbe",
+    0x8032411C: "__ull_rem",
     0x80324158: "__ull_div",
     0x80324194: "__ll_lshift",
+    0x803241FC: "__ll_div",
     0x80324258: "__ll_mul",
     0x803243B0: "osInvalDCache",
     0x80324460: "osPiStartDma",
-    0x80324570: "bzero",
     0x80324610: "osInvalICache",
     0x80324690: "osEepromLongRead",
     0x803247D0: "osEepromLongWrite",
-    0x80324910: "bcopy",
     0x80324D74: "guOrtho",
     0x80325010: "guPerspective",
     0x80325070: "osGetTime",
     0x80325138: "__d_to_ull",
     0x803252A4: "__ull_to_d",
-    0x80325310: "cosf",
-    0x80325480: "sinf",
-    0x80325688: "guTranslate",
-    0x80325874: "guRotate",
-    0x80325924: "guScale",
     0x80325970: "osAiSetFrequency",
-    0x80325CD8: "alSeqFileNew",
     0x80325D20: "osWritebackDCache",
     0x80325DA0: "osAiGetLength",
     0x80325DB0: "osAiSetNextBuffer",
@@ -111,6 +103,10 @@ a00_pat = {
     # gfx_draw_bg
     0x8027C99C: [0x3508C3BC],
     0x8027C9A8: [0x24180000],
+    # object spawn
+    0x802C9C44: [0x3C018036, 0x24210C28, 0x1000000D, 0xAFA1001C],
+    # hud clamp pos
+    0x802D6B80: [0x00000000],
 }
 
 a00_xpr = {
@@ -126,24 +122,6 @@ a00_xpr = {
         "(int)(video_r-video_l)",
     0x8027B338: # transition fadein radius
         "(int)(video_r-video_l)",
-}
-
-a00_ins = {
-    # obj cull
-    0x8027D5C8: "    f18.f[IX] *= video_aspect;\n",
-}
-
-a02_pat = {
-    # object spawn
-    0x802C9C44: [0x3C018036, 0x24210C28, 0x1000000D, 0xAFA1001C],
-}
-
-a03_pat = {
-    # hud clamp pos
-    0x802D6B80: [0x00000000],
-}
-
-a03_xpr = {
     0x802CB900: "(int)video_l", # transition v0 x
     0x802CB944: "(int)video_r", # transition v1 x
     0x802CB988: "(int)video_r", # transition v2 x
@@ -161,31 +139,6 @@ a03_xpr = {
     0x802CCECC: # reticle v3 u
         "(int)(-3.6F * (video_r-video_l))",
     0x802CCEF0: "(int)video_l", # reticle v3 x
-}
-
-a03_ins = {
-    # reticle border
-    0x802CD19C:
-        "{\n"
-        "    int x = 0.15F * (video_r-video_l);\n"
-        "    at = __read_s32((s16)0x007C + sp);\n"
-        "    __write_u32((s16)0x007C + sp, at + 0x0028);\n"
-        "    __write_u32((s16)0x0000 + at, 0xBA001402);\n"
-        "    __write_u32((s16)0x0004 + at, 0x00300000);\n"
-        "    __write_u32((s16)0x0008 + at, 0xF7000000);\n"
-        "    __write_u32((s16)0x000C + at, 0x00010001);\n"
-        "    __write_u32((s16)0x0010 + at, "
-            "0xF60003BC | ((  x-1) & 0x3FF) << 14);\n"
-        "    __write_u32((s16)0x0014 + at, 0x00000000);\n"
-        "    __write_u32((s16)0x0018 + at, 0xF64FC3BC);\n"
-        "    __write_u32((s16)0x001C + at, "
-            "0x00000000 | ((320-x) & 0x3FF) << 14);\n"
-        "    __write_u32((s16)0x0020 + at, 0xBA001402);\n"
-        "    __write_u32((s16)0x0024 + at, 0x00000000);\n"
-        "}\n",
-}
-
-a04_xpr = {
     0x802DB708: "(int)video_r - 30", # pause red coin
     0x802E3754: "(int)video_l + 22 + 16*0", # lives "," x
     0x802E375C: "240 - APP_BORDER - 7 - 16", # life "," y
@@ -228,29 +181,54 @@ a04_xpr = {
     0x802E3B60: "240 - APP_BORDER - 7 - 20", # camera y
 }
 
-a04_ins = {
+a00_ins = {
+    # obj cull
+    0x8027D5C8: "    f18.f[IX] *= video_aspect;\n",
+    # reticle border
+    0x802CD19C:
+        "{\n"
+        "    int x = 0.15F * (video_r-video_l);\n"
+        "    at = *__s32(sp+0x7C);\n"
+        "    *__u32(sp+0x7C) = at+0x28;\n"
+        "    *__u32(at+0x00) = 0xBA001402;\n"
+        "    *__u32(at+0x04) = 0x00300000;\n"
+        "    *__u32(at+0x08) = 0xF7000000;\n"
+        "    *__u32(at+0x0C) = 0x00010001;\n"
+        "    *__u32(at+0x10) = 0xF60003BC | ((  x-1) & 0x3FF) << 14;\n"
+        "    *__u32(at+0x14) = 0x00000000;\n"
+        "    *__u32(at+0x18) = 0xF64FC3BC;\n"
+        "    *__u32(at+0x1C) = 0x00000000 | ((320-x) & 0x3FF) << 14;\n"
+        "    *__u32(at+0x20) = 0xBA001402;\n"
+        "    *__u32(at+0x24) = 0x00000000;\n"
+        "}\n",
     # pause
     0x802DB3C8: "    ARG_F(a1) = video_l;\n",
     0x802DB3E4:
         "    ARG_F(a1) = (1.0F/128) * (video_r-video_l);\n",
     # hud draw power
     0x802E3254: "    t8 += 8;\n",
-}
-
-a06_ins = {
     # audio sleep
     0x80317938: "    thread_yield(THREAD_YIELD_BREAK);\n",
 }
 
 segment = [
     [0x00001050, 0x80246050, 0x8027F590, [], a00_pat, a00_xpr, a00_ins],
-    [0x0003A590, 0x8027F590, 0x8029C770, [], {}, {}, {}],
-    [0x00057770, 0x8029C770, 0x802CB5C0, [], a02_pat, {}, {}],
-    [0x000865C0, 0x802CB5C0, 0x802D5E00, [], a03_pat, a03_xpr, a03_ins],
-    [0x00090E00, 0x802D5E00, 0x802F9730, [], {}, a04_xpr, a04_ins],
-    [0x000B4730, 0x802F9730, 0x80314A30, [], {}, {}, {}],
-    # 0x8032B260
-    [0x000CFA30, 0x80314A30, 0x803223B0, [], {}, {}, a06_ins],
+    [0x0003A590, 0x8027F590, 0x8029C770, [], a00_pat, a00_xpr, a00_ins],
+    [0x00057770, 0x8029C770, 0x802CB5C0, [], a00_pat, a00_xpr, a00_ins],
+    [0x000865C0, 0x802CB5C0, 0x802D5E00, [], a00_pat, a00_xpr, a00_ins],
+    [0x00090E00, 0x802D5E00, 0x802F9730, [], a00_pat, a00_xpr, a00_ins],
+    [0x000B4730, 0x802F9730, 0x80314A30, [], a00_pat, a00_xpr, a00_ins],
+    [0x000CFA30, 0x80314A30, 0x803223B0, [], a00_pat, a00_xpr, a00_ins],
+    [0x000DD4F0, 0x803224F0, 0x803225A0, [], a00_pat, a00_xpr, a00_ins],
+    [0x000DEA50, 0x80323A50, 0x80323A60, [], a00_pat, a00_xpr, a00_ins],
+    [0x000DF570, 0x80324570, 0x80324610, [], a00_pat, a00_xpr, a00_ins],
+    [0x000DF910, 0x80324910, 0x80324C20, [], a00_pat, a00_xpr, a00_ins],
+    [0x000E0310, 0x80325310, 0x80325970, [], a00_pat, a00_xpr, a00_ins],
+    [0x000E0CD8, 0x80325CD8, 0x80325D20, [], a00_pat, a00_xpr, a00_ins],
+    [0x000E1260, 0x80326260, 0x80327490, [], a00_pat, a00_xpr, a00_ins],
+    [0x000E4450, 0x80329450, 0x80329750, [], a00_pat, a00_xpr, a00_ins],
+    [0x000E4790, 0x80329790, 0x8032A860, [], a00_pat, a00_xpr, a00_ins],
+    [0x000E6060, 0x8032B060, 0x8032B1F0, [], a00_pat, a00_xpr, a00_ins],
     [0x000F5580, 0x80378800, 0x80385F90, [], {}, {}, {}],
     [0x0021F4C0, 0x8016F000, 0x801A7830, [], {}, {}, {}],
 ]

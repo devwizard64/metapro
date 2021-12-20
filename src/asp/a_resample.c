@@ -28,7 +28,7 @@ static void asp_a_resample(u32 w0, u32 w1)
     }
     else
     {
-        __WORDSWAP(dmemin, addr, 0x10);
+        wordswap(dmemin, addr, 0x10);
         pos = addr[5] & 0xFFFF;
     }
     count += 0x20;
@@ -46,6 +46,6 @@ static void asp_a_resample(u32 w0, u32 w1)
     while (count > 0);
     pos -= 0x10*pitch;
     dmemin += pos >> 16;
-    __WORDSWAP(addr, dmemin, 0x10);
+    wordswap(addr, dmemin, 0x10);
     addr[5] = pos;
 }

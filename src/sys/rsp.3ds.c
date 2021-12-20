@@ -4,7 +4,7 @@ static Handle gsp_start  = 0;
 static Handle asp_start  = 0;
 static Handle gsp_end    = 0;
 static Handle asp_end    = 0;
-static void  *gsp_ucode  = NULL;
+static PTR    gsp_ucode  = NULLPTR;
 static u32   *gsp_data   = NULL;
 static u32   *asp_data   = NULL;
 static u32    asp_size   = 0;
@@ -36,24 +36,6 @@ static void asp_main(unused void *arg)
     while (rsp_update);
 }
 
-static void rsp_gfxtask(void *ucode, void *data)
-{
-    gsp_ucode = ucode;
-    gsp_data  = data;
-    svcWaitSynchronization(gsp_end, U64_MAX);
-    svcClearEvent(gsp_end);
-    svcSignalEvent(gsp_start);
-}
-
-static void rsp_audtask(void *data, u32 size)
-{
-    asp_data = data;
-    asp_size = size;
-    svcWaitSynchronization(asp_end, U64_MAX);
-    svcClearEvent(asp_end);
-    svcSignalEvent(asp_start);
-}
-
 static void rsp_init(void)
 {
     svcCreateEvent(&gsp_start, RESET_ONESHOT);
@@ -81,4 +63,22 @@ static void rsp_exit(void)
         threadJoin(asp_thread, U64_MAX);
         svcCloseHandle(asp_start);
     }
+}
+
+void rsp_gfxtask(PTR ucode, void *data)
+{
+    gsp_ucode = ucode;
+    gsp_data  = data;
+    svcWaitSynchronization(gsp_end, U64_MAX);
+    svcClearEvent(gsp_end);
+    svcSignalEvent(gsp_start);
+}
+
+void rsp_audtask(void *data, u32 size)
+{
+    asp_data = data;
+    asp_size = size;
+    svcWaitSynchronization(asp_end, U64_MAX);
+    svcClearEvent(asp_end);
+    svcSignalEvent(asp_start);
 }

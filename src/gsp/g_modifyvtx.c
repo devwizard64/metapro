@@ -24,7 +24,7 @@ static void gsp_g_modifyvtx(u32 w0, u32 w1)
             }
             break;
         default:
-            edebug("modifyvtx %02X\n", offset);
+            wdebug("modifyvtx %02X\n", offset);
             break;
     }
 }

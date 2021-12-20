@@ -4,6 +4,9 @@
 #define false   0
 #define true    1
 
+#define MIN(a, b)               ((a) < (b) ? (a) : (b))
+#define MAX(a, b)               ((a) > (b) ? (a) : (b))
+
 #ifdef WIN32
 #define SEP     "\\"
 #else
@@ -27,6 +30,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <malloc.h>
+#include <setjmp.h>
 
 #include <math.h>
 

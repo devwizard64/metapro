@@ -104,6 +104,13 @@ static void gdp_combine_ac_env(u8 *col, unused struct vtxf *vf)
     col[3] = gdp_env[3];
 }
 
+#ifndef APP_UNSM
+static void gdp_combine_ac_shade_prim(u8 *col, unused struct vtxf *vf)
+{
+    col[3] = vf->shade[3] * gdp_prim[3] / 0x100;
+}
+#endif
+
 static void gdp_combine_ac_shade_env(u8 *col, unused struct vtxf *vf)
 {
     col[3] = vf->shade[3] * gdp_env[3] / 0x100;
@@ -212,6 +219,7 @@ static void gdp_set_cc(u32 w0, u32 w1)
             break;
     #ifndef APP_UNSM
         case CC1(0, 0, 0, PRIMITIVE):
+        case CC1(1, 0, PRIMITIVE, 0):
             gdp_combine_cc = gdp_combine_cc_prim;
             tx = GDP_TX_NULL;
             break;
@@ -238,11 +246,17 @@ static void gdp_set_cc(u32 w0, u32 w1)
             tx = GDP_TX_NULL;
             break;
     #ifndef APP_UNSM
+        case CC2(TEXEL0, 0, SHADE, 0, ENVIRONMENT, 0, COMBINED, 0):
+            gdp_combine_cc = gdp_combine_cc_shade_env;
+            tx = GDP_TX_MODULATE;
+            break;
+        case CC1(SHADE, 0, PRIMITIVE, 0):
         case CC1(PRIMITIVE, 0, SHADE, 0):
             gdp_combine_cc = gdp_combine_cc_shade_prim;
             tx = GDP_TX_NULL;
             break;
         case CC2(TEXEL0, 0, SHADE, 0, COMBINED, 0, PRIMITIVE, 0):
+        case CC2(TEXEL0, 0, SHADE, 0, PRIMITIVE, 0, COMBINED, 0):
             gdp_combine_cc = gdp_combine_cc_shade_prim;
             tx = GDP_TX_MODULATE;
             break;
@@ -298,11 +312,41 @@ static void gdp_set_cc(u32 w0, u32 w1)
             tx = GDP_TX_MODULATE;
             /* C = 1 */
             break;
+        case CC1(TEXEL1, TEXEL0, PRIMITIVE_ALPHA, TEXEL0): /*this is wrong*/
+        case CC2(
+            TEXEL0, PRIMITIVE, ENV_ALPHA, TEXEL0,
+            PRIMITIVE, ENVIRONMENT, COMBINED, ENVIRONMENT
+        ): /*this is wrong*/
+        case CC2(
+            TEXEL1, PRIMITIVE, ENV_ALPHA, TEXEL0,
+            PRIMITIVE, ENVIRONMENT, COMBINED, ENVIRONMENT
+        ): /*this is wrong*/
+        case CC2(
+            TEXEL1, PRIMITIVE, PRIM_LOD_FRAC, TEXEL0,
+            PRIMITIVE, ENVIRONMENT, COMBINED, ENVIRONMENT
+        ): /*this is wrong*/
+            gdp_combine_cc = gdp_combine_cc_1;
+            tx = GDP_TX_MODULATE;
+            break;
+        case CC2(
+            TEXEL1, TEXEL0, ENV_ALPHA, TEXEL0,
+            COMBINED, 0, SHADE, 0
+        ): /*this is wrong*/
+            gdp_combine_cc = gdp_combine_cc_shade;
+            tx = GDP_TX_MODULATE;
+            break;
+        case CC2(
+            TEXEL1, TEXEL0, ENV_ALPHA, TEXEL0,
+            PRIMITIVE, ENVIRONMENT, COMBINED, ENVIRONMENT
+        ): /*this is wrong*/
+            gdp_combine_cc = gdp_combine_cc_prim;
+            tx = GDP_TX_MODULATE;
+            break;
     #endif
         default:
-            gdp_combine_cc = gdp_combine_cc_0;
+            gdp_combine_cc = gdp_combine_cc_1;
             tx = GDP_TX_NULL;
-            wdebug("unknown cc %08" FMT_X "%08" FMT_X "\n", w0, w1);
+            /* wdebug("unknown cc %08" FMT_X "%08" FMT_X "\n", w0, w1); */
             break;
     }
     switch (ac)
@@ -312,6 +356,7 @@ static void gdp_set_cc(u32 w0, u32 w1)
     #endif
         case AC1(0, 0, 0, TEXEL0):
     #ifndef APP_UNSM
+        case AC2(0, 0, 0, 0, 0, 0, 0, 1):
         case AC2(0, 0, 0, COMBINED, 0, 0, 0, 1):
         case AC1(TEXEL0, 0, 0, 1):
     #endif
@@ -331,10 +376,20 @@ static void gdp_set_cc(u32 w0, u32 w1)
         case AC1(TEXEL0, 0, PRIMITIVE, 0):
     #ifndef APP_UNSM
         case AC1(PRIMITIVE, 0, TEXEL0, 0):
+        case AC2(0, 0, 0, TEXEL0, COMBINED, 0, PRIMITIVE, 0):
     #endif
         case AC1(PRIMITIVE, SHADE, TEXEL0, SHADE): /*this is wrong*/
     #ifndef APP_UNSM
         case AC1(PRIMITIVE, ENVIRONMENT, TEXEL0, ENVIRONMENT): /*this is wrong*/
+        case AC2(0, 0, 0, 1, COMBINED, 0, PRIMITIVE, 0):
+        case AC2(
+            TEXEL1, 1, PRIM_LOD_FRAC, TEXEL0,
+            COMBINED, 0, PRIMITIVE, 0
+        ): /*this is wrong*/
+        case AC2(
+            TEXEL0, 0, PRIMITIVE, 0,
+            TEXEL1, 0, PRIM_LOD_FRAC, COMBINED
+        ): /*this is wrong*/
     #endif
             gdp_combine_ac = gdp_combine_ac_prim;
             break;
@@ -343,12 +398,29 @@ static void gdp_set_cc(u32 w0, u32 w1)
         case AC1(ENVIRONMENT, 0, TEXEL0, 0):
             gdp_combine_ac = gdp_combine_ac_env;
             break;
+    #ifndef APP_UNSM
+        case AC2(TEXEL0, 0, SHADE, 0, COMBINED, 0, PRIMITIVE, 0):
+            gdp_combine_ac = gdp_combine_ac_shade_prim;
+            break;
+    #endif
         case AC1(SHADE, 0, ENVIRONMENT, 0):
             gdp_combine_ac = gdp_combine_ac_shade_env;
             break;
+    #ifndef APP_UNSM
+        case AC1(TEXEL1, TEXEL0, PRIMITIVE, TEXEL0): /*this is wrong*/
+        case AC1(TEXEL1, TEXEL0, PRIM_LOD_FRAC, TEXEL0): /*this is wrong*/
+            gdp_combine_ac = gdp_combine_ac_1;
+            break;
+        case AC2(
+            TEXEL1, TEXEL0, ENVIRONMENT, TEXEL0,
+            COMBINED, 0, PRIMITIVE, 0
+        ): /*this is wrong*/
+            gdp_combine_ac = gdp_combine_ac_prim;
+            break;
+    #endif
         default:
-            gdp_combine_ac = gdp_combine_ac_0;
-            wdebug("unknown ac %08" FMT_X "%08" FMT_X "\n", w0, w1);
+            gdp_combine_ac = gdp_combine_ac_1;
+            /* wdebug("unknown ac %08" FMT_X "%08" FMT_X "\n", w0, w1); */
             break;
     }
     gdp_set_tx(tx);

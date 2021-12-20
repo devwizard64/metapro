@@ -1,5 +1,4 @@
-def patch(data):
-    return data
+patch = None
 
 entry = 0x80000400
 bss   = [0x800F6910, 0x000A0FC0]
@@ -53,18 +52,12 @@ reg   = (
 )
 
 header = (
-    # "#define LIB_DYNRES\n"
+    "#define EEPROM_TYPE             1\n"
+    "#define AUDIO_FREQ              26800\n"
     "#define GSP_F3D\n"
     "#define GSP_F3DEX\n"
-    # "#define GSP_FOG\n"
     "#define ASP_MAIN\n"
     "#define ASP_MAIN1\n"
-    # "#define ASP_MAIN2\n"
-    "#ifdef GEKKO\n"
-    "#define APP_BORDER 8\n"
-    "#else\n"
-    "#define APP_BORDER 0\n"
-    "#endif\n"
     "\n"
     "#define __osExceptionPreamble   0x800D11B0\n"
 )
@@ -91,52 +84,36 @@ lib = {
     0x800CD890: "osWritebackDCacheAll",
     0x800CD8C0: "osSendMesg",
     0x800CDA10: "osViSwapBuffer",
-    0x800CDA60: "bzero",
     0x800CDB00: "osInvalICache",
     0x800CDB80: "osInvalDCache",
     0x800CDC30: "osPiStartDma",
     0x800CDD40: "osSpTaskYield",
     0x800CDD60: "osSpTaskYielded",
     0x800CDDE0: "osGetTime",
-    0x800CDE9C: "__ull_rem", #
+    0x800CDE9C: "__ull_rem",
     0x800CDED8: "__ull_div",
-    0x800CDF7C: "__ll_div", #
+    0x800CDF7C: "__ll_div",
     0x800CDFD8: "__ll_mul",
-    0x800CE130: "__osGetCurrFaultedThread", #
-    0x800CE140: "sqrtf",
+    0x800CE130: "__osGetCurrFaultedThread",
     0x800CE2A4: "guOrtho",
     0x800CE310: "osSetTime",
     0x800CE340: "osEepromProbe",
-    0x800CE3B0: "osPfsIsPlug", #
-    0x800CE720: "osPfsInitPak", #
-    0x800CE8E0: "osPfsNumFiles", #
-    0x800CEA30: "osPfsFileState", #
-    0x800CED20: "osPfsFreeBlocks", #
-    0x800CF004: "guRotate",
-    0x800CF0B4: "guScale",
+    0x800CE3B0: "osPfsIsPlug",
+    0x800CE720: "osPfsInitPak",
+    0x800CE8E0: "osPfsNumFiles",
+    0x800CEA30: "osPfsFileState",
+    0x800CED20: "osPfsFreeBlocks",
     0x800CF330: "guPerspective",
-    0x800CF390: "guLookAtF", #
-    0x800CF648: "guLookAt", #
-    0x800CF708: "guTranslate",
-    0x800CF774: "osSyncPrintf", #
-    0x800CF820: "guMtxCatL", #
-    0x800CF880: "osPfsFindFile", #
-    0x800CFA40: "osPfsDeleteFile", #
+    0x800CF880: "osPfsFindFile",
+    0x800CFA40: "osPfsDeleteFile",
     0x800D0050: "osEepromLongWrite",
     0x800D0190: "osEepromLongRead",
-    0x800D03CC: "osPfsReadWriteFile", #
-    0x800D07D0: "osPfsAllocateFile", #
+    0x800D03CC: "osPfsReadWriteFile",
+    0x800D07D0: "osPfsAllocateFile",
     0x800D0F80: "osAiSetFrequency",
     0x800D10E0: "osAiGetLength",
     0x800D10F0: "osAiSetNextBuffer",
     0x800D11A0: "osGetCount",
-    0x800D1C00: "osWritebackDCache",
-    0x800D3520: "bcopy",
-    0x800D3830: "osVirtualToPhysical",
-    0x800D39C0: "osSetTimer", #
-    0x800D60F0: "sinf",
-    0x800D62B0: "cosf",
-    0x800D7180: "guMtxCatF",
 }
 
 a00_pat = {
@@ -145,9 +122,18 @@ a00_pat = {
 }
 
 segment = [
-    # 0x800D8F70
     [0x00001050, 0x80000450, 0x800CBF70, [], a00_pat, {}, {}],
+    [0x000CE660, 0x800CDA60, 0x800CDB00, [], {}, {}, {}],
+    [0x000CED40, 0x800CE140, 0x800CE150, [], {}, {}, {}],
+    [0x000CFA70, 0x800CEE70, 0x800CF100, [], {}, {}, {}],
+    [0x000CFF90, 0x800CF390, 0x800CF880, [], {}, {}, {}],
+    [0x000D4120, 0x800D3520, 0x800D3830, [], {}, {}, {}],
+    [0x000D49A0, 0x800D3DA0, 0x800D4010, [], {}, {}, {}],
+    [0x000D6C60, 0x800D6060, 0x800D72F0, [], {}, {}, {}],
+    [0x000D8BE0, 0x800D7FE0, 0x800D8F70, [], {}, {}, {}],
+    # a01
     [0x000F7510, 0x8028DF00, 0x802B8790, [], {}, {}, {}],
+    # a02
     [0x00123640, 0x80280000, 0x80284E40, [], {}, {}, {}],
 ]
 

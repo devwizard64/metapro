@@ -1,6 +1,8 @@
 #include "types.h"
 #include "cpu.h"
 
+#ifndef __LLE__
+
 #include "abi.h"
 
 #define asp_u8(addr)  ((u8  *)&asp_dmem[(addr) ^ (AX_H >> 1)])
@@ -69,7 +71,7 @@ typedef void ASP(u32 w0, u32 w1);
 
 static u8   asp_dmem[0x1000];
 #ifdef ASP_MAIN
-static u8  *asp_addr_table[0x10];
+static u8  *asp_addr_table[16];
 static u16  asp_dmemin;
 static u16  asp_dmemout;
 static u16  asp_count;
@@ -109,8 +111,7 @@ static void asp_a_spnoop(unused u32 w0, unused u32 w1)
 #ifdef ASP_MAIN2
 static void asp_a_addmixer(unused u32 w0, unused u32 w1)
 {
-    puts("A_ADDMIXER");
-    exit(EXIT_FAILURE);
+    edebug("A_ADDMIXER\n");
 }
 #else
 #include "asp/a_envmixer.c" /* not verified */
@@ -123,14 +124,12 @@ static void asp_a_addmixer(unused u32 w0, unused u32 w1)
 #ifdef ASP_NAUDIO
 static void asp_a_mp3(unused u32 w0, unused u32 w1)
 {
-    puts("A_MP3");
-    exit(EXIT_FAILURE);
+    edebug("A_MP3\n");
 }
 
 static void asp_a_mp3addy(unused u32 w0, unused u32 w1)
 {
-    puts("A_MP3ADDY");
-    exit(EXIT_FAILURE);
+    edebug("A_MP3ADDY\n");
 }
 #else
 #include "asp/a_segment.c"
@@ -140,8 +139,7 @@ static void asp_a_mp3addy(unused u32 w0, unused u32 w1)
 #ifdef ASP_MAIN2
 static void asp_a_duplicate(unused u32 w0, unused u32 w1)
 {
-    puts("A_DUPLICATE");
-    exit(EXIT_FAILURE);
+    edebug("A_DUPLICATE\n");
 }
 #else
 #include "asp/a_setvol.c"
@@ -155,8 +153,7 @@ static void asp_a_duplicate(unused u32 w0, unused u32 w1)
 #ifdef ASP_MAIN2
 static void asp_a_hilogain(unused u32 w0, unused u32 w1)
 {
-    puts("A_HILOGAIN");
-    exit(EXIT_FAILURE);
+    edebug("A_HILOGAIN\n");
 }
 #else
 static void asp_a_polef(unused u32 w0, unused u32 w1)
@@ -169,14 +166,12 @@ static void asp_a_polef(unused u32 w0, unused u32 w1)
 #ifdef ASP_MAIN2
 static void asp_a_interl(unused u32 w0, unused u32 w1)
 {
-    puts("A_INTERL");
-    exit(EXIT_FAILURE);
+    edebug("A_INTERL\n");
 }
 
 static void asp_a_envsetup1(unused u32 w0, unused u32 w1)
 {
-    puts("A_ENVSETUP1");
-    exit(EXIT_FAILURE);
+    edebug("A_ENVSETUP1\n");
 }
 
 #include "asp/a_envmixer.c"
@@ -184,8 +179,7 @@ static void asp_a_envsetup1(unused u32 w0, unused u32 w1)
 
 static void asp_a_envsetup2(unused u32 w0, unused u32 w1)
 {
-    puts("A_ENVSETUP2");
-    exit(EXIT_FAILURE);
+    edebug("A_ENVSETUP2\n");
 }
 #endif
 
@@ -248,9 +242,6 @@ static ASP *const asp_table[] =
 
 void asp_update(u32 *al, uint size)
 {
-#if !(defined(APP_UNSM) /* && defined(APP_E0) */) || defined(__NDS__)
-    return;
-#endif
 #ifdef ASP_NAUDIO
     while (size > 0)
 #else
@@ -266,7 +257,7 @@ void asp_update(u32 *al, uint size)
         }
         else
         {
-            edebug("invalid Acmd {{0x%08" FMT_X ", 0x%08" FMT_X "}}\n", w0, w1);
+            wdebug("invalid Acmd {{0x%08" FMT_X ", 0x%08" FMT_X "}}\n", w0, w1);
         }
         size -= 8;
     }
@@ -274,3 +265,5 @@ void asp_update(u32 *al, uint size)
     while (size > 0);
 #endif
 }
+
+#endif

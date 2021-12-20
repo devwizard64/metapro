@@ -23,7 +23,8 @@ static void gsp_g_moveword(u32 w0, u32 w1)
             gsp_light_no = 1 + w1/0x18;
         #endif
             break;
-        /* G_MW_CLIP */
+        case G_MW_CLIP:
+            break;
         case G_MW_SEGMENT:
             gsp_addr_table[offset/4] = &cpu_dram[w1 & 0x1FFFFFFF];
             break;
@@ -39,12 +40,11 @@ static void gsp_g_moveword(u32 w0, u32 w1)
             break;
     #endif
     #ifndef GSP_F3D_20D
-        /* G_MW_PERSPNORM */
+        case G_MW_PERSPNORM:
+            break;
     #endif
         default:
-        #if 0
             wdebug("moveword of %02X:%04X\n", index, offset);
-        #endif
             break;
     }
 }

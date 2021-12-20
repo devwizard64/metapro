@@ -1,3 +1,9 @@
+#include "types.h"
+#include "cpu.h"
+#include "sys.h"
+
+#include "ultra64.h"
+
 void lib_osContGetQuery(void)
 {
     os_cont_status(a0, 0, CONT_TYPE_NORMAL, 0, 0);

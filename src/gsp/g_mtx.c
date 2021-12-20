@@ -10,12 +10,14 @@ static void gsp_g_mtx(u32 w0, u32 w1)
     uint flag;
     gsp_flush_rect();
 #ifdef APP_UNSM
+#ifdef APP_E0
     if (w1 == 0x02017310)
+#endif
     {
     #if 1
-        mtxf_ortho(mf, video_l, video_r, 0, 240, 0, 2);
+        mtx_ortho(mf, video_l, video_r, 0, 240, 0, 2);
     #else
-        mtxf_ortho_bg(mf, 0, 320, 0, 240, 0, 2);
+        mtx_ortho_bg(mf, 0, 320, 0, 240, 0, 2);
     #endif
     }
     else
@@ -39,7 +41,7 @@ static void gsp_g_mtx(u32 w0, u32 w1)
         {
             f32 src[4][4];
             memcpy(src, MP, sizeof(src));
-            mtxf_cat(MP, mf, src);
+            mtx_cat(MP, mf, src);
         }
         gsp_flush_mp();
     }
@@ -47,21 +49,15 @@ static void gsp_g_mtx(u32 w0, u32 w1)
     {
         if (flag & G_MTX_LOAD)
         {
-            if (PUSH)
-            {
-                gsp_mtxf_modelview++;
-            }
+            if (PUSH) gsp_mtx_modelview++;
             memcpy(MM, mf, sizeof(mf));
         }
         else
         {
             f32 src[4][4];
             memcpy(src, MM, sizeof(src));
-            if (PUSH)
-            {
-                gsp_mtxf_modelview++;
-            }
-            mtxf_cat(MM, mf, src);
+            if (PUSH) gsp_mtx_modelview++;
+            mtx_cat(MM, mf, src);
         }
         gsp_flush_mm();
     #ifdef APP_UNK4
@@ -70,7 +66,7 @@ static void gsp_g_mtx(u32 w0, u32 w1)
         gsp_new_light = true;
     }
 #if defined(GSP_SWFOG) || defined(__NATIVE__)
-    mtxf_cat(gsp_mtxf_mvp, MM, MP);
+    mtx_cat(gsp_mtx_mvp, MM, MP);
 #endif
 }
 #undef PUSH

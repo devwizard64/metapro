@@ -1,19 +1,50 @@
-/* header says it returns a s32, but the asm doesn't set v0 */
+#include "types.h"
+#include "cpu.h"
+#include "rsp.h"
+#include "sys.h"
+
+#include "ultra64.h"
+
 void lib_osSpTaskStartGo(void)
 {
-    PTR   task  = a0;
-    u32   type  = __read_u32(task+0x00);
-    void *ucode = __tlb(__read_s32(task+0x10));
-    void *data  = __tlb(__read_s32(task+0x30));
-    u32   size  = __read_u32(task+0x34);
-    if (type == M_GFXTASK)
+    struct os_task task;
+    memcpy(&task, __dram(a0), sizeof(task));
+    task.ucode_boot         = __tlb(task.ucode_boot);
+    task.ucode              = __tlb(task.ucode);
+    task.ucode_data         = __tlb(task.ucode_data);
+    task.dram_stack         = __tlb(task.dram_stack);
+    task.output_buff        = __tlb(task.output_buff);
+    task.output_buff_size   = __tlb(task.output_buff_size);
+    task.data_ptr           = __tlb(task.data_ptr);
+    task.yield_data_ptr     = __tlb(task.yield_data_ptr);
+    switch (task.type)
     {
-        rsp_gfxtask(ucode, data);
-        os_event(&os_event_table[OS_EVENT_DP]);
-    }
-    else
-    {
-        rsp_audtask(data, size);
+        case M_GFXTASK:
+            rsp_gfxtask(task.ucode, &cpu_dram[task.data_ptr]);
+            os_event(&os_event_table[OS_EVENT_DP]);
+            break;
+    #ifdef __LLE__
+        default:
+            rsp_main(&task);
+            break;
+    #else
+        case M_AUDTASK:
+        #ifndef __NDS__
+        #if defined(APP_UNSM) /* && defined(APP_E0) */
+            rsp_audtask(&cpu_dram[task.data_ptr], task.data_size);
+        #endif
+        #endif
+            break;
+    #ifdef APP_UCZL
+        case M_NJPEGTASK:
+            if (task->ucode == 0x80006210) break;
+            /* 0x800E6BC0 = njpgdspMain */
+            break;
+    #endif
+        default:
+            wdebug("unknown task %d\n", task.type);
+            break;
+    #endif
     }
     os_event(&os_event_table[OS_EVENT_SP]);
 }

@@ -1,5 +1,4 @@
-def patch(data):
-    return data
+patch = None
 
 entry = 0x80000400
 bss   = [0x800AF860, 0x00010840]
@@ -19,6 +18,8 @@ reg   = (
 )
 
 header = (
+    "#define EEPROM_TYPE             1\n"
+    "#define AUDIO_FREQ              32000\n"
     "#define GSP_F3DEX\n"
     "#define GSP_F3DEX2\n"
     "#define ASP_MAIN\n"

@@ -1,6 +1,6 @@
 #define i (w*(ty+iy)+(tx+ix))
 
-static void *gdp_texture_rgba16(GDP_FMT *fmt, const u8 *src, uint w, uint h)
+static void *gdp_texture_rgba16(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -8,7 +8,7 @@ static void *gdp_texture_rgba16(GDP_FMT *fmt, const u8 *src, uint w, uint h)
     uint tx;
     uint iy;
     uint ix;
-    *fmt = GX_TF_RGBA8;
+    arg->fmt = GX_TF_RGBA8;
     buf = dst = memalign(0x20, 4*w*h);
     for (ty = 0; ty < h; ty += 4)
     {
@@ -34,7 +34,7 @@ static void *gdp_texture_rgba16(GDP_FMT *fmt, const u8 *src, uint w, uint h)
 }
 
 #ifndef APP_UNSM
-static void *gdp_texture_rgba32(GDP_FMT *fmt, const u8 *src, uint w, uint h)
+static void *gdp_texture_rgba32(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -42,7 +42,7 @@ static void *gdp_texture_rgba32(GDP_FMT *fmt, const u8 *src, uint w, uint h)
     uint tx;
     uint iy;
     uint ix;
-    *fmt = GX_TF_RGBA8;
+    arg->fmt = GX_TF_RGBA8;
     buf = dst = memalign(0x20, 4*w*h);
     for (ty = 0; ty < h; ty += 4)
     {
@@ -71,7 +71,7 @@ static void *gdp_texture_rgba32(GDP_FMT *fmt, const u8 *src, uint w, uint h)
 
 #define gdp_texture_yuv16  NULL
 
-static void *gdp_texture_ia4(GDP_FMT *fmt, const u8 *src, uint w, uint h)
+static void *gdp_texture_ia4(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -79,7 +79,7 @@ static void *gdp_texture_ia4(GDP_FMT *fmt, const u8 *src, uint w, uint h)
     uint tx;
     uint iy;
     uint ix;
-    *fmt = GX_TF_IA4;
+    arg->fmt = GX_TF_IA4;
     buf = dst = memalign(0x20, w*h);
     for (ty = 0; ty < h; ty += 4)
     {
@@ -100,7 +100,7 @@ static void *gdp_texture_ia4(GDP_FMT *fmt, const u8 *src, uint w, uint h)
     return buf;
 }
 
-static void *gdp_texture_ia8(GDP_FMT *fmt, const u8 *src, uint w, uint h)
+static void *gdp_texture_ia8(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -108,7 +108,7 @@ static void *gdp_texture_ia8(GDP_FMT *fmt, const u8 *src, uint w, uint h)
     uint tx;
     uint iy;
     uint ix;
-    *fmt = GX_TF_IA4;
+    arg->fmt = GX_TF_IA4;
     buf = dst = memalign(0x20, w*h);
     for (ty = 0; ty < h; ty += 4)
     {
@@ -129,7 +129,7 @@ static void *gdp_texture_ia8(GDP_FMT *fmt, const u8 *src, uint w, uint h)
 }
 
 #ifdef APP_UNSM
-static void *gdp_texture_ia8_face(GDP_FMT *fmt, const u8 *src, uint w, uint h)
+static void *gdp_texture_ia8_face(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -137,7 +137,7 @@ static void *gdp_texture_ia8_face(GDP_FMT *fmt, const u8 *src, uint w, uint h)
     uint tx;
     uint iy;
     uint ix;
-    *fmt = GX_TF_IA4;
+    arg->fmt = GX_TF_IA4;
     buf = dst = memalign(0x20, w*h);
     for (ty = 0; ty < h; ty += 4)
     {
@@ -158,7 +158,7 @@ static void *gdp_texture_ia8_face(GDP_FMT *fmt, const u8 *src, uint w, uint h)
 }
 #endif
 
-static void *gdp_texture_ia16(GDP_FMT *fmt, const u8 *src, uint w, uint h)
+static void *gdp_texture_ia16(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -166,7 +166,7 @@ static void *gdp_texture_ia16(GDP_FMT *fmt, const u8 *src, uint w, uint h)
     uint tx;
     uint iy;
     uint ix;
-    *fmt = GX_TF_IA8;
+    arg->fmt = GX_TF_IA8;
     buf = dst = memalign(0x20, 2*w*h);
     for (ty = 0; ty < h; ty += 4)
     {
@@ -188,7 +188,7 @@ static void *gdp_texture_ia16(GDP_FMT *fmt, const u8 *src, uint w, uint h)
 }
 
 #ifndef APP_UNSM
-static void *gdp_texture_i4(GDP_FMT *fmt, const u8 *src, uint w, uint h)
+static void *gdp_texture_i4(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -196,7 +196,7 @@ static void *gdp_texture_i4(GDP_FMT *fmt, const u8 *src, uint w, uint h)
     uint tx;
     uint iy;
     uint ix;
-    *fmt = GX_TF_IA4;
+    arg->fmt = GX_TF_IA4;
     buf = dst = memalign(0x20, w*h);
     for (ty = 0; ty < h; ty += 4)
     {
@@ -217,7 +217,7 @@ static void *gdp_texture_i4(GDP_FMT *fmt, const u8 *src, uint w, uint h)
     return buf;
 }
 
-static void *gdp_texture_i8(GDP_FMT *fmt, const u8 *src, uint w, uint h)
+static void *gdp_texture_i8(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -225,7 +225,7 @@ static void *gdp_texture_i8(GDP_FMT *fmt, const u8 *src, uint w, uint h)
     uint tx;
     uint iy;
     uint ix;
-    *fmt = GX_TF_IA8;
+    arg->fmt = GX_TF_IA8;
     buf = dst = memalign(0x20, 2*w*h);
     for (ty = 0; ty < h; ty += 4)
     {

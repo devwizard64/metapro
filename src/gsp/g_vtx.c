@@ -59,8 +59,14 @@ static void gsp_g_vtx(u32 w0, u32 w1)
         {
             if (gsp_lookat)
             {
+            #ifdef GSP_F3D
             #define LOOKATY gsp_light_buf[0]
             #define LOOKATX gsp_light_buf[1]
+            #endif
+            #ifdef GSP_F3DEX2
+            #define LOOKATX gsp_light_buf[0]
+            #define LOOKATY gsp_light_buf[1]
+            #endif
                 s = LOOKATX.x*v->r + LOOKATX.y*v->g + LOOKATX.z*v->b;
                 t = LOOKATY.x*v->r + LOOKATY.y*v->g + LOOKATY.z*v->b;
             #undef LOOKATY
@@ -140,8 +146,8 @@ static void gsp_g_vtx(u32 w0, u32 w1)
             float x = v->x;
             float y = v->y;
             float z = v->z;
-            float nz = MDOT4(gsp_mtxf_mvp, 2);
-            float nw = MDOT4(gsp_mtxf_mvp, 3);
+            float nz = MDOT4(gsp_mtx_mvp, 2);
+            float nw = MDOT4(gsp_mtx_mvp, 3);
             int   a;
             z = nz/nw;
             if (z > 1) z = -1;

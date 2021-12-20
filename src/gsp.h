@@ -8,7 +8,8 @@
 extern void gsp_init(void);
 extern void gsp_exit(void);
 extern void gsp_cache(void);
-extern void gsp_update(void *ucode, u32 *dl);
+extern void gsp_update(PTR ucode, u32 *dl);
+extern void gsp_image(void *img);
 
 #endif /* __ASSEMBLER__ */
 
