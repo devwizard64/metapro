@@ -1,9 +1,9 @@
-static struct os_timer *os_timer_list = NULL;
+static OSTimer *os_timer_list = NULL;
 
 #if 0
 static void timer_print(void)
 {
-    struct os_timer *list = os_timer_list;
+    OSTimer *list = os_timer_list;
     while (list != NULL)
     {
         pdebug(
@@ -18,10 +18,10 @@ static void timer_print(void)
 }
 #endif
 
-static void timer_link(struct os_timer *timer)
+static void timer_link(OSTimer *timer)
 {
-    struct os_timer **list = &os_timer_list;
-    struct os_timer  *prev = NULL;
+    OSTimer **list = &os_timer_list;
+    OSTimer  *prev = NULL;
     while (*list != NULL)
     {
         if (*list == timer) return;
@@ -33,34 +33,23 @@ static void timer_link(struct os_timer *timer)
     timer->next = NULL;
 }
 
-static void timer_unlink(struct os_timer *timer)
+static void timer_unlink(OSTimer *timer)
 {
-    if (timer->prev != NULL)
-    {
-        timer->prev->next = timer->next;
-    }
-    else
-    {
-        os_timer_list = timer->next;
-    }
-    if (timer->next != NULL)
-    {
-        timer->next->prev = timer->prev;
-    }
+    if (timer->prev != NULL) timer->prev->next = timer->next;
+    else                     os_timer_list     = timer->next;
+    if (timer->next != NULL) timer->next->prev = timer->prev;
 }
 
-struct os_timer *timer_find(PTR addr)
+OSTimer *timer_find(PTR addr)
 {
-    struct os_timer *timer = os_timer_list;
+    OSTimer *timer = os_timer_list;
     while (timer != NULL && timer->addr != addr) timer = timer->next;
     return timer;
 }
 
-void timer_init(
-    PTR addr, u64 countdown, u64 interval, struct os_mesg_queue *mq, PTR msg
-)
+void timer_init(PTR addr, u64 countdown, u64 interval, OSMesgQueue *mq, PTR msg)
 {
-    struct os_timer *timer = timer_find(addr);
+    OSTimer *timer = timer_find(addr);
     if (timer == NULL)
     {
         timer = malloc(sizeof(*timer));
@@ -73,7 +62,7 @@ void timer_init(
     timer->event.msg = msg;
 }
 
-void timer_destroy(struct os_timer *timer)
+void timer_destroy(OSTimer *timer)
 {
     if (timer != NULL)
     {
@@ -84,10 +73,10 @@ void timer_destroy(struct os_timer *timer)
 
 static void timer_update(void)
 {
-    struct os_timer *timer = os_timer_list;
+    OSTimer *timer = os_timer_list;
     while (timer != NULL)
     {
-        struct os_timer *next = timer->next;
+        OSTimer *next = timer->next;
         if (timer->countdown >= 781250)
         {
             timer->countdown -= 781250;

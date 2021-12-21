@@ -14,12 +14,12 @@ SRC_OBJ := \
 	$(BUILD)/src/main.o \
 	$(BUILD)/src/demo.o \
 	$(BUILD)/src/tm.o   \
+	$(BUILD)/src/sys.o  \
+	$(BUILD)/src/mtx.o  \
 	$(BUILD)/src/cpu.o  \
 	$(BUILD)/src/rsp.o  \
-	$(BUILD)/src/sys.o  \
 	$(BUILD)/src/gsp.o  \
-	$(BUILD)/src/asp.o  \
-	$(BUILD)/src/mtx.o
+	$(BUILD)/src/asp.o
 
 LIB_OBJ := \
 	$(BUILD)/src/lib/osSpTaskStartGo.o      \

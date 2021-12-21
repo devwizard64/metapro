@@ -1,24 +1,20 @@
 #include "types.h"
-#include "app.h"
 #include "cpu.h"
 #include "sys.h"
 
-#include "ultra64.h"
-
 void lib_osContInit(void)
 {
-#ifdef APP_UNSM
-    *__u8(a1) = 0x03;
-    os_cont_status(a2, 0, CONT_TYPE_NORMAL, 0, 0);
-    os_cont_status(a2, 1, CONT_TYPE_NORMAL, 0, 0);
-    os_cont_status(a2, 2, 0, 0, CONT_NO_RESPONSE_ERROR);
-    os_cont_status(a2, 3, 0, 0, CONT_NO_RESPONSE_ERROR);
-#else
-    *__u8(a1) = 0x01;
-    os_cont_status(a2, 0, CONT_TYPE_NORMAL, 0, 0);
-    os_cont_status(a2, 1, 0, 0, CONT_NO_RESPONSE_ERROR);
-    os_cont_status(a2, 2, 0, 0, CONT_NO_RESPONSE_ERROR);
-    os_cont_status(a2, 3, 0, 0, CONT_NO_RESPONSE_ERROR);
-#endif
+    PTR status = a2;
+    uint bitpattern = 0;
+    uint i;
+    for (i = 0; i < MAXCONTROLLERS; i++)
+    {
+        if (os_cont_status[i].errno_ == 0) bitpattern |= 1 << i;
+        *__u16(status+0) = os_cont_status[i].type;
+        *__u8 (status+2) = os_cont_status[i].status;
+        *__u8 (status+3) = os_cont_status[i].errno_;
+        status += 4;
+    }
+    *__u8(a1) = bitpattern;
     v0 = 0;
 }

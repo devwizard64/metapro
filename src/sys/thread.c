@@ -5,14 +5,14 @@
 #define THREAD_STACK_END        0
 #endif
 
-static struct os_thread *os_thread_list  = NULL;
-static struct os_thread *os_thread_queue = NULL;
-struct os_thread *os_thread = NULL;
+static OSThread *os_thread_list  = NULL;
+static OSThread *os_thread_queue = NULL;
+OSThread *os_thread = NULL;
 
 #if 0
 static void thread_print(void)
 {
-    struct os_thread *queue = os_thread_queue;
+    OSThread *queue = os_thread_queue;
     while (queue != NULL)
     {
         pdebug(
@@ -27,10 +27,10 @@ static void thread_print(void)
 }
 #endif
 
-static void thread_llink(struct os_thread *thread)
+static void thread_llink(OSThread *thread)
 {
-    struct os_thread **list = &os_thread_list;
-    struct os_thread  *prev = NULL;
+    OSThread **list = &os_thread_list;
+    OSThread  *prev = NULL;
     while (*list != NULL)
     {
         if (*list == thread) return;
@@ -42,10 +42,10 @@ static void thread_llink(struct os_thread *thread)
     thread->lnext = NULL;
 }
 
-static void thread_qlink(struct os_thread *thread)
+static void thread_qlink(OSThread *thread)
 {
-    struct os_thread **queue = &os_thread_queue;
-    struct os_thread  *prev  = NULL;
+    OSThread **queue = &os_thread_queue;
+    OSThread  *prev  = NULL;
     while (*queue != NULL)
     {
         if (*queue == thread) return;
@@ -58,60 +58,36 @@ static void thread_qlink(struct os_thread *thread)
     thread->qlink = true;
 }
 
-static void thread_lunlink(struct os_thread *thread)
+static void thread_lunlink(OSThread *thread)
 {
-    if (thread->lprev != NULL)
-    {
-        thread->lprev->lnext = thread->lnext;
-    }
-    else
-    {
-        os_thread_list = thread->lnext;
-    }
-    if (thread->lnext != NULL)
-    {
-        thread->lnext->lprev = thread->lprev;
-    }
+    if (thread->lprev != NULL) thread->lprev->lnext = thread->lnext;
+    else                       os_thread_list       = thread->lnext;
+    if (thread->lnext != NULL) thread->lnext->lprev = thread->lprev;
 }
 
-static void thread_qunlink(struct os_thread *thread)
+static void thread_qunlink(OSThread *thread)
 {
     if (thread->qlink)
     {
         thread->qlink = false;
-        if (thread->qprev != NULL)
-        {
-            thread->qprev->qnext = thread->qnext;
-        }
-        else
-        {
-            os_thread_queue = thread->qnext;
-        }
-        if (thread->qnext != NULL)
-        {
-            thread->qnext->qprev = thread->qprev;
-        }
+        if (thread->qprev != NULL) thread->qprev->qnext = thread->qnext;
+        else                       os_thread_queue      = thread->qnext;
+        if (thread->qnext != NULL) thread->qnext->qprev = thread->qprev;
     }
 }
 
-struct os_thread *thread_find(PTR addr)
+OSThread *thread_find(PTR addr)
 {
-    struct os_thread *thread;
-    if (addr == NULLPTR)
-    {
-        thread = os_thread;
-    }
-    else
-    {
-        thread = os_thread_list;
-        while (thread != NULL && thread->addr != addr) thread = thread->lnext;
-    }
+    OSThread *thread;
+    if (addr == NULLPTR) return os_thread;
+    thread = os_thread_list;
+    while (thread != NULL && thread->addr != addr) thread = thread->lnext;
     return thread;
 }
 
 void thread_init(PTR addr, s32 id, PTR entry, s32 arg, s32 s, u32 pri)
 {
-    struct os_thread *thread = thread_find(addr);
+    OSThread *thread = thread_find(addr);
     if (thread == NULL)
     {
         thread = malloc(sizeof(*thread));
@@ -137,7 +113,7 @@ void thread_init(PTR addr, s32 id, PTR entry, s32 arg, s32 s, u32 pri)
     thread->pri     = pri;
 }
 
-void thread_destroy(struct os_thread *thread)
+void thread_destroy(OSThread *thread)
 {
     if (thread != NULL)
     {
@@ -155,13 +131,13 @@ void thread_destroy(struct os_thread *thread)
     }
 }
 
-void thread_start(struct os_thread *thread)
+void thread_start(OSThread *thread)
 {
     thread_qlink(thread);
     thread_yield(THREAD_YIELD_QUEUE);
 }
 
-void thread_stop(struct os_thread *thread)
+void thread_stop(OSThread *thread)
 {
     thread_qunlink(thread);
     thread_yield(THREAD_YIELD_QUEUE);
@@ -169,8 +145,5 @@ void thread_stop(struct os_thread *thread)
 
 void thread_yield(int arg)
 {
-    if (os_thread == NULL || setjmp(os_thread->jmp) == 0)
-    {
-        longjmp(sys_jmp, arg);
-    }
+    if (os_thread == NULL || setjmp(os_thread->jmp) == 0) longjmp(sys_jmp, arg);
 }

@@ -374,4 +374,241 @@
 #define G_OBJRM_WIDEN           0x40
 #endif
 
+#ifndef __ASSEMBLER__
+
+typedef struct vp
+{
+#ifdef __EB__
+    s16 w;
+    s16 h;
+    s16 d;
+    s16 g;
+    s16 x;
+    s16 y;
+    s16 z;
+    s16 f;
+#else
+    s16 h;
+    s16 w;
+    s16 g;
+    s16 d;
+    s16 y;
+    s16 x;
+    s16 f;
+    s16 z;
+#endif
+}
+Vp;
+
+typedef struct vtx
+{
+#ifdef __EB__
+    s16 x;
+    s16 y;
+    s16 z;
+    u16 f;
+    s16 s;
+    s16 t;
+    s8  r;
+    s8  g;
+    s8  b;
+    u8  a;
+#else
+    s16 y;
+    s16 x;
+    u16 f;
+    s16 z;
+    s16 t;
+    s16 s;
+    u8  a;
+    s8  b;
+    s8  g;
+    s8  r;
+#endif
+}
+Vtx;
+
+typedef struct light
+{
+    struct
+    {
+    #ifdef __EB__
+        u8 r;
+        u8 g;
+        u8 b;
+        u8 f;
+    #else
+        u8 f;
+        u8 b;
+        u8 g;
+        u8 r;
+    #endif
+    }
+    col[2];
+#ifdef __EB__
+    s8 x;
+    s8 y;
+    s8 z;
+    u8 f;
+#else
+    u8 f;
+    s8 z;
+    s8 y;
+    s8 x;
+#endif
+#ifdef GSP_F3D
+    u32 pad[1];
+#endif
+#ifdef GSP_F3DEX2
+    u32 pad[3];
+#endif
+}
+Light;
+
+typedef struct obj_bg
+{
+#ifdef __EB__
+    u16 image_x;
+    u16 image_w;
+    s16 frame_x;
+    u16 frame_w;
+    u16 image_y;
+    u16 image_h;
+    s16 frame_y;
+    u16 frame_h;
+    PTR image_ptr;
+    u16 image_load;
+    u8  image_fmt;
+    u8  image_siz;
+    u16 image_pal;
+    u16 image_flip;
+    u16 scale_w;
+    u16 scale_h;
+    s32 image_y_orig;
+    u32 pad;
+#else
+    u16 image_w;
+    u16 image_x;
+    u16 frame_w;
+    s16 frame_x;
+    u16 image_h;
+    u16 image_y;
+    u16 frame_h;
+    s16 frame_y;
+    PTR image_ptr;
+    u8  image_siz;
+    u8  image_fmt;
+    u16 image_load;
+    u16 image_flip;
+    u16 image_pal;
+    u16 scale_h;
+    u16 scale_w;
+    s32 image_y_orig;
+    u32 pad;
+#endif
+}
+uObjBg;
+
+typedef struct obj_sprite
+{
+#ifdef __EB__
+    s16 obj_x;
+    u16 scale_w;
+    u16 image_w;
+    u16 pad_x;
+    s16 obj_y;
+    u16 scale_h;
+    u16 image_h;
+    u16 pad_y;
+    u16 image_stride;
+    u16 image_adrs;
+    u8  image_fmt;
+    u8  image_siz;
+    u8  image_pal;
+    u8  image_flag;
+#else
+    u16 scale_w;
+    s16 obj_x;
+    u16 pad_x;
+    u16 image_w;
+    u16 scale_h;
+    s16 obj_y;
+    u16 pad_y;
+    u16 image_h;
+    u16 image_adrs;
+    u16 image_stride;
+    u8  image_flag;
+    u8  image_pal;
+    u8  image_siz;
+    u8  image_fmt;
+#endif
+}
+uObjSprite;
+
+typedef struct obj_mtx
+{
+#ifdef __EB__
+    s32 a;
+    s32 b;
+    s32 c;
+    s32 d;
+    s16 x;
+    s16 y;
+    u16 base_scale_x;
+    u16 base_scale_y;
+#else
+    s32 a;
+    s32 b;
+    s32 c;
+    s32 d;
+    s16 y;
+    s16 x;
+    u16 base_scale_y;
+    u16 base_scale_x;
+#endif
+}
+uObjMtx;
+
+typedef struct obj_sub_mtx
+{
+#ifdef __EB__
+    s16 x;
+    s16 y;
+    u16 base_scale_x;
+    u16 base_scale_y;
+#else
+    s16 y;
+    s16 x;
+    u16 base_scale_y;
+    u16 base_scale_x;
+#endif
+}
+uObjSubMtx;
+
+typedef struct obj_txtr
+{
+#ifdef __EB__
+    u32 type;
+    PTR image;
+    u16 tmem; /* phead for tlut */
+    u16 twidth; /* tsize for block, pnum for tlut */
+    u16 theight; /* tline for block */
+    u16 sid;
+    u32 flag;
+    u32 mask;
+#else
+    u32 type;
+    PTR image;
+    u16 twidth;
+    u16 tmem;
+    u16 sid;
+    u16 theight;
+    u32 flag;
+    u32 mask;
+#endif
+}
+uObjTxtr;
+
+#endif /* __ASSEMBLER__ */
+
 #endif /* __GBI_H__ */

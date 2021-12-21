@@ -1,39 +1,39 @@
-static void gdp_combine_cc_0(u8 *col, unused struct vtxf *vf)
+static void gdp_combine_cc_0(u8 *col, unused VTXF *vf)
 {
     col[0] = 0x00;
     col[1] = 0x00;
     col[2] = 0x00;
 }
 
-static void gdp_combine_cc_1(u8 *col, unused struct vtxf *vf)
+static void gdp_combine_cc_1(u8 *col, unused VTXF *vf)
 {
     col[0] = 0xFF;
     col[1] = 0xFF;
     col[2] = 0xFF;
 }
 
-static void gdp_combine_cc_shade(u8 *col, struct vtxf *vf)
+static void gdp_combine_cc_shade(u8 *col, VTXF *vf)
 {
     col[0] = vf->shade[0];
     col[1] = vf->shade[1];
     col[2] = vf->shade[2];
 }
 
-static void gdp_combine_cc_prim(u8 *col, unused struct vtxf *vf)
+static void gdp_combine_cc_prim(u8 *col, unused VTXF *vf)
 {
     col[0] = gdp_prim[0];
     col[1] = gdp_prim[1];
     col[2] = gdp_prim[2];
 }
 
-static void gdp_combine_cc_env(u8 *col, unused struct vtxf *vf)
+static void gdp_combine_cc_env(u8 *col, unused VTXF *vf)
 {
     col[0] = gdp_env[0];
     col[1] = gdp_env[1];
     col[2] = gdp_env[2];
 }
 
-static void gdp_combine_cc_shade_env(u8 *col, struct vtxf *vf)
+static void gdp_combine_cc_shade_env(u8 *col, VTXF *vf)
 {
     col[0] = vf->shade[0] * gdp_env[0] / 0x100;
     col[1] = vf->shade[1] * gdp_env[1] / 0x100;
@@ -41,28 +41,28 @@ static void gdp_combine_cc_shade_env(u8 *col, struct vtxf *vf)
 }
 
 #ifndef APP_UNSM
-static void gdp_combine_cc_shade_prim(u8 *col, struct vtxf *vf)
+static void gdp_combine_cc_shade_prim(u8 *col, VTXF *vf)
 {
     col[0] = vf->shade[0] * gdp_prim[0] / 0x100;
     col[1] = vf->shade[1] * gdp_prim[1] / 0x100;
     col[2] = vf->shade[2] * gdp_prim[2] / 0x100;
 }
 
-static void gdp_combine_cc_prim_env(u8 *col, unused struct vtxf *vf)
+static void gdp_combine_cc_prim_env(u8 *col, unused VTXF *vf)
 {
     col[0] = gdp_prim[0] * gdp_env[0] / 0x100;
     col[1] = gdp_prim[1] * gdp_env[1] / 0x100;
     col[2] = gdp_prim[2] * gdp_env[2] / 0x100;
 }
 
-static void gdp_combine_cc_prim_env_shade_env(u8 *col, struct vtxf *vf)
+static void gdp_combine_cc_prim_env_shade_env(u8 *col, VTXF *vf)
 {
     col[0] = (gdp_prim[0]-gdp_env[0]) * vf->shade[0]/0x100 + gdp_env[0];
     col[1] = (gdp_prim[1]-gdp_env[1]) * vf->shade[1]/0x100 + gdp_env[1];
     col[2] = (gdp_prim[2]-gdp_env[2]) * vf->shade[2]/0x100 + gdp_env[2];
 }
 
-static void gdp_combine_cc_1env(u8 *col, unused struct vtxf *vf)
+static void gdp_combine_cc_1env(u8 *col, unused VTXF *vf)
 {
     col[0] = 0xFF - gdp_env[0];
     col[1] = 0xFF - gdp_env[1];
@@ -71,7 +71,7 @@ static void gdp_combine_cc_1env(u8 *col, unused struct vtxf *vf)
 #endif
 
 #ifdef GSP_SWFOG
-static void gdp_combine_cc_fog(u8 *col, unused struct vtxf *vf)
+static void gdp_combine_cc_fog(u8 *col, unused VTXF *vf)
 {
     col[0] = gdp_fog[0];
     col[1] = gdp_fog[1];
@@ -79,45 +79,45 @@ static void gdp_combine_cc_fog(u8 *col, unused struct vtxf *vf)
 }
 #endif
 
-static void gdp_combine_ac_0(u8 *col, unused struct vtxf *vf)
+static void gdp_combine_ac_0(u8 *col, unused VTXF *vf)
 {
     col[3] = 0x00;
 }
 
-static void gdp_combine_ac_1(u8 *col, unused struct vtxf *vf)
+static void gdp_combine_ac_1(u8 *col, unused VTXF *vf)
 {
     col[3] = 0xFF;
 }
 
-static void gdp_combine_ac_shade(u8 *col, struct vtxf *vf)
+static void gdp_combine_ac_shade(u8 *col, VTXF *vf)
 {
     col[3] = vf->shade[3];
 }
 
-static void gdp_combine_ac_prim(u8 *col, unused struct vtxf *vf)
+static void gdp_combine_ac_prim(u8 *col, unused VTXF *vf)
 {
     col[3] = gdp_prim[3];
 }
 
-static void gdp_combine_ac_env(u8 *col, unused struct vtxf *vf)
+static void gdp_combine_ac_env(u8 *col, unused VTXF *vf)
 {
     col[3] = gdp_env[3];
 }
 
 #ifndef APP_UNSM
-static void gdp_combine_ac_shade_prim(u8 *col, unused struct vtxf *vf)
+static void gdp_combine_ac_shade_prim(u8 *col, unused VTXF *vf)
 {
     col[3] = vf->shade[3] * gdp_prim[3] / 0x100;
 }
 #endif
 
-static void gdp_combine_ac_shade_env(u8 *col, unused struct vtxf *vf)
+static void gdp_combine_ac_shade_env(u8 *col, unused VTXF *vf)
 {
     col[3] = vf->shade[3] * gdp_env[3] / 0x100;
 }
 
 #ifdef GSP_SWFOG
-static void gdp_combine_ac_fog(u8 *col, struct vtxf *vf)
+static void gdp_combine_ac_fog(u8 *col, VTXF *vf)
 {
     col[3] = vf->shade[3];
 }

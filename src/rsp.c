@@ -1,7 +1,7 @@
 #include "types.h"
+#include "sys.h"
 #include "cpu.h"
 #include "rsp.h"
-#include "sys.h"
 
 #ifdef __LLE__
 
@@ -79,33 +79,10 @@
 #define vd  rsp.vreg[INST_VD]
 #define ev  rsp_element[INST_EV]
 
-typedef union
-{
-    s8  b[16];
-    s16 s[8];
-    u16 u[8];
-}
-VREG;
-
-struct rsp
-{
-    s32 reg[32];
-    VREG vreg[32];
-    s64 acc[8];
-    u16 vcc;
-    u16 vco;
-    u8  vce;
-    PTR mem_addr;
-    PTR dram_addr;
-    PTR pc;
-    PTR baddr;
-    s8  bcode;
-};
-
-typedef void RSP(u32 inst);
+typedef void RSPCALL(u32 inst);
 
 static u8 rsp_mem[0x2000];
-static struct rsp rsp;
+static RSP rsp;
 
 static const u8 rsp_element[][8] =
 {
@@ -160,7 +137,10 @@ static void rsp_dma_rd(u32 len)
     uint l;
     if ((skip | count) > 0)
     {
-        pdebug("rsp: DMA_RD %04X %08X %08X %d %d %d\n", mem&0x1fff, dram, len, skip, count+1, length+1);
+        pdebug(
+            "rsp: DMA_RD %04X %08X %08X %d %d %d\n",
+            mem & 0x1FFF, dram, len, skip, count+1, length+1
+        );
         pause();
         return;
     }
@@ -185,7 +165,10 @@ static void rsp_dma_wr(u32 len)
     uint l;
     if ((skip | count) > 0)
     {
-        pdebug("rsp: DMA_WR %04X %08X %08X %d %d %d\n", mem&0x1fff, dram, len, skip, count+1, length+1);
+        pdebug(
+            "rsp: DMA_WR %04X %08X %08X %d %d %d\n",
+            mem & 0x1FFF, dram, len, skip, count+1, length+1
+        );
         pause();
         return;
     }
@@ -352,7 +335,7 @@ static void rsp_sltu(u32 inst)
     debugi("sltu $%d, $%d, $%d\n", INST_RD, INST_RS, INST_RT);
 }
 
-static RSP *const rsp_special_table[] =
+static RSPCALL *const rsp_special_table[] =
 {
     /* 0x00 */  rsp_sll,
     /* 0x01 */  rsp_null,
@@ -457,7 +440,7 @@ static void rsp_bgezal(u32 inst)
     debugi("bgezal $%d, 0x%08X\n", INST_RS, INST_BDST);
 }
 
-static RSP *const rsp_regimm_table[] =
+static RSPCALL *const rsp_regimm_table[] =
 {
     /* 0x00 */  rsp_bltz,
     /* 0x01 */  rsp_bgez,
@@ -631,7 +614,7 @@ static void rsp_mtc0(u32 inst)
     debugi("mtc0 $%d, $c%d\n", INST_RT, INST_RD);
 }
 
-static RSP *const rsp_cop0_table[] =
+static RSPCALL *const rsp_cop0_table[] =
 {
     /* 0x00 */  rsp_mfc0,
     /* 0x01 */  rsp_null,
@@ -1152,7 +1135,7 @@ static void rsp_vnop(unused u32 inst)
     debugi("vnop\n");
 }
 
-static RSP *const rsp_cop2_func_table[] =
+static RSPCALL *const rsp_cop2_func_table[] =
 {
     /* 0x00 */  rsp_vmulf,
     /* 0x01 */  rsp_vmulu,
@@ -1225,7 +1208,7 @@ static void rsp_cop2_func(u32 inst)
     rsp_cop2_func_table[INST_FUNC](inst);
 }
 
-static RSP *const rsp_cop2_table[] =
+static RSPCALL *const rsp_cop2_table[] =
 {
     /* 0x00 */  rsp_mfc2,
     /* 0x01 */  rsp_null,
@@ -1448,7 +1431,7 @@ static void rsp_ltv(u32 inst)
     debugi("ltv $v%d[%d], 0x%02X($%d)\n",INST_VT, INST_E, INST_OFFB, INST_RS);
 }
 
-static RSP *const rsp_lwc2_table[] =
+static RSPCALL *const rsp_lwc2_table[] =
 {
     /* 0x00 */  rsp_lbv,
     /* 0x01 */  rsp_lsv,
@@ -1618,7 +1601,7 @@ static void rsp_stv(u32 inst)
     debugi("stv $v%d[%d], 0x%02X($%d)\n",INST_VT, INST_E, INST_OFFB, INST_RS);
 }
 
-static RSP *const rsp_swc2_table[] =
+static RSPCALL *const rsp_swc2_table[] =
 {
     /* 0x00 */  rsp_sbv,
     /* 0x01 */  rsp_ssv,
@@ -1659,7 +1642,7 @@ static void rsp_swc2(u32 inst)
     rsp_swc2_table[INST_RD](inst);
 }
 
-static RSP *const rsp_op_table[] =
+static RSPCALL *const rsp_op_table[] =
 {
     /* 0x00 */  rsp_special,
     /* 0x01 */  rsp_regimm,
@@ -1732,12 +1715,12 @@ static void rsp_op(u32 inst)
     rsp_op_table[INST_OP](inst);
 }
 
-void rsp_main(struct os_task *task)
+void rsp_main(OSTask *task)
 {
 #ifdef RSP_DEBUG
     int step = false;
 #endif
-    byteswap(&rsp_mem[0x0FC0], task, sizeof(struct os_task));
+    byteswap(&rsp_mem[0x0FC0], task, sizeof(OSTask));
     byteswap(
         &rsp_mem[0x1000],
         &cpu_dram[task->ucode_boot],

@@ -1,4 +1,4 @@
-static void *gdp_texture_rgba16(GDP_TXARG *arg, const u8 *src, uint w, uint h)
+static void *gdp_texture_rgba16(TXTARG *arg, const u8 *src, uint w, uint h)
 {
     arg->internalFormat = GL_RGBA;
     arg->format         = GL_RGBA;
@@ -7,7 +7,7 @@ static void *gdp_texture_rgba16(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 }
 
 #ifndef APP_UNSM
-static void *gdp_texture_rgba32(GDP_TXARG *arg, const u8 *src, uint w, uint h)
+static void *gdp_texture_rgba32(TXTARG *arg, const u8 *src, uint w, uint h)
 {
     arg->internalFormat = GL_RGBA;
     arg->format         = GL_RGBA;
@@ -20,7 +20,7 @@ static void *gdp_texture_rgba32(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 
 #define gdp_texture_yuv16  NULL
 
-static void *gdp_texture_ia4(GDP_TXARG *arg, const u8 *src, uint w, uint h)
+static void *gdp_texture_ia4(TXTARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -38,13 +38,12 @@ static void *gdp_texture_ia4(GDP_TXARG *arg, const u8 *src, uint w, uint h)
         dst[3] = IA4_AL(src[0]);
         dst += 4;
         src += 1;
-        len -= 1;
     }
-    while (len > 0);
+    while (--len > 0);
     return buf;
 }
 
-static void *gdp_texture_ia8(GDP_TXARG *arg, const u8 *src, uint w, uint h)
+static void *gdp_texture_ia8(TXTARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -60,14 +59,13 @@ static void *gdp_texture_ia8(GDP_TXARG *arg, const u8 *src, uint w, uint h)
         dst[1] = IA8_A(src[0]);
         dst += 2;
         src += 1;
-        len -= 1;
     }
-    while (len > 0);
+    while (--len > 0);
     return buf;
 }
 
 #ifdef APP_UNSM
-static void *gdp_texture_ia8_face(GDP_TXARG *arg, const u8 *src, uint w, uint h)
+static void *gdp_texture_ia8_face(TXTARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -83,14 +81,13 @@ static void *gdp_texture_ia8_face(GDP_TXARG *arg, const u8 *src, uint w, uint h)
         dst[1] = IA8_I(src[0]);
         dst += 2;
         src += 1;
-        len -= 1;
     }
-    while (len > 0);
+    while (--len > 0);
     return buf;
 }
 #endif
 
-static void *gdp_texture_ia16(GDP_TXARG *arg, const u8 *src, uint w, uint h)
+static void *gdp_texture_ia16(TXTARG *arg, const u8 *src, uint w, uint h)
 {
     arg->internalFormat = GL_LUMINANCE_ALPHA;
     arg->format         = GL_LUMINANCE_ALPHA;
@@ -99,7 +96,7 @@ static void *gdp_texture_ia16(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 }
 
 #ifndef APP_UNSM
-static void *gdp_texture_i4(GDP_TXARG *arg, const u8 *src, uint w, uint h)
+static void *gdp_texture_i4(TXTARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -115,13 +112,12 @@ static void *gdp_texture_i4(GDP_TXARG *arg, const u8 *src, uint w, uint h)
         dst[2] = dst[3] = I4_IL(src[0]);
         dst += 4;
         src += 1;
-        len -= 1;
     }
-    while (len > 0);
+    while (--len > 0);
     return buf;
 }
 
-static void *gdp_texture_i8(GDP_TXARG *arg, const u8 *src, uint w, uint h)
+static void *gdp_texture_i8(TXTARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -136,9 +132,8 @@ static void *gdp_texture_i8(GDP_TXARG *arg, const u8 *src, uint w, uint h)
         dst[0] = dst[1] = src[0];
         dst += 2;
         src += 1;
-        len -= 1;
     }
-    while (len > 0);
+    while (--len > 0);
     return buf;
 }
 #else

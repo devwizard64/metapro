@@ -1,8 +1,8 @@
 #include "types.h"
 #include "app.h"
-#include "cpu.h"
 #include "sys.h"
-#include "gsp.h"
+#include "cpu.h"
+#include "rsp.h"
 
 #include "ultra64.h"
 
@@ -17,13 +17,13 @@ u8 cpu_dram[CPU_DRAM_SIZE];
 #if EEPROM_SIZE > 0
 u64 eeprom[EEPROM_SIZE];
 #endif
-struct cpu cpu;
+CPU cpu;
 
 #ifdef APP_DCALL
-static PTR cpu_dcall_table[lenof(app_dcall_table)-1];
+static PTR dcall_ptr[lenof(dcall_table)-1];
 #endif
 #ifdef APP_CACHE
-static u8 *cpu_cache_table[lenof(app_cache_table)];
+static u8 *cache_ptr[lenof(cache_table)];
 #endif
 
 #if 0
@@ -56,11 +56,11 @@ void __break(unused uint code)
 
 void __call(PTR addr)
 {
-    const struct app_call *start = app_call_table;
-    uint len = lenof(app_call_table)-1;
+    const CALL *start = call_table;
+    uint len = lenof(call_table)-1;
     do
     {
-        const struct app_call *call;
+        const CALL *call;
         if (len > 1) len /= 2;
         call = start + len;
         if (addr >= call->addr) start = call;
@@ -73,8 +73,8 @@ void __call(PTR addr)
 #ifdef APP_DCALL
 PTR __dcall(PTR addr)
 {
-    const PTR *app = app_dcall_table;
-    PTR       *cpu = cpu_dcall_table;
+    const PTR *app = dcall_table;
+    PTR       *cpu = dcall_ptr;
     addr = __tlb(addr);
     while (addr >= app[1])
     {
@@ -165,23 +165,23 @@ void dma(void *dst, PTR src, u32 size)
 #endif
     FILE *f;
 #ifdef APP_DCALL
-    for (i = 0; i < lenof(cpu_dcall_table); i++)
+    for (i = 0; i < lenof(dcall_ptr); i++)
     {
-        PTR app  = app_dcall_table[i];
+        PTR app  = dcall_table[i];
         PTR addr = __ptr(dst);
         if (app >= addr && app < addr+size)
         {
-            cpu_dcall_table[i] = src;
+            dcall_ptr[i] = src;
         }
     }
 #endif
 #ifdef APP_CACHE
-    for (i = 0; i < lenof(cpu_cache_table); i++)
+    for (i = 0; i < lenof(cache_ptr); i++)
     {
-        const struct app_cache *cache = &app_cache_table[i];
+        const CACHE *cache = &cache_table[i];
         if (src >= cache->addr && src+size <= cache->addr+cache->size)
         {
-            memcpy(dst, &cpu_cache_table[i][src-cache->addr], size);
+            memcpy(dst, &cache_ptr[i][src-cache->addr], size);
             return;
         }
     }
@@ -241,14 +241,13 @@ void cpu_init(void)
         case 0x12408037: cpu_swap = __wordswap; break;
     }
 #ifdef APP_CACHE
-    for (i = 0; i < lenof(cpu_cache_table); i++)
+    for (i = 0; i < lenof(cache_ptr); i++)
     {
-        const struct app_cache *cache = &app_cache_table[i];
-        u8 *dst;
+        const CACHE *cache = &cache_table[i];
         fseek(f, cache->addr, SEEK_SET);
-        dst = cpu_cache_table[i] = malloc(cache->size);
-        fread(dst, 1, cache->size, f);
-        cpu_swap(dst, dst, cache->size);
+        cache_ptr[i] = malloc(cache->size);
+        fread(cache_ptr[i], 1, cache->size, f);
+        cpu_swap(cache_ptr[i], cache_ptr[i], cache->size);
     }
 #endif
     fclose(f);
@@ -261,7 +260,7 @@ void cpu_exit(void)
 {
 #ifdef APP_CACHE
     uint i;
-    for (i = 0; i < lenof(cpu_cache_table); i++) free(cpu_cache_table[i]);
+    for (i = 0; i < lenof(cache_ptr); i++) free(cache_ptr[i]);
 #endif
 }
 
@@ -272,7 +271,7 @@ void cpu_save(void)
     {
         fwrite(cpu_dram, 1, sizeof(cpu_dram), f);
     #ifdef APP_DCALL
-        fwrite(cpu_dcall_table, 1, sizeof(cpu_dcall_table), f);
+        fwrite(dcall_ptr, 1, sizeof(dcall_ptr), f);
     #endif
         fclose(f);
     #if EEPROM_SIZE > 0
@@ -292,7 +291,7 @@ void cpu_load(void)
     {
         fread(cpu_dram, 1, sizeof(cpu_dram), f);
     #ifdef APP_DCALL
-        fread(cpu_dcall_table, 1, sizeof(cpu_dcall_table), f);
+        fread(dcall_ptr, 1, sizeof(dcall_ptr), f);
     #endif
         fclose(f);
     #if EEPROM_SIZE > 0

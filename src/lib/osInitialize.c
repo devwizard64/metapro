@@ -4,8 +4,9 @@
 
 void lib_osInitialize(void)
 {
-    memcpy(__dram(0x80000000), __dram(__osExceptionPreamble), 0x00000010);
-    memcpy(__dram(0x80000080), __dram(__osExceptionPreamble), 0x00000010);
-    memcpy(__dram(0x80000100), __dram(__osExceptionPreamble), 0x00000010);
-    memcpy(__dram(0x80000180), __dram(__osExceptionPreamble), 0x00000010);
+    void *src = __dram(__osExceptionPreamble);
+    memcpy(&cpu_dram[0x000], src, 0x10);
+    memcpy(&cpu_dram[0x080], src, 0x10);
+    memcpy(&cpu_dram[0x100], src, 0x10);
+    memcpy(&cpu_dram[0x180], src, 0x10);
 }

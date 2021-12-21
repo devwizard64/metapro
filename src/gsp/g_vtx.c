@@ -18,8 +18,8 @@ static void gsp_g_vtx(u32 w0, u32 w1)
     uint end   = w0 >>  1 & 0x7F;
     uint index = end-count;
 #endif
-    struct vtx  *v  = &gsp_vtx_buf[index];
-    struct vtxf *vf = &gsp_vtxf_buf[index];
+    Vtx  *v  = &gsp_vtx_buf[index];
+    VTXF *vf = &gsp_vtxf_buf[index];
     memcpy(v, gsp_addr(w1), size);
     if (gsp_new_light)
     {
@@ -27,8 +27,8 @@ static void gsp_g_vtx(u32 w0, u32 w1)
         gsp_new_light = false;
         for (i = 2; i < gsp_light_no; i++)
         {
-            struct light  *l  = &gsp_light_buf[i];
-            struct lightf *lf = &gsp_lightf_buf[i];
+            Light  *l  = &gsp_light_buf[i];
+            LIGHTF *lf = &gsp_lightf_buf[i];
             float x = l->x;
             float y = l->y;
             float z = l->z;
@@ -118,7 +118,7 @@ static void gsp_g_vtx(u32 w0, u32 w1)
             uint  i;
             for (i = 2; i < gsp_light_no; i++)
             {
-                struct lightf *lf = &gsp_lightf_buf[i];
+                LIGHTF *lf = &gsp_lightf_buf[i];
                 float d = lf->x*x + lf->y*y + lf->z*z;
                 if (d > 0)
                 {

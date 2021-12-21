@@ -1,6 +1,6 @@
 static void gdp_g_loadtile(u32 w0, u32 w1)
 {
-    struct tile *tile = &gdp_tile[w1 >> 24 & 7];
+    TILE *tile = &gdp_tile[w1 >> 24 & 7];
     u8 *dst = &gdp_tmem[tile->tmem << 3];
     uint siz = tile->fmt & 3;
     uint sl = w0 >> 14 & 0x3FF;

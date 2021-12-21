@@ -6,17 +6,17 @@
 
 void lib_osEPiStartDma(void)
 {
-    struct os_mesg_queue *mq = __dram(*__s32(a1+0x04));
-    void *dst = __dram(*__s32(a1+0x08));
-    PTR src = *__s32(a1+0x0C);
-    u32 size = *__u32(a1+0x10);
-    s32 direction = a2;
-    src &= 0x0FFFFFFF;
-    if (src < 0x08000000)
+    OSMesgQueue *mq = __dram(*__s32(a1+0x04));
+    void *dramAddr  = __dram(*__s32(a1+0x08));
+    PTR   devAddr   = *__s32(a1+0x0C);
+    u32   size      = *__u32(a1+0x10);
+    s32   direction = a2;
+    devAddr &= 0x0FFFFFFF;
+    if (devAddr < 0x08000000)
     {
         switch (direction)
         {
-            case OS_READ:   dma(dst, src, size);    break;
+            case OS_READ:   dma(dramAddr, devAddr, size);   break;
         }
     }
     else

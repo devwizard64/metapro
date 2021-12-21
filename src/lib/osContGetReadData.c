@@ -8,7 +8,7 @@ void lib_osContGetReadData(void)
 {
     PTR pad;
     uint i;
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < MAXCONTROLLERS; i++)
     {
         os_cont_pad[i].button  = 0;
         os_cont_pad[i].stick_x = 0;
@@ -18,7 +18,7 @@ void lib_osContGetReadData(void)
     input_update();
     contdemo_update();
     pad = a0;
-    for (i = 0; i < 4; i++)
+    for (i = 0; i < MAXCONTROLLERS; i++)
     {
         *__u16(pad+0) = os_cont_pad[i].button;
         *__s8 (pad+2) = os_cont_pad[i].stick_x;

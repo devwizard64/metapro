@@ -6,14 +6,14 @@
 
 void lib_osPiStartDma(void)
 {
-    s32 direction = a2;
-    PTR src = a3;
-    void *dst = __dram(*__s32(sp+0x10));
-    u32 size = *__u32(sp+0x14);
-    struct os_mesg_queue *mq = __dram(*__s32(sp+0x18));
+    s32   direction = a2;
+    PTR   devAddr   = a3;
+    void *vAddr     = __dram(*__s32(sp+0x10));
+    u32   nbytes    = *__u32(sp+0x14);
+    OSMesgQueue *mq = __dram(*__s32(sp+0x18));
     switch (direction)
     {
-        case OS_READ:   dma(dst, src, size);    break;
+        case OS_READ:   dma(vAddr, devAddr, nbytes);    break;
     }
     v0 = mesg_send(mq, 0, OS_MESG_NOBLOCK);
 }

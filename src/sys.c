@@ -1,9 +1,8 @@
 #include "types.h"
 #include "app.h"
-#include "cpu.h"
 #include "sys.h"
-#include "gsp.h"
-#include "asp.h"
+#include "cpu.h"
+#include "rsp.h"
 #include "lib.h"
 
 #include "ultra64.h"
@@ -123,8 +122,8 @@ void sys_main(void (*start)(void))
     int arg = setjmp(sys_jmp);
     if (arg != THREAD_YIELD_NULL)
     {
-        struct os_thread *queue;
-        struct os_thread *thread;
+        OSThread *queue;
+        OSThread *thread;
         s32 pri;
         thread = os_thread;
         os_thread = NULL;

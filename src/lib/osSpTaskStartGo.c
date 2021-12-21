@@ -7,8 +7,8 @@
 
 void lib_osSpTaskStartGo(void)
 {
-    struct os_task task;
-    memcpy(&task, __dram(a0), sizeof(task));
+    OSTask task;
+    memcpy(&task, __dram(a0), sizeof(OSTask));
     task.ucode_boot         = __tlb(task.ucode_boot);
     task.ucode              = __tlb(task.ucode);
     task.ucode_data         = __tlb(task.ucode_data);

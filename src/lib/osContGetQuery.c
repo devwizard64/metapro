@@ -2,12 +2,15 @@
 #include "cpu.h"
 #include "sys.h"
 
-#include "ultra64.h"
-
 void lib_osContGetQuery(void)
 {
-    os_cont_status(a0, 0, CONT_TYPE_NORMAL, 0, 0);
-    os_cont_status(a0, 1, 0, 0, CONT_NO_RESPONSE_ERROR);
-    os_cont_status(a0, 2, 0, 0, CONT_NO_RESPONSE_ERROR);
-    os_cont_status(a0, 3, 0, 0, CONT_NO_RESPONSE_ERROR);
+    PTR status = a0;
+    uint i;
+    for (i = 0; i < MAXCONTROLLERS; i++)
+    {
+        *__u16(status+0) = os_cont_status[i].type;
+        *__u8 (status+2) = os_cont_status[i].status;
+        *__u8 (status+3) = os_cont_status[i].errno_;
+        status += 4;
+    }
 }

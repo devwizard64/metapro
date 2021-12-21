@@ -1,6 +1,6 @@
 static void gsp_g_obj_loadtxtr(unused u32 w0, u32 w1)
 {
-    struct obj_txtr *txtr = gsp_addr(w1);
+    uObjTxtr *txtr = gsp_addr(w1);
     switch (txtr->type)
     {
         case G_OBJLT_TLUT:
@@ -10,7 +10,7 @@ static void gsp_g_obj_loadtxtr(unused u32 w0, u32 w1)
             );
             break;
         default:
-            wdebug("unknown loadtxtr 0x%08" FMT_X "\n", txtr->type);
+            wdebug("unknown uObjTxtr 0x%08" FMT_X "\n", txtr->type);
             break;
     }
 }

@@ -156,7 +156,7 @@ extern PTR __tlb(PTR addr);
 }
 #endif
 
-typedef union
+typedef union reg
 {
     s32 i[2];
     u32 iu[2];
@@ -167,7 +167,7 @@ typedef union
 }
 REG;
 
-struct cpu
+typedef struct cpu
 {
 #if CPU_ARG_LEN > 0
     s32 arg[CPU_ARG_LEN];
@@ -178,7 +178,8 @@ struct cpu
 #if CPU_REG_LEN > 0
     REG reg[CPU_REG_LEN];
 #endif
-};
+}
+CPU;
 
 extern const u32 cpu_lwl_mask[];
 extern const u32 cpu_lwr_mask[];
@@ -191,7 +192,7 @@ extern u8 cpu_dram[CPU_DRAM_SIZE];
 #if EEPROM_SIZE > 0
 extern u64 eeprom[EEPROM_SIZE];
 #endif
-extern struct cpu cpu;
+extern CPU cpu;
 
 extern void __break(uint code);
 extern void __call(PTR addr);

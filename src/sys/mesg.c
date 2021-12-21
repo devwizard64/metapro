@@ -1,8 +1,8 @@
-struct os_event os_event_table[OS_NUM_EVENTS] = {0};
-struct os_event os_event_vi = {0};
+__OSEventState os_event_table[OS_NUM_EVENTS] = {0};
+__OSEventState os_event_vi = {0};
 
 #if 0
-static void mesg_print(struct os_mesg_queue *mq)
+static void mesg_print(OSMesgQueue *mq)
 {
     int i;
     int n;
@@ -15,7 +15,7 @@ static void mesg_print(struct os_mesg_queue *mq)
 }
 #endif
 
-void mesg_init(struct os_mesg_queue *mq, PTR msg, s32 count)
+void mesg_init(OSMesgQueue *mq, PTR msg, s32 count)
 {
     mq->recv  = NULLPTR;
     mq->send  = NULLPTR;
@@ -25,7 +25,7 @@ void mesg_init(struct os_mesg_queue *mq, PTR msg, s32 count)
     mq->msg   = msg;
 }
 
-int mesg_send(struct os_mesg_queue *mq, PTR msg, int flag)
+int mesg_send(OSMesgQueue *mq, PTR msg, int flag)
 {
     while (mq->count >= mq->len)
     {
@@ -46,7 +46,7 @@ int mesg_send(struct os_mesg_queue *mq, PTR msg, int flag)
     return 0;
 }
 
-int mesg_recv(struct os_mesg_queue *mq, PTR msg, int flag)
+int mesg_recv(OSMesgQueue *mq, PTR msg, int flag)
 {
     while (mq->count == 0)
     {
@@ -68,7 +68,7 @@ int mesg_recv(struct os_mesg_queue *mq, PTR msg, int flag)
     return 0;
 }
 
-void os_event(struct os_event *event)
+void os_event(__OSEventState *event)
 {
     if (event->mq != NULL) mesg_send(event->mq, event->msg, OS_MESG_NOBLOCK);
 }

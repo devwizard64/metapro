@@ -9,7 +9,7 @@
 #define asp_s16(addr) ((s16 *)&asp_dmem[(addr) ^ (AX_W >> 1)])
 #define asp_u16(addr) ((u16 *)&asp_dmem[(addr) ^ (AX_W >> 1)])
 
-typedef void ASP(u32 w0, u32 w1);
+typedef void ASPCALL(u32 w0, u32 w1);
 
 /*
 0x0000 - 0x02C0: asp_data.bin
@@ -183,7 +183,7 @@ static void asp_a_envsetup2(unused u32 w0, unused u32 w1)
 }
 #endif
 
-static ASP *const asp_table[] =
+static ASPCALL *const asp_table[] =
 {
     /* 0x00 */  asp_a_spnoop,
     /* 0x01 */  asp_a_adpcm,

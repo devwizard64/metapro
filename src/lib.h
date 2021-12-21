@@ -3,8 +3,8 @@
 
 #include "types.h"
 #include "app.h"
-#include "cpu.h"
 #include "sys.h"
+#include "cpu.h"
 
 #include "ultra64.h"
 

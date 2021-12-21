@@ -1,6 +1,6 @@
 static void gdp_g_loadblock(unused u32 w0, unused u32 w1)
 {
-    struct tile *tile = &gdp_tile[w1 >> 24 & 7];
+    TILE *tile = &gdp_tile[w1 >> 24 & 7];
     u8 *dst = &gdp_tmem[tile->tmem << 3];
     uint siz = tile->fmt & 3;
     uint len = w1 >> 12 & 0xFFF;

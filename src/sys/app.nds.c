@@ -67,7 +67,7 @@ void input_update(void)
         if (held & input_config[i]) os_cont_pad[0].button |= 0x8000 >> i;
     }
 #ifdef APP_UNSM
-    memcpy(&os_cont_pad[1], &os_cont_pad[0], sizeof(struct os_cont_pad));
+    memcpy(&os_cont_pad[1], &os_cont_pad[0], sizeof(OSContPad));
 #endif
 }
 

@@ -183,7 +183,7 @@ void input_update(void)
         case 2: os_cont_pad[0].stick_y =  80;   break;
     }
 #ifdef APP_UNSM
-    memcpy(&os_cont_pad[1], &os_cont_pad[0], sizeof(struct os_cont_pad));
+    memcpy(&os_cont_pad[1], &os_cont_pad[0], sizeof(OSContPad));
 #endif
 }
 

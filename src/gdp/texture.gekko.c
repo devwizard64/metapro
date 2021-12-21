@@ -1,6 +1,6 @@
 #define i (w*(ty+iy)+(tx+ix))
 
-static void *gdp_texture_rgba16(GDP_TXARG *arg, const u8 *src, uint w, uint h)
+static void *gdp_texture_rgba16(TXTARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -34,7 +34,7 @@ static void *gdp_texture_rgba16(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 }
 
 #ifndef APP_UNSM
-static void *gdp_texture_rgba32(GDP_TXARG *arg, const u8 *src, uint w, uint h)
+static void *gdp_texture_rgba32(TXTARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -71,7 +71,7 @@ static void *gdp_texture_rgba32(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 
 #define gdp_texture_yuv16  NULL
 
-static void *gdp_texture_ia4(GDP_TXARG *arg, const u8 *src, uint w, uint h)
+static void *gdp_texture_ia4(TXTARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -100,7 +100,7 @@ static void *gdp_texture_ia4(GDP_TXARG *arg, const u8 *src, uint w, uint h)
     return buf;
 }
 
-static void *gdp_texture_ia8(GDP_TXARG *arg, const u8 *src, uint w, uint h)
+static void *gdp_texture_ia8(TXTARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -129,7 +129,7 @@ static void *gdp_texture_ia8(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 }
 
 #ifdef APP_UNSM
-static void *gdp_texture_ia8_face(GDP_TXARG *arg, const u8 *src, uint w, uint h)
+static void *gdp_texture_ia8_face(TXTARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -158,7 +158,7 @@ static void *gdp_texture_ia8_face(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 }
 #endif
 
-static void *gdp_texture_ia16(GDP_TXARG *arg, const u8 *src, uint w, uint h)
+static void *gdp_texture_ia16(TXTARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -188,7 +188,7 @@ static void *gdp_texture_ia16(GDP_TXARG *arg, const u8 *src, uint w, uint h)
 }
 
 #ifndef APP_UNSM
-static void *gdp_texture_i4(GDP_TXARG *arg, const u8 *src, uint w, uint h)
+static void *gdp_texture_i4(TXTARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
@@ -217,7 +217,7 @@ static void *gdp_texture_i4(GDP_TXARG *arg, const u8 *src, uint w, uint h)
     return buf;
 }
 
-static void *gdp_texture_i8(GDP_TXARG *arg, const u8 *src, uint w, uint h)
+static void *gdp_texture_i8(TXTARG *arg, const u8 *src, uint w, uint h)
 {
     void *buf;
     u8   *dst;
