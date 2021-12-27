@@ -40,10 +40,10 @@ ifneq ($(LLE),0)
 	FLAG    += -D__LLE__
 endif
 ifeq ($(DEBUG),0)
-	OPT     += -O2
+	OPT     ?= -O2
 else
-	OPT     += -ggdb3
-	FLAG    += -D__DEBUG__
+	OPT     ?= -O0
+	FLAG    += -ggdb3 -D__DEBUG__
 endif
 
 ifeq ($(TARGET),native)

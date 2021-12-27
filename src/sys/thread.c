@@ -1,18 +1,13 @@
 #define THREAD_STACK_SIZE       0x4000
-#ifdef __PPC__
-#define THREAD_STACK_END        0x10
-#else
-#define THREAD_STACK_END        0
-#endif
 
-static OSThread *os_thread_list  = NULL;
-static OSThread *os_thread_queue = NULL;
-OSThread *os_thread = NULL;
+static THREAD *os_thread_list  = NULL;
+static THREAD *os_thread_queue = NULL;
+THREAD *os_thread = NULL;
 
 #if 0
 static void thread_print(void)
 {
-    OSThread *queue = os_thread_queue;
+    THREAD *queue = os_thread_queue;
     while (queue != NULL)
     {
         pdebug(
@@ -27,10 +22,10 @@ static void thread_print(void)
 }
 #endif
 
-static void thread_llink(OSThread *thread)
+static void thread_llink(THREAD *thread)
 {
-    OSThread **list = &os_thread_list;
-    OSThread  *prev = NULL;
+    THREAD **list = &os_thread_list;
+    THREAD  *prev = NULL;
     while (*list != NULL)
     {
         if (*list == thread) return;
@@ -42,10 +37,10 @@ static void thread_llink(OSThread *thread)
     thread->lnext = NULL;
 }
 
-static void thread_qlink(OSThread *thread)
+static void thread_qlink(THREAD *thread)
 {
-    OSThread **queue = &os_thread_queue;
-    OSThread  *prev  = NULL;
+    THREAD **queue = &os_thread_queue;
+    THREAD  *prev  = NULL;
     while (*queue != NULL)
     {
         if (*queue == thread) return;
@@ -58,14 +53,14 @@ static void thread_qlink(OSThread *thread)
     thread->qlink = true;
 }
 
-static void thread_lunlink(OSThread *thread)
+static void thread_lunlink(THREAD *thread)
 {
     if (thread->lprev != NULL) thread->lprev->lnext = thread->lnext;
     else                       os_thread_list       = thread->lnext;
     if (thread->lnext != NULL) thread->lnext->lprev = thread->lprev;
 }
 
-static void thread_qunlink(OSThread *thread)
+static void thread_qunlink(THREAD *thread)
 {
     if (thread->qlink)
     {
@@ -76,9 +71,9 @@ static void thread_qunlink(OSThread *thread)
     }
 }
 
-OSThread *thread_find(PTR addr)
+THREAD *thread_find(PTR addr)
 {
-    OSThread *thread;
+    THREAD *thread;
     if (addr == NULLPTR) return os_thread;
     thread = os_thread_list;
     while (thread != NULL && thread->addr != addr) thread = thread->lnext;
@@ -87,7 +82,7 @@ OSThread *thread_find(PTR addr)
 
 void thread_init(PTR addr, s32 id, PTR entry, s32 arg, s32 s, u32 pri)
 {
-    OSThread *thread = thread_find(addr);
+    THREAD *thread = thread_find(addr);
     if (thread == NULL)
     {
         thread = malloc(sizeof(*thread));
@@ -97,7 +92,7 @@ void thread_init(PTR addr, s32 id, PTR entry, s32 arg, s32 s, u32 pri)
     thread->stack   = malloc(THREAD_STACK_SIZE);
 #endif
 #ifdef __PPC__
-    thread->stack   = memalign(0x20, THREAD_STACK_SIZE);
+    thread->stack   = memalign(0x20, THREAD_STACK_SIZE+0x10);
 #endif
 #ifdef __arm__
     thread->stack   = memalign(0x10, THREAD_STACK_SIZE);
@@ -113,7 +108,7 @@ void thread_init(PTR addr, s32 id, PTR entry, s32 arg, s32 s, u32 pri)
     thread->pri     = pri;
 }
 
-void thread_destroy(OSThread *thread)
+void thread_destroy(THREAD *thread)
 {
     if (thread != NULL)
     {
@@ -131,13 +126,13 @@ void thread_destroy(OSThread *thread)
     }
 }
 
-void thread_start(OSThread *thread)
+void thread_start(THREAD *thread)
 {
     thread_qlink(thread);
     thread_yield(THREAD_YIELD_QUEUE);
 }
 
-void thread_stop(OSThread *thread)
+void thread_stop(THREAD *thread)
 {
     thread_qunlink(thread);
     thread_yield(THREAD_YIELD_QUEUE);

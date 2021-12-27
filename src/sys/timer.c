@@ -1,9 +1,9 @@
-static OSTimer *os_timer_list = NULL;
+static TIMER *os_timer_list = NULL;
 
 #if 0
 static void timer_print(void)
 {
-    OSTimer *list = os_timer_list;
+    TIMER *list = os_timer_list;
     while (list != NULL)
     {
         pdebug(
@@ -18,10 +18,10 @@ static void timer_print(void)
 }
 #endif
 
-static void timer_link(OSTimer *timer)
+static void timer_link(TIMER *timer)
 {
-    OSTimer **list = &os_timer_list;
-    OSTimer  *prev = NULL;
+    TIMER **list = &os_timer_list;
+    TIMER  *prev = NULL;
     while (*list != NULL)
     {
         if (*list == timer) return;
@@ -33,23 +33,23 @@ static void timer_link(OSTimer *timer)
     timer->next = NULL;
 }
 
-static void timer_unlink(OSTimer *timer)
+static void timer_unlink(TIMER *timer)
 {
     if (timer->prev != NULL) timer->prev->next = timer->next;
     else                     os_timer_list     = timer->next;
     if (timer->next != NULL) timer->next->prev = timer->prev;
 }
 
-OSTimer *timer_find(PTR addr)
+TIMER *timer_find(PTR addr)
 {
-    OSTimer *timer = os_timer_list;
+    TIMER *timer = os_timer_list;
     while (timer != NULL && timer->addr != addr) timer = timer->next;
     return timer;
 }
 
 void timer_init(PTR addr, u64 countdown, u64 interval, OSMesgQueue *mq, PTR msg)
 {
-    OSTimer *timer = timer_find(addr);
+    TIMER *timer = timer_find(addr);
     if (timer == NULL)
     {
         timer = malloc(sizeof(*timer));
@@ -62,7 +62,7 @@ void timer_init(PTR addr, u64 countdown, u64 interval, OSMesgQueue *mq, PTR msg)
     timer->event.msg = msg;
 }
 
-void timer_destroy(OSTimer *timer)
+void timer_destroy(TIMER *timer)
 {
     if (timer != NULL)
     {
@@ -73,10 +73,10 @@ void timer_destroy(OSTimer *timer)
 
 static void timer_update(void)
 {
-    OSTimer *timer = os_timer_list;
+    TIMER *timer = os_timer_list;
     while (timer != NULL)
     {
-        OSTimer *next = timer->next;
+        TIMER *next = timer->next;
         if (timer->countdown >= 781250)
         {
             timer->countdown -= 781250;

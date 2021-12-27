@@ -2,7 +2,7 @@
 
 static void app_init(void)
 {
-    video_update_size(256, 192);
+    video_resize_1(256, 192);
     consoleDemoInit();
     videoSetMode(MODE_0_3D);
     soundEnable();

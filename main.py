@@ -641,7 +641,7 @@ def op_load():
         if inst_rt == 0x00: return [(addr, "")], False
         reg_flag |= 1 << inst_rt
         rt = gpr[inst_rt]
-    line = "    %s = *__%s(%s + (s16)0x%04X);\n" % (rt, t, rs, inst_immu)
+    line = "    %s = *cpu_%s(%s + (s16)0x%04X);\n" % (rt, t, rs, inst_immu)
     return [(addr, line)], False
 
 def op_store():
@@ -667,7 +667,7 @@ def op_store():
             chk_flag |= flag
             return [(addr, "")], False
         rt = gpr[inst_rt]
-    line = "    *__%s(%s + (s16)0x%04X) = %s;\n" % (t, rs, inst_immu, rt)
+    line = "    *cpu_%s(%s + (s16)0x%04X) = %s;\n" % (t, rs, inst_immu, rt)
     return [(addr, line)], False
 
 def op_ls(rt):

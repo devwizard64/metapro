@@ -38,7 +38,7 @@ static void app_init(void)
     SDL_AudioSpec spec;
     SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO);
-    video_update_size(VIDEO_SCALE*320, VIDEO_SCALE*240);
+    video_resize_1(VIDEO_SCALE*320, VIDEO_SCALE*240);
     window = SDL_CreateWindow(
         "app", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         video_w, video_h, SDL_WINDOW_RESIZABLE | SDL_WINDOW_OPENGL
@@ -86,9 +86,7 @@ static void app_update(void)
                 {
                     case SDL_WINDOWEVENT_RESIZED:
                         SDL_ClearQueuedAudio(audio_device);
-                        video_update_size(
-                            event.window.data1, event.window.data2
-                        );
+                        video_resize_1(event.window.data1, event.window.data2);
                         break;
                 }
                 break;

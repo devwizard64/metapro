@@ -8,9 +8,9 @@ void lib_osPiStartDma(void)
 {
     s32   direction = a2;
     PTR   devAddr   = a3;
-    void *vAddr     = __dram(*__s32(sp+0x10));
-    u32   nbytes    = *__u32(sp+0x14);
-    OSMesgQueue *mq = __dram(*__s32(sp+0x18));
+    void *vAddr     = cpu_ptr(*cpu_s32(sp+0x10));
+    u32   nbytes    =        (*cpu_u32(sp+0x14));
+    OSMesgQueue *mq = cpu_ptr(*cpu_s32(sp+0x18));
     switch (direction)
     {
         case OS_READ:   dma(vAddr, devAddr, nbytes);    break;

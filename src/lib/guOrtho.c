@@ -10,9 +10,9 @@ void lib_guOrtho(void)
     float l = ARG_F(a1);
     float r = ARG_F(a2);
     float b = ARG_F(a3);
-    float t = *__f32(sp+0x10);
-    float n = *__f32(sp+0x14);
-    float f = *__f32(sp+0x18);
+    float t = *cpu_f32(sp+0x10);
+    float n = *cpu_f32(sp+0x14);
+    float f = *cpu_f32(sp+0x18);
 #ifdef VIDEO_DYNRES
     if (n == 0 && f == 3)
     {
@@ -29,5 +29,5 @@ void lib_guOrtho(void)
 #else
     mtx_ortho(mf, l, r, b, t, n, f);
 #endif
-    mtx_write(__dram(a0), &mf[0][0]);
+    mtx_write(cpu_ptr(a0), &mf[0][0]);
 }

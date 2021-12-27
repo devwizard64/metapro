@@ -6,10 +6,10 @@
 
 void lib_osEPiStartDma(void)
 {
-    OSMesgQueue *mq = __dram(*__s32(a1+0x04));
-    void *dramAddr  = __dram(*__s32(a1+0x08));
-    PTR   devAddr   = *__s32(a1+0x0C);
-    u32   size      = *__u32(a1+0x10);
+    OSMesgQueue *mq = cpu_ptr(*cpu_s32(a1+0x04));
+    void *dramAddr  = cpu_ptr(*cpu_s32(a1+0x08));
+    PTR   devAddr   =        (*cpu_s32(a1+0x0C));
+    u32   size      =        (*cpu_u32(a1+0x10));
     s32   direction = a2;
     devAddr &= 0x0FFFFFFF;
     if (devAddr < 0x08000000)

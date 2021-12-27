@@ -23,24 +23,24 @@
 #define lib_osSetTime()
 #define lib_osMapTLB()
 #define lib_osUnmapTLBAll()
-#define lib_osCreateMesgQueue() {mesg_init(__dram(a0), a1, a2);}
+#define lib_osCreateMesgQueue() {mesg_init(cpu_ptr(a0), a1, a2);}
 #define lib_osSetEventMesg()                \
 {                                           \
-    os_event_table[a0].mq  = __dram(a1);    \
+    os_event_table[a0].mq  = cpu_ptr(a1);   \
     os_event_table[a0].msg = a2;            \
 }
 #define lib_osViSetEvent()          \
 {                                   \
-    os_event_vi.mq  = __dram(a0);   \
+    os_event_vi.mq  = cpu_ptr(a0);  \
     os_event_vi.msg = a1;           \
 }
 #define lib_osCreateThread() \
-    {thread_init(a0, a1, a2, a3, *__s32(sp+0x10), *__s32(sp+0x14));}
-#define lib_osRecvMesg() {v0 = mesg_recv(__dram(a0), a1, a2);}
+    {thread_init(a0, a1, a2, a3, *cpu_s32(sp+0x10), *cpu_s32(sp+0x14));}
+#define lib_osRecvMesg() {v0 = mesg_recv(cpu_ptr(a0), a1, a2);}
 #define lib_osSpTaskLoad()
 extern void lib_osSpTaskStartGo(void);
 #define lib_osSpTaskYield()
-#define lib_osSendMesg() {v0 = mesg_send(__dram(a0), a1, a2);}
+#define lib_osSendMesg() {v0 = mesg_send(cpu_ptr(a0), a1, a2);}
 #define lib_osSpTaskYielded() {v0 = 0;}
 #define lib_osStartThread() {thread_start(thread_find(a0));}
 #define lib_osWritebackDCacheAll()
@@ -54,7 +54,7 @@ extern void lib_osSpTaskStartGo(void);
 extern void lib_osInitialize(void);
 #define lib_osViSwapBuffer() {video_buf = a0;}
 #define lib_osContStartReadData() \
-    {v0 = mesg_send(__dram(a0), 0, OS_MESG_NOBLOCK);}
+    {v0 = mesg_send(cpu_ptr(a0), 0, OS_MESG_NOBLOCK);}
 extern void lib_osContGetReadData(void);
 extern void lib_osContInit(void);
 #define lib_osEepromProbe() {v0 = EEPROM_TYPE;}
@@ -102,9 +102,9 @@ extern void lib_osContInit(void);
 extern void lib_osPiStartDma(void);
 #define lib_osInvalICache()
 #define lib_osEepromLongRead() \
-    {byteswap(__dram(a2), &eeprom[a1], a3); v0 = 0;}
+    {byteswap(cpu_ptr(a2), &eeprom[a1], a3); v0 = 0;}
 #define lib_osEepromLongWrite() \
-    {byteswap(&eeprom[a1], __dram(a2), a3); eeprom_write(); v0 = 0;}
+    {byteswap(&eeprom[a1], cpu_ptr(a2), a3); eeprom_write(); v0 = 0;}
 extern void lib_guOrtho(void);
 extern void lib_guPerspective(void);
 #define lib_osGetTime() {v0 = 0; v1 = 0;}
@@ -113,7 +113,7 @@ LIB_SE(__ull_to_d)
 #define lib_osAiSetFrequency() {v0 = AUDIO_FREQ;}
 #define lib_osWritebackDCache()
 #define lib_osAiGetLength() {v0 = audio_size();}
-#define lib_osAiSetNextBuffer() {audio_update(__dram(a0), a1); v0 = 0;}
+#define lib_osAiSetNextBuffer() {audio_update(cpu_ptr(a0), a1); v0 = 0;}
 #define lib_osVirtualToPhysical() {v0 = __tlb(a0);}
 
 /* UNSMC3 */
@@ -128,7 +128,7 @@ extern void lib_osEPiStartDma(void);
 #define lib_UNSMC3_80308D18() {v0 = 11;}
 
 /* UNKTE0 */
-#define lib_osPfsIsPlug() {*__u8(a1) = 0x00; v0 = 0;}
+#define lib_osPfsIsPlug() {*cpu_u8(a1) = 0x00; v0 = 0;}
 LIB_SE(osPfsInitPak)
 LIB_SE(osPfsNumFiles)
 LIB_SE(osPfsFileState)
@@ -148,21 +148,22 @@ LIB_SE(__osPiRelAccess)
 #define lib_osGetThreadId() {v0 = thread_find(a0)->id;}
 #define lib_osSetIntMask() {v0 = 0;}
 #define lib_osGetMemSize() {v0 = MIN(0x800000, CPU_DRAM_SIZE);}
-#define lib_osEPiReadIo() {dma(__dram(a2), a1, 4); v0 = 0;}
-#define lib_osSetTimer()                                \
-{                                                       \
-    timer_init(                                         \
-        a0, (u64)a2 << 32 | (u32)a3,                    \
-        (u64)*__u32(sp+0x10) << 32 | *__u32(sp+0x14),   \
-        __dram(*__u32(sp+0x18)), *__u32(sp+0x1C)        \
-    );                                                  \
+#define lib_osEPiReadIo() {dma(cpu_ptr(a2), a1, 4); v0 = 0;}
+#define lib_osSetTimer()                                    \
+{                                                           \
+    timer_init(                                             \
+        a0, (u64)a2 << 32 | (u32)a3,                        \
+        (u64)*cpu_u32(sp+0x10) << 32 | *cpu_u32(sp+0x14),   \
+        cpu_ptr(*cpu_u32(sp+0x18)), *cpu_u32(sp+0x1C)       \
+    );                                                      \
 }
 
 #define lib___osMotorAccess() {v0 = 0;}
 #define lib_osMotorInit() {v0 = 0;}
 #define lib_osStopTimer() {timer_destroy(timer_find(a0));}
 #define lib_osAfterPreNMI() {v0 = 0;}
-#define lib_osContStartQuery() {v0 = mesg_send(__dram(a0), 0, OS_MESG_NOBLOCK);}
+#define lib_osContStartQuery() \
+    {v0 = mesg_send(cpu_ptr(a0), 0, OS_MESG_NOBLOCK);}
 extern void lib_osContGetQuery(void);
 LIB_SE(__osGetActiveQueue)
 LIB_SE(osDpGetStatus)
@@ -198,7 +199,7 @@ LIB_SE(UCZLJ0_801D2CB0)
 /* UNK4E0 */
 #define lib_osStopThread() {thread_stop(thread_find(a0));}
 #define lib_osEepromWrite() \
-    {byteswap(&eeprom[a1], __dram(a2), 8); eeprom_write(); v0 = 0;}
+    {byteswap(&eeprom[a1], cpu_ptr(a2), 8); eeprom_write(); v0 = 0;}
 #define lib_osViGetNextFramebuffer() {v0 = video_buf;}
 #define lib_osEPiLinkHandle() {v0 = 0;}
 #define lib_osGetThreadPri() {v0 = thread_find(a0)->pri;}

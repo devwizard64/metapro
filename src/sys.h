@@ -13,19 +13,19 @@
 
 #ifndef __ASSEMBLER__
 
-typedef struct os_event_state
+typedef struct event
 {
     OSMesgQueue *mq;
     PTR msg;
 }
-__OSEventState;
+EVENT;
 
-typedef struct os_thread
+typedef struct thread
 {
-    struct os_thread *lprev;
-    struct os_thread *lnext;
-    struct os_thread *qprev;
-    struct os_thread *qnext;
+    struct thread *lprev;
+    struct thread *lnext;
+    struct thread *qprev;
+    struct thread *qnext;
     u8     *stack;
     jmp_buf jmp;
     CPU     cpu;
@@ -37,18 +37,18 @@ typedef struct os_thread
     s32     id;
     s32     pri;
 }
-OSThread;
+THREAD;
 
-typedef struct os_timer
+typedef struct timer
 {
-    struct os_timer *prev;
-    struct os_timer *next;
+    struct timer *prev;
+    struct timer *next;
     PTR     addr;
     u64     countdown;
     u64     interval;
-    __OSEventState event;
+    EVENT   event;
 }
-OSTimer;
+TIMER;
 
 extern PTR video_buf;
 extern u16 video_w;
@@ -77,28 +77,28 @@ extern void contdemo_update(void);
 extern OSContStatus os_cont_status[MAXCONTROLLERS];
 extern OSContPad os_cont_pad[MAXCONTROLLERS];
 
-extern __OSEventState os_event_table[OS_NUM_EVENTS];
-extern __OSEventState os_event_vi;
+extern EVENT os_event_table[OS_NUM_EVENTS];
+extern EVENT os_event_vi;
 extern void mesg_init(OSMesgQueue *mq, PTR msg, s32 count);
 extern int mesg_recv(OSMesgQueue *mq, PTR msg, int flag);
 extern int mesg_send(OSMesgQueue *mq, PTR msg, int flag);
-extern void os_event(__OSEventState *event);
+extern void os_event(EVENT *event);
 
-extern OSThread *os_thread;
-extern OSThread *thread_find(PTR addr);
+extern THREAD *os_thread;
+extern THREAD *thread_find(PTR addr);
 extern void thread_init(PTR addr, s32 id, PTR entry, s32 arg, s32 s, u32 pri);
-extern void thread_destroy(OSThread *thread);
-extern void thread_start(OSThread *thread);
-extern void thread_stop(OSThread *thread);
+extern void thread_destroy(THREAD *thread);
+extern void thread_start(THREAD *thread);
+extern void thread_stop(THREAD *thread);
 extern s32 thread_id(void);
 extern void thread_yield(int arg);
 extern void thread_fault(void);
 
-extern OSTimer *timer_find(PTR addr);
+extern TIMER *timer_find(PTR addr);
 extern void timer_init(
     PTR addr, u64 countdown, u64 interval, OSMesgQueue *mq, PTR msg
 );
-extern void timer_destroy(OSTimer *timer);
+extern void timer_destroy(TIMER *timer);
 
 extern void sys_init(void);
 extern void sys_main(void (*start)(void));

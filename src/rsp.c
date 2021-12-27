@@ -135,15 +135,6 @@ static void rsp_dma_rd(u32 len)
     uint length = (len >>  0 & 0xFFF) | 7;
     uint c;
     uint l;
-    if ((skip | count) > 0)
-    {
-        pdebug(
-            "rsp: DMA_RD %04X %08X %08X %d %d %d\n",
-            mem & 0x1FFF, dram, len, skip, count+1, length+1
-        );
-        pause();
-        return;
-    }
     for (c = 0; c <= count; c++)
     {
         for (l = 0; l <= length; l++)
@@ -163,15 +154,6 @@ static void rsp_dma_wr(u32 len)
     uint length = (len >>  0 & 0xFFF) | 7;
     uint c;
     uint l;
-    if ((skip | count) > 0)
-    {
-        pdebug(
-            "rsp: DMA_WR %04X %08X %08X %d %d %d\n",
-            mem & 0x1FFF, dram, len, skip, count+1, length+1
-        );
-        pause();
-        return;
-    }
     for (c = 0; c <= count; c++)
     {
         for (l = 0; l <= length; l++)
@@ -589,6 +571,11 @@ static void rsp_mfc0(u32 inst)
 
 static void rsp_mtc0(u32 inst)
 {
+    if ((INST_RD == SP_RD_LEN || INST_RD == SP_WR_LEN) && rt == -1)
+    {
+        wdebug("rsp: bad dma\n");
+        return;
+    }
     switch (INST_RD)
     {
         case SP_MEM_ADDR:   rsp.mem_addr  = rt; break;

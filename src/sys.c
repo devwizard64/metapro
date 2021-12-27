@@ -23,23 +23,18 @@ f32 video_l =   0;
 f32 video_r = 320;
 f32 video_aspect = (float)320/240;
 
-#define video_update_wh(w, h)           \
+#define video_resize(w, h)              \
 {                                       \
     video_w = (w);                      \
     video_h = (h);                      \
-}
-
-#define video_update_lr()               \
-{                                       \
     video_l = 160 - 120*video_aspect;   \
     video_r = 160 + 120*video_aspect;   \
 }
 
-#define video_update_size(w, h)         \
+#define video_resize_1(w, h)            \
 {                                       \
-    video_update_wh(w, h);              \
     video_aspect = (float)(w)/(h);      \
-    video_update_lr();                  \
+    video_resize(w, h);                 \
 }
 
 #ifdef __NATIVE__
@@ -96,7 +91,7 @@ static void sys_update(void)
         cpu_load();
         contdemo_load();
     }
-    /* if (video_buf != NULLPTR) gsp_image(__dram(video_buf)); */
+    /* if (video_buf != NULLPTR) gsp_image(cpu_ptr(video_buf)); */
     if (!sys_fast) sleep_frame();
     app_update();
     if (sys_prenmi > 0)
@@ -122,8 +117,8 @@ void sys_main(void (*start)(void))
     int arg = setjmp(sys_jmp);
     if (arg != THREAD_YIELD_NULL)
     {
-        OSThread *queue;
-        OSThread *thread;
+        THREAD *queue;
+        THREAD *thread;
         s32 pri;
         thread = os_thread;
         os_thread = NULL;
@@ -151,9 +146,8 @@ void sys_main(void (*start)(void))
         memcpy(&cpu, &thread->cpu, sizeof(cpu));
         if (thread->init)
         {
-            register void *stack;
+            void *stack = thread->stack + THREAD_STACK_SIZE;
             thread->init = false;
-            stack = thread->stack + THREAD_STACK_SIZE-THREAD_STACK_END;
         #ifdef __GNUC__
             asm volatile(
             #ifdef __i386__

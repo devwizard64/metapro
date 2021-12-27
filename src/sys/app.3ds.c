@@ -5,7 +5,7 @@ static float audio_mix[12] = {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 static void app_init(void)
 {
     osSetSpeedupEnable(true);
-    video_update_size(400, 240);
+    video_resize_1(400, 240);
     gfxInitDefault();
     consoleInit(GFX_BOTTOM, NULL);
     ndspInit();

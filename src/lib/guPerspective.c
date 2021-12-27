@@ -13,9 +13,9 @@ void lib_guPerspective(void)
 #else
     float aspect = ARG_F(a3);
 #endif
-    float near = *__f32(sp+0x10);
-    float far  = *__f32(sp+0x14);
-    *__u16(a1) = 0xFFFF;
+    float near = *cpu_f32(sp+0x10);
+    float far  = *cpu_f32(sp+0x14);
+    *cpu_u16(a1) = 0xFFFF;
     mtx_perspective(mf, fovy, aspect, near, far);
-    mtx_write(__dram(a0), &mf[0][0]);
+    mtx_write(cpu_ptr(a0), &mf[0][0]);
 }

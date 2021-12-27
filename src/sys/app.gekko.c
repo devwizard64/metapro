@@ -14,7 +14,6 @@ static void app_init(void)
 {
     VIDEO_Init();
     video_rmode = VIDEO_GetPreferredMode(NULL);
-    video_update_wh(video_rmode->fbWidth, video_rmode->efbHeight);
 #ifdef __WII__
     if (CONF_GetAspectRatio() == CONF_ASPECT_16_9)
     {
@@ -27,7 +26,7 @@ static void app_init(void)
     {
         video_aspect = (float)4/3;
     }
-    video_update_lr();
+    video_resize(video_rmode->fbWidth, video_rmode->efbHeight);
     VIDEO_Configure(video_rmode);
     framebuffer = MEM_K0_TO_K1(SYS_AllocateFramebuffer(video_rmode));
     VIDEO_SetNextFramebuffer(framebuffer);

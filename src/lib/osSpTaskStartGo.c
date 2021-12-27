@@ -8,7 +8,7 @@
 void lib_osSpTaskStartGo(void)
 {
     OSTask task;
-    memcpy(&task, __dram(a0), sizeof(OSTask));
+    memcpy(&task, cpu_ptr(a0), sizeof(OSTask));
     task.ucode_boot         = __tlb(task.ucode_boot);
     task.ucode              = __tlb(task.ucode);
     task.ucode_data         = __tlb(task.ucode_data);
@@ -37,8 +37,8 @@ void lib_osSpTaskStartGo(void)
             break;
     #ifdef APP_UCZL
         case M_NJPEGTASK:
-            if (task->ucode == 0x80006210) break;
-            /* 0x800E6BC0 = njpgdspMain */
+            if (task.ucode == 0x00006210) break;
+            /* 0x000E6BC0 = njpgdspMain */
             break;
     #endif
         default:

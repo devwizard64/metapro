@@ -1,5 +1,5 @@
-__OSEventState os_event_table[OS_NUM_EVENTS] = {0};
-__OSEventState os_event_vi = {0};
+EVENT os_event_table[OS_NUM_EVENTS] = {0};
+EVENT os_event_vi = {0};
 
 #if 0
 static void mesg_print(OSMesgQueue *mq)
@@ -9,7 +9,7 @@ static void mesg_print(OSMesgQueue *mq)
     pdebug("recv:%08X  send:%08X  msg:", mq->recv, mq->send);
     for (i = mq->index, n = mq->count; n != 0; i++, n--)
     {
-        pdebug(" %d", *__u32(mq->msg + 4*(i % mq->len)));
+        pdebug(" %d", *cpu_u32(mq->msg + 4*(i % mq->len)));
     }
     pdebug("\n");
 }
@@ -35,7 +35,7 @@ int mesg_send(OSMesgQueue *mq, PTR msg, int flag)
         os_thread->ready = false;
         thread_yield(THREAD_YIELD_QUEUE);
     }
-    *__s32(mq->msg + 4*((mq->index+mq->count) % mq->len)) = msg;
+    *cpu_s32(mq->msg + 4*((mq->index+mq->count) % mq->len)) = msg;
     mq->count++;
     if (mq->recv != NULLPTR)
     {
@@ -56,7 +56,7 @@ int mesg_recv(OSMesgQueue *mq, PTR msg, int flag)
         os_thread->ready = false;
         thread_yield(THREAD_YIELD_QUEUE);
     }
-    if (msg != NULLPTR) *__s32(msg) = *__s32(mq->msg + 4*mq->index);
+    if (msg != NULLPTR) *cpu_s32(msg) = *cpu_s32(mq->msg + 4*mq->index);
     mq->index = (mq->index+1) % mq->len;
     mq->count--;
     if (mq->send != NULLPTR)
@@ -68,7 +68,7 @@ int mesg_recv(OSMesgQueue *mq, PTR msg, int flag)
     return 0;
 }
 
-void os_event(__OSEventState *event)
+void os_event(EVENT *event)
 {
     if (event->mq != NULL) mesg_send(event->mq, event->msg, OS_MESG_NOBLOCK);
 }

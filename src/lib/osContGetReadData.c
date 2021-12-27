@@ -20,10 +20,10 @@ void lib_osContGetReadData(void)
     pad = a0;
     for (i = 0; i < MAXCONTROLLERS; i++)
     {
-        *__u16(pad+0) = os_cont_pad[i].button;
-        *__s8 (pad+2) = os_cont_pad[i].stick_x;
-        *__s8 (pad+3) = os_cont_pad[i].stick_y;
-        *__u8 (pad+4) = os_cont_pad[i].errno_;
+        *cpu_u16(pad+0) = os_cont_pad[i].button;
+        *cpu_s8 (pad+2) = os_cont_pad[i].stick_x;
+        *cpu_s8 (pad+3) = os_cont_pad[i].stick_y;
+        *cpu_u8 (pad+4) = os_cont_pad[i].errno_;
         pad += 6;
     }
 }
