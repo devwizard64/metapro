@@ -2,8 +2,8 @@ static void *const gsp_movemem_table[] =
 {
 #ifdef GSP_F3D
     /* 0x80 G_MV_VIEWPORT */ &gsp_viewport,
-    /* 0x82 G_MV_LOOKATY  */ &gsp_light_buf[1],
-    /* 0x84 G_MV_LOOKATX  */ &gsp_light_buf[0],
+    /* 0x82 G_MV_LOOKATY  */ &gsp_light_buf[0],
+    /* 0x84 G_MV_LOOKATX  */ &gsp_light_buf[1],
     /* 0x86 G_MV_L0       */ &gsp_light_buf[2],
     /* 0x88 G_MV_L1       */ &gsp_light_buf[3],
     /* 0x8A G_MV_L2       */ &gsp_light_buf[4],
@@ -39,7 +39,6 @@ static void gsp_g_movemem(u32 w0, u32 w1)
             }
             else if (index >= G_MV_LOOKATY && index < G_MV_L7+2)
             {
-                if (index < G_MV_LOOKATX+2) gsp_lookat = true;
                 gsp_new_light = true;
             }
         }
@@ -61,7 +60,6 @@ static void gsp_g_movemem(u32 w0, u32 w1)
                     gsp_flush_vp();
                     break;
                 case G_MV_LIGHT:
-                    if (offset < G_MVO_L0) gsp_lookat = true;
                     gsp_new_light = true;
                     break;
             }

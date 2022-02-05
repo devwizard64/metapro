@@ -79,7 +79,7 @@ reg_lohi = [
     (1 << 48, "hi"),
 ]
 
-stack_reg = [
+reg_table = [
     ["s32", reg_cpu],
     ["REG", reg_fpu],
     ["s32", reg_lohi],
@@ -182,8 +182,7 @@ def op_shift():
     flag = 1 << inst_rd
     reg_flag |= flag
     if inst == 0x00000000: return [(addr, "")], False
-    if inst_func in {0x3C, 0x3E, 0x3F}:
-        rll_flag |= flag
+    if inst_func in {0x3C, 0x3E, 0x3F}: rll_flag |= flag
     if inst_func in {0x04, 0x06, 0x07}:
         mask = {
             0x04: 0x1F,
@@ -216,6 +215,7 @@ def op_shift():
 def op_jr():
     global addr
     global wret
+    global jr
     end = op_end()
     rs = inst_rs
     addr += 4
@@ -225,22 +225,9 @@ def op_jr():
         line = "    return;\n"
         end = addr-4 >= inst_maxb
     else:
-        line = (
-            "    switch ((PTR)%s)\n"
-            "    {\n"
-        ) % gpr[rs]
-        a = addr
-        addr = addr_s
-        wret = False
-        while True:
-            line += "        case 0x%08XU: goto _%08X; break;\n" % (addr, addr)
-            btbl.add(addr)
-            op_unpack()
-            addr += 4
-            op_jt()
-            if op_end() and addr-4 >= inst_maxb: break
-        addr = a
-        line += "    }\n"
+        jr = True
+        line = "    goto *jr[((PTR)%s-0x%08XU) >> 2];\n" % (gpr[rs], addr_s)
+        end = False
     return [(addr-4, l+line)] + ln, end
 
 def op_jalr():
@@ -310,10 +297,8 @@ def op_arith():
     flag = 1 << inst_rd
     reg_flag |= flag
     if inst_func in {0x24, 0x25, 0x26, 0x27}:
-        if rll_flag & (1 << inst_rs | 1 << inst_rt):
-            rll_flag |= flag
-    if inst_func in {0x2D}:
-        rll_flag |= flag
+        if rll_flag & (1 << inst_rs | 1 << inst_rt): rll_flag |= flag
+    if inst_func in {0x2D}: rll_flag |= flag
     op, s, tt, e = {
         0x20: ("+", "(s32)((s32)", "(s32)", ")"),
         0x21: ("+", "(s32)((s32)", "(s32)", ")"),
@@ -457,8 +442,7 @@ def op_b():
 def op_bal():
     global addr
     a = addr
-    if inst_rs != 0x00:
-        raise RuntimeError("bgezal $%s" % gpr[inst_rs])
+    if inst_rs != 0x00: raise RuntimeError("bgezal $%s" % gpr[inst_rs])
     bdst = inst_bdst
     jtbl.add(bdst)
     addr += 4
@@ -476,10 +460,8 @@ def op_arithi():
     flag = 1 << inst_rt
     reg_flag |= flag
     if inst_op in {0x0C, 0x0D, 0x0E}:
-        if rll_flag & (1 << inst_rs):
-            rll_flag |= flag
-    if inst_op in {0x19}:
-        rll_flag |= flag
+        if rll_flag & (1 << inst_rs): rll_flag |= flag
+    if inst_op in {0x19}: rll_flag |= flag
     # sltiu
     if inst_op == 0x0B:
         imm = "0x%04XU" % (inst_imms & 0xFFFFFFFF)
@@ -631,7 +613,7 @@ def op_load():
         0x24: "u8",
         0x25: "u16",
         0x27: "u32",
-        0x31: "u32",
+        0x31: "s32",
     }[inst_op]
     rs = gpr[inst_rs]
     if inst_op == 0x31:
@@ -694,8 +676,9 @@ def op_ld():
     global reg_flag
     global rll_flag
     if inst_rt == 0x00: return [(addr, "")], False
-    reg_flag |= 1 << inst_rt
-    rll_flag |= 1 << inst_rt
+    flag = 1 << inst_rt
+    reg_flag |= flag
+    rll_flag |= flag
     return op_ls(gpr[inst_rt])
 
 def op_ldc1():
@@ -1009,6 +992,7 @@ def main(argv):
     global stack_min
     global hret
     global wret
+    global jr
     if len(argv) < 2:
         print("usage: %s <app> [build]" % argv[0])
         return 1
@@ -1106,6 +1090,7 @@ def main(argv):
             stack_min = 0
             hret = False
             wret = None
+            jr = False
             while True:
                 op_unpack()
                 op_jt()
@@ -1203,12 +1188,12 @@ def main(argv):
                 "{\n"
             ) % name
             inst_maxb = 0
-            reg_flag = app.reg
-            chk_flag = app.reg
+            reg_flag = chk_flag = app.reg
             rll_flag = 0
             stack_min = 0
             hret = False
             wret = None
+            jr = False
             btbl = set()
             line = []
             while True:
@@ -1216,7 +1201,16 @@ def main(argv):
                 line += ln
                 addr += 4
                 if end: break
-            for t, reg in stack_reg:
+            if jr:
+                app_c += (
+                    "    static void *const jr[] =\n"
+                    "    {\n"
+                )
+                for addr in range(addr_s, addr, 4):
+                    app_c += "        &&_%08X,\n" % addr
+                    btbl.add(addr)
+                app_c += "    };\n"
+            for t, reg in reg_table:
                 for flag, r in reg:
                     if app.reg & flag: continue
                     if (reg_flag | chk_flag) & flag:

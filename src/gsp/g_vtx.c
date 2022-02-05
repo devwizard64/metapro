@@ -18,16 +18,16 @@ static void gsp_g_vtx(u32 w0, u32 w1)
     uint end   = w0 >>  1 & 0x7F;
     uint index = end-count;
 #endif
-    Vtx  *v  = &gsp_vtx_buf[index];
+    VTX  *v  = &gsp_vtx_buf[index];
     VTXF *vf = &gsp_vtxf_buf[index];
     memcpy(v, gsp_addr(w1), size);
     if (gsp_new_light)
     {
         uint i;
         gsp_new_light = false;
-        for (i = 2; i < gsp_light_no; i++)
+        for (i = 0; i < gsp_light_no; i++)
         {
-            Light  *l  = &gsp_light_buf[i];
+            LIGHT  *l  = &gsp_light_buf[i];
             LIGHTF *lf = &gsp_lightf_buf[i];
             float x = l->x;
             float y = l->y;
@@ -57,41 +57,10 @@ static void gsp_g_vtx(u32 w0, u32 w1)
         int t;
         if (gsp_geometry_mode & G_TEXTURE_GEN)
         {
-            if (gsp_lookat)
-            {
-            #ifdef GSP_F3D
-            #define LOOKATY gsp_light_buf[0]
-            #define LOOKATX gsp_light_buf[1]
-            #endif
-            #ifdef GSP_F3DEX2
-            #define LOOKATX gsp_light_buf[0]
-            #define LOOKATY gsp_light_buf[1]
-            #endif
-                s = LOOKATX.x*v->r + LOOKATX.y*v->g + LOOKATX.z*v->b;
-                t = LOOKATY.x*v->r + LOOKATY.y*v->g + LOOKATY.z*v->b;
-            #undef LOOKATY
-            #undef LOOKATX
-            }
-            else
-            {
-                float x = v->r;
-                float y = v->g;
-                float z = v->b;
-                float nx = MDOT3(MM, 0);
-                float ny = MDOT3(MM, 1);
-                float nz = MDOT3(MM, 2);
-                float d = sqrtf(nx*nx + ny*ny + nz*nz);
-                if (d > 0)
-                {
-                    d = 0x4000 / d;
-                    nx *= d;
-                    ny *= d;
-                }
-                s = ny;
-                t = nx;
-            }
-            s += 0x4000;
-            t += 0x4000;
+            LIGHTF *lx = &gsp_lightf_buf[0];
+            LIGHTF *ly = &gsp_lightf_buf[1];
+            s = 0x4000 * (1 + lx->x*v->r + lx->y*v->g + lx->z*v->b);
+            t = 0x4000 * (1 + ly->x*v->r + ly->y*v->g + ly->z*v->b);
         }
         else
         {

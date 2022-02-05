@@ -191,10 +191,10 @@ static u32 gdp_othermode_l;
 static u32 gdp_cycle;
 static u8  gdp_rect;
 
-static Vp     gsp_viewport;
-static Light  gsp_light_buf[10];
+static VP     gsp_viewport;
+static LIGHT  gsp_light_buf[10];
 static LIGHTF gsp_lightf_buf[10];
-static Vtx    gsp_vtx_buf[GSP_VTX_LEN+4];
+static VTX    gsp_vtx_buf[GSP_VTX_LEN+4];
 static VTXF   gsp_vtxf_buf[GSP_VTX_LEN+4];
 #ifdef APP_UNK4
 static s16  gsp_mtx[32];
@@ -213,7 +213,6 @@ static u32  gsp_geometry_mode;
 static s16  gsp_fog_m;
 static s16  gsp_fog_o;
 static u8   gsp_light_no;
-static bool gsp_lookat;
 static bool gsp_new_cache;
 static bool gsp_new_texture;
 static bool gsp_new_fog;
@@ -690,7 +689,7 @@ static void gdp_tri(const u8 *t)
 #endif
     for (i = 0; i < 3; i++)
     {
-        Vtx  *v  = &gsp_vtx_buf[t[i]];
+        VTX  *v  = &gsp_vtx_buf[t[i]];
         VTXF *vf = &gsp_vtxf_buf[t[i]];
         float s = gdp_texture_scale[0] * vf->s;
         float t = gdp_texture_scale[1] * vf->t;
@@ -809,7 +808,7 @@ static void gsp_flush_rect(void)
 static void gsp_fillrect(u32 w0, u32 w1)
 {
 #ifndef __NDS__
-    Vtx  *v  = &gsp_vtx_buf[GSP_VTX_LEN];
+    VTX  *v  = &gsp_vtx_buf[GSP_VTX_LEN];
     VTXF *vf = &gsp_vtxf_buf[GSP_VTX_LEN];
     int xh = w0 >> 12 & 0xFFF;
     int yh = w0 >>  0 & 0xFFF;
@@ -848,7 +847,7 @@ static void gsp_fillrect(u32 w0, u32 w1)
 static void gsp_texrect(void)
 {
 #ifndef __NDS__
-    Vtx  *v  = &gsp_vtx_buf[GSP_VTX_LEN];
+    VTX  *v  = &gsp_vtx_buf[GSP_VTX_LEN];
     VTXF *vf = &gsp_vtxf_buf[GSP_VTX_LEN];
     int   xh = (s16)(gdp_texrect[0] >> 8) >> 4;
     int   yh = (s16)(gdp_texrect[0] << 4) >> 4;
@@ -914,7 +913,7 @@ static void gsp_texrect(void)
 #ifdef GSP_F3DEX2
 static void gsp_bg(uObjBg *bg)
 {
-    Vtx  *v  = &gsp_vtx_buf[GSP_VTX_LEN];
+    VTX  *v  = &gsp_vtx_buf[GSP_VTX_LEN];
     VTXF *vf = &gsp_vtxf_buf[GSP_VTX_LEN];
     TILE *tile = &gdp_tile[0];
     void *timg = gsp_addr(bg->image_ptr);
@@ -999,11 +998,18 @@ static void gsp_start(PTR ucode, u32 *dl)
     gdp_combine_ac = gdp_combine_ac_0;
     gdp_triangle = gdp_tri;
     gdp_rect = 0;
+    gsp_light_buf[0].x =   0;
+    gsp_light_buf[0].y = 127;
+    gsp_light_buf[0].z =   0;
+    gsp_light_buf[1].x = 127;
+    gsp_light_buf[1].y =   0;
+    gsp_light_buf[1].z =   0;
     gsp_mtx_modelview = gsp_mtx_modelview_stack;
     for (i = 0; i < lenof(gsp_addr_table); i++) gsp_addr_table[i] = cpu_dram;
     gsp_dl_stack[0] = dl;
     gsp_dl_index = 0;
-    gsp_lookat = false;
+    gsp_new_fog   = false;
+    gsp_new_light = true;
 }
 
 #include "gsp/g_spnoop.c"
@@ -1724,8 +1730,6 @@ void gsp_update(PTR ucode, u32 *dl)
     pglSelectScreen(GFX_TOP, GFX_LEFT);
 #endif
     gsp_new_texture = false;
-    gsp_new_fog     = false;
-    gsp_new_light   = false;
     gsp_start(ucode, dl);
     do
     {

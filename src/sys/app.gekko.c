@@ -98,9 +98,9 @@ void input_update(void)
     {
         uint down = PAD_ButtonsDown(0);
         if (down & PAD_BUTTON_START)    exit(EXIT_SUCCESS);
+        if (down & PAD_BUTTON_X)        sys_fast ^= false^true;
         if (down & PAD_BUTTON_LEFT)     sys_save = true;
         if (down & PAD_BUTTON_RIGHT)    sys_load = true;
-        sys_fast = (down & PAD_BUTTON_X) != 0;
     }
     for (pad = 0; pad < 4; pad++)
     {

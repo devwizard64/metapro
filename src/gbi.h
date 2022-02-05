@@ -398,7 +398,7 @@ typedef struct vp
     s16 z;
 #endif
 }
-Vp;
+VP;
 
 typedef struct vtx
 {
@@ -426,7 +426,7 @@ typedef struct vtx
     s8  r;
 #endif
 }
-Vtx;
+VTX;
 
 typedef struct light
 {
@@ -463,7 +463,7 @@ typedef struct light
     u32 pad[3];
 #endif
 }
-Light;
+LIGHT;
 
 typedef struct obj_bg
 {

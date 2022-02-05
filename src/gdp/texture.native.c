@@ -70,7 +70,7 @@ static void *gdp_texture_ia8_face(TXTARG *arg, const u8 *src, uint w, uint h)
     void *buf;
     u8   *dst;
     uint  len;
-    arg->internalFormat = GL_LUMINANCE_ALPHA;
+    arg->internalFormat = GL_RGBA;
     arg->format         = GL_LUMINANCE_ALPHA;
     arg->type           = GL_UNSIGNED_BYTE;
     buf = dst = malloc(2*w*h);

@@ -1,7 +1,13 @@
 APP     ?= UNSME0
 TARGET  ?= native
 DEBUG   ?= 1
-LLE     ?= 1
+ifeq ($(DEBUG),0)
+	LLE ?= 0
+	OPT ?= -O2
+else
+	LLE ?= 1
+	OPT ?= -O0
+endif
 
 LIBOGC  := $(DEVKITPRO)/libogc
 LIBNDS  := $(DEVKITPRO)/libnds
@@ -35,15 +41,12 @@ LIB_OBJ := \
 APP_OBJ := $(shell python3 main.py $(APP) $(BUILD)/app/)
 APP_SRC := $(addprefix build/$(APP)/,$(notdir $(APP_OBJ:.o=.c)))
 
-FLAG    += -Isrc -Ibuild/$(APP)
+FLAG    += -fno-strict-aliasing -Isrc -Ibuild/$(APP) $(OPT)
+ifneq ($(DEBUG),0)
+	FLAG    += -ggdb3 -D__DEBUG__
+endif
 ifneq ($(LLE),0)
 	FLAG    += -D__LLE__
-endif
-ifeq ($(DEBUG),0)
-	OPT     ?= -O2
-else
-	OPT     ?= -O0
-	FLAG    += -ggdb3 -D__DEBUG__
 endif
 
 ifeq ($(TARGET),native)
@@ -106,7 +109,8 @@ else ifeq ($(TARGET),3ds)
 	LIB     := -lpicaGL -lm -lctru
 endif
 
-CCFLAG  += -fno-strict-aliasing $(OPT) -Wall -Wextra -Wpedantic
+CCFLAG  += -Wall -Wextra
+WFLAG   := -Wno-uninitialized
 
 .PHONY: default native win32 gcn wii nds 3ds
 default: $(TARGET)
@@ -135,9 +139,8 @@ $(BUILD)/src/%.o: src/%.c build/$(APP)/app.h | $(BUILD)/src $(BUILD)/src/lib
 	$(CC) $(CCFLAG) -MMD -MP -c -o $@ $<
 
 -include $(APP_OBJ:.o=.d)
-$(BUILD)/app/%.o: CCFLAG += -Wno-maybe-uninitialized -Wno-uninitialized
 $(BUILD)/app/%.o: build/$(APP)/%.c | $(BUILD)/app
-	$(CC) $(CCFLAG) -MMD -MP -c -o $@ $<
+	$(CC) $(CCFLAG) $(WFLAG) -MMD -MP -c -o $@ $<
 
 $(APP_SRC): build/$(APP)/app.h
 build/$(APP)/app.h: main.py | build/$(APP)

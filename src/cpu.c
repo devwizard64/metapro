@@ -144,7 +144,7 @@ void *__wordswap(void *dst, const void *src, u32 size)
     while (size >= 4)
     {
         u16 a = _src[0];
-        u16 b = _src[0];
+        u16 b = _src[1];
         _dst[0] = b;
         _dst[1] = a;
         _dst += 2;

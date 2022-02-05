@@ -19,6 +19,15 @@
 #define PATH_DRAM   PATH_ROOT "dram.bin"
 #define PATH_INPUT  PATH_ROOT "input.bin"
 
+#ifdef APP_UCZL
+#define CPU_DRAM_SIZE   0xC00000
+#else
+#define CPU_DRAM_SIZE   0x400000
+#endif
+#define EEPROM_SIZE     (64*EEPROM_TYPE*EEPROM_TYPE)
+
+#define ARG_F(x)        (*((f32 *)&(x)))
+
 #ifdef __EB__
 #define IX      1
 #define AX_B    0
@@ -33,16 +42,6 @@
 #define wordswap        __wordswap
 #endif
 #define AX_W    0
-
-#ifdef APP_UCZL
-#define CPU_DRAM_SIZE   0xC00000
-#else
-#define CPU_DRAM_SIZE   0x400000
-#endif
-
-#define EEPROM_SIZE     (64*EEPROM_TYPE*EEPROM_TYPE)
-
-#define ARG_F(x)        (*((f32 *)&(x)))
 
 #if defined(__UNSME0_0021F4C0_C__) || defined(__UNSMC3_0020AAF0_C__)
 #define __tlb(addr)                                             \
@@ -124,36 +123,6 @@ extern PTR __tlb(PTR addr);
     *cpu_s32((addr)+0) = x.i[1^IX]; \
     *cpu_s32((addr)+4) = x.i[0^IX]; \
 }
-
-#ifdef __EB__
-#define __str_r(dst, src)   strcpy(dst, cpu_ptr(src))
-#define __str_w(dst, src)   strcpy(cpu_ptr(dst), src)
-#else
-#define __str_r(dst, src)       \
-{                               \
-    char *_dst = dst;           \
-    PTR   _src = src;           \
-    char  _c;                   \
-    do                          \
-    {                           \
-        _c = *cpu_s8(_src++);   \
-        *_dst++ = _c;           \
-    }                           \
-    while (_c != 0);            \
-}
-#define __str_w(dst, src)       \
-{                               \
-    PTR   _dst = dst;           \
-    char *_src = src;           \
-    char  _c;                   \
-    do                          \
-    {                           \
-        _c = *_src++;           \
-        *cpu_s8(_dst++) = _c;   \
-    }                           \
-    while (_c != 0);            \
-}
-#endif
 
 typedef union reg
 {

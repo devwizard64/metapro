@@ -695,7 +695,7 @@ static void rsp_vrndp(unused u32 inst)
     );
 }
 
-static void rsp_vmulq(u32 inst)
+static void rsp_vmulq(unused u32 inst)
 {
     edebug(
         "rsp: vmulq $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS
@@ -782,7 +782,7 @@ static void rsp_vrndn(unused u32 inst)
     );
 }
 
-static void rsp_vmacq(u32 inst)
+static void rsp_vmacq(unused u32 inst)
 {
     edebug(
         "rsp: vmacq $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS

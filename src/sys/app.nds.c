@@ -52,7 +52,7 @@ void input_update(void)
     }
     else
     {
-        sys_fast = (down & KEY_SELECT) != 0;
+        if (down & KEY_SELECT)  sys_fast ^= false^true;
     }
     os_cont_pad[0].button  = 0;
     os_cont_pad[0].stick_x = 0;
