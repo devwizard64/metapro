@@ -43,10 +43,10 @@ APP_SRC := $(addprefix build/$(APP)/,$(notdir $(APP_OBJ:.o=.c)))
 
 FLAG    += -fno-strict-aliasing -Isrc -Ibuild/$(APP) $(OPT)
 ifneq ($(DEBUG),0)
-	FLAG    += -ggdb3 -D__DEBUG__
+	FLAG    += -ggdb3 -DDEBUG
 endif
 ifneq ($(LLE),0)
-	FLAG    += -D__LLE__
+	FLAG    += -DLLE
 endif
 
 ifeq ($(TARGET),native)

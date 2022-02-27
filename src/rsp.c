@@ -3,7 +3,7 @@
 #include "cpu.h"
 #include "rsp.h"
 
-#ifdef __LLE__
+#ifdef LLE
 
 /* #define RSP_DEBUG */
 
@@ -104,7 +104,7 @@ static const u8 rsp_element[][8] =
     {7, 7, 7, 7, 7, 7, 7, 7},
 };
 
-#ifdef __DEBUG__
+#ifdef DEBUG
 static const char *const str_element[] =
 {
     "",

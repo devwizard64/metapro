@@ -1,7 +1,7 @@
 #include "types.h"
 #include "cpu.h"
 
-#ifndef __LLE__
+#ifndef LLE
 
 #include "abi.h"
 

@@ -1,7 +1,7 @@
 #include "types.h"
 #include "tm.h"
 
-#ifdef __DEBUG__
+#ifdef DEBUG
 
 #ifdef __NATIVE__
 #define tm_time()       clock()

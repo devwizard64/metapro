@@ -14,7 +14,7 @@ enum tm_index
     TM_LEN,
 };
 
-#ifdef __DEBUG__
+#ifdef DEBUG
 extern void tm_cpu_start(void);
 extern void tm_gsp_start(void);
 extern void tm_asp_start(void);

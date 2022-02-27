@@ -98,7 +98,7 @@ typedef u32 PTR;
 extern void eexit(void);
 #define wprint(...) fprintf(stderr, "warning: " __VA_ARGS__)
 #define eprint(...) {fprintf(stderr, "error: " __VA_ARGS__); eexit();}
-#ifdef __DEBUG__
+#ifdef DEBUG
 #define pdebug printf
 #define wdebug wprint
 #define edebug eprint

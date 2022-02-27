@@ -23,7 +23,7 @@ void lib_osSpTaskStartGo(void)
             rsp_gfxtask(task.ucode, &cpu_dram[task.data_ptr]);
             os_event(&os_event_table[OS_EVENT_DP]);
             break;
-    #ifdef __LLE__
+    #ifdef LLE
         default:
             rsp_main(&task);
             break;

@@ -6,9 +6,9 @@
 
 #ifndef __ASSEMBLER__
 
-#if defined(__NATIVE__) && defined(__DEBUG__)
+#if defined(__NATIVE__) && defined(DEBUG)
 #define PATH_ROOT   "app" SEP APP_PATH SEP
-#elif defined(__3DS__) && defined(__DEBUG__)
+#elif defined(__3DS__) && defined(DEBUG)
 #define PATH_ROOT   "sdmc:" SEP "3ds" SEP
 #else
 #define PATH_ROOT   ""
