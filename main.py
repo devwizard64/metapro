@@ -192,8 +192,7 @@ def op_shift():
         rs = "(%s & 0x%02X)" % (gpr[inst_rs], mask)
     else:
         sa = inst_sa
-        if inst_func in {0x3C, 0x3E, 0x3F}:
-            sa += 32
+        if inst_func in {0x3C, 0x3E, 0x3F}: sa += 32
         rs = "%d" % sa
     op, td, t = {
         0x00: ("<<", "(s32)", "(u32)"),
@@ -346,10 +345,8 @@ def op_jal():
     addr += 4
     ln, e = op_process()
     l = ln[0][1] if len(ln) > 0 else ""
-    if jdst in app.lib:
-        line = "    lib_%s();\n" % app.lib[jdst]
-    else:
-        line = "    app_%08X();\n" % jdst
+    if jdst in app.lib: line = "    lib_%s();\n" % app.lib[jdst]
+    else:               line = "    app_%08X();\n" % jdst
     return [(a, l), (addr, line)], end
 
 def op_b():
@@ -396,48 +393,41 @@ def op_b():
                 }[inst_op]
                 if op_end(): end = addr >= inst_maxb
             bc = "%s %s %s" % (rs, op, rt)
+            if rs == rt:
+                if op in {"==", "<=", ">="}: bc = "1"
+                if op in {"!=", "<",  ">" }: bc = "0"
         bdst = inst_bdst
     btbl.add(bdst)
     addr += 4
     ln, e = op_process()
     l = ln[0][1] if len(ln) > 0 else ""
-    line = []
-    ln = (
-        "    if (%s)\n"
-        "    {\n"
-    ) % bc
+    ln = ""
     if l != "":
-        ln += "    " + l
-    ln += (
-        "        goto _%08X;\n"
-        "    }\n"
-    ) % bdst
-    if l != "" and (jt & 2):
-        ln += (
-            "    else\n"
+        lb = (
+            "    if (%s)\n"
             "    {\n"
-        )
-        # b
-        if jt == 2:
-            line.append((addr-4, ln))
-            ln = (
-                "    " + l +
-                "    }\n"
+            "    %s"
+            "        goto _%08X;\n"
+            "    }\n"
+        ) % (bc, l, bdst)
+        if jt & 2:
+            lb += (
+                "    else\n"
+                "    {\n"
             )
-            line.append((addr, ln))
-        # bl
-        if jt == 3:
-            ln += (
-                "        goto b_%08X;\n"
-                "    }\n"
-            ) % (addr+4)
-            line.append((addr-4, ln))
-            ln = l + ("b_%08X:;\n" % (addr+4))
-            line.append((addr, ln))
+            # b
+            if jt == 2:
+                ln = "    " + l + "    }\n"
+            # bl
+            if jt == 3:
+                lb += (
+                    "        goto b_%08X;\n"
+                    "    }\n"
+                ) % (addr+4)
+                ln = l + ("b_%08X:;\n" % (addr+4))
     else:
-        line.append((addr-4, ln))
-        line.append((addr, ""))
-    return line, end
+        lb = "    if (%s) goto _%08X;\n" % (bc, bdst)
+    return [(addr-4, lb), (addr, ln)], end
 
 def op_bal():
     global addr
@@ -448,10 +438,8 @@ def op_bal():
     addr += 4
     ln, end = op_process()
     l = ln[0][1] if len(ln) > 0 else ""
-    if bdst in app.lib:
-        line = "    lib_%s();\n" % app.lib[bdst]
-    else:
-        line = "    app_%08X();\n" % bdst
+    if bdst in app.lib: line = "    lib_%s();\n" % app.lib[bdst]
+    else:               line = "    app_%08X();\n" % bdst
     return [(a, l), (addr, line)], False
 
 def op_arithi():
@@ -497,7 +485,7 @@ def op_lui():
 def op_mfc1():
     global reg_flag
     reg_flag |= 1 << inst_rt
-    line = "    %s = f%d.iu[%d^IX];\n" % (
+    line = "    %s = f%d.i[%d^IX];\n" % (
         gpr[inst_rt], inst_rd & ~1, inst_rd & 1
     )
     return [(addr, line)], False
@@ -506,8 +494,8 @@ def op_mtc1():
     global reg_flag
     reg_flag |= (1 << 32) << (inst_rd >> 1)
     rd = {
-        0x04: "iu[%d^IX]" % (inst_rd & 1), # mtc1
-        0x05: "llu",                       # dmtc1
+        0x04: "i[%d^IX]" % (inst_rd & 1), # mtc1
+        0x05: "ll",                       # dmtc1
     }[inst_rs]
     line = "    f%d.%s = %s;\n" % (inst_rd & ~1, rd, gpr[inst_rt])
     return [(addr, line)], False
@@ -1008,7 +996,8 @@ def main(argv):
     path_build = os.path.join("build", argv[1])
     with open(os.path.join(path_app, "app.bin"), "rb") as f: data = f.read()
     if app.patch != None: data = app.patch(data)
-    app_h = (
+    h = open(os.path.join(path_build, "app.h"), "w")
+    h.write((
         "#ifndef __APP_H__\n"
         "#define __APP_H__\n"
         "\n"
@@ -1016,21 +1005,10 @@ def main(argv):
         "\n"
         "#define APP_U%c%c%c\n"
         "#define APP_%c%d\n"
-    ) % struct.unpack(">59xBBBBB", data[:0x40])
-    if len(app.dcall) > 0: app_h += "#define APP_DCALL\n"
-    if len(app.cache) > 0: app_h += "#define APP_CACHE\n"
-    s = ""
-    r = 3*[0]
-    for flag, reg in reg_cpu+reg_fpu+reg_lohi:
-        if app.reg & flag:
-            if   flag & 0x00010000200000FC: i = 0
-            elif flag & 0x00020000DFFFFF03: i = 1
-            elif flag & 0x0000FFFF00000000: i = 2
-            s += "#define %s cpu.%s[%s]\n" % (
-                reg.ljust(15), ("arg", "ext", "reg")[i], r[i]
-            )
-            r[i] += 1
-    app_h += (
+    ) % struct.unpack(">59xBBBBB", data[:0x40]))
+    if len(app.dcall) > 0: h.write("#define APP_DCALL\n")
+    if len(app.cache) > 0: h.write("#define APP_CACHE\n")
+    h.write((
         "%s"
         "\n"
         "#define APP_PATH        \"%s\"\n"
@@ -1040,7 +1018,21 @@ def main(argv):
         "#define APP_STACK       0x%08X\n"
         "#define app_main        app_%08X\n"
         "\n"
-        "%s"
+    ) % (
+        app.header,
+        argv[1], app.entry, app.bss[0], app.bss[1], app.sp, app.main,
+    ))
+    r = 3*[0]
+    for flag, reg in reg_cpu+reg_fpu+reg_lohi:
+        if app.reg & flag:
+            if   flag & 0x00010000200000FC: i = 0
+            elif flag & 0x00020000DFFFFF03: i = 1
+            elif flag & 0x0000FFFF00000000: i = 2
+            h.write("#define %s cpu.%s[%s]\n" % (
+                reg.ljust(15), ("arg", "ext", "reg")[i], r[i]
+            ))
+            r[i] += 1
+    h.write((
         "#define CPU_ARG_LEN     %d\n"
         "#define CPU_EXT_LEN     %d\n"
         "#define CPU_REG_LEN     %d\n"
@@ -1052,21 +1044,16 @@ def main(argv):
         "}\n"
         "CALL;\n"
         "\n"
-    ) % (
-        app.header,
-        argv[1], app.entry, app.bss[0], app.bss[1], app.sp, app.main,
-        s, r[0], r[1], r[2],
+    ) % (r[0], r[1], r[2]))
+    if len(app.cache) > 0: h.write(
+        "typedef struct cache\n"
+        "{\n"
+        "    PTR addr;\n"
+        "    u32 size;\n"
+        "}\n"
+        "CACHE;\n"
+        "\n"
     )
-    if len(app.cache) > 0:
-        app_h += (
-            "typedef struct cache\n"
-            "{\n"
-            "    PTR addr;\n"
-            "    u32 size;\n"
-            "}\n"
-            "CACHE;\n"
-            "\n"
-        )
     g_addr = set()
     d_addr = set()
     for src, start, end, dst, pat, xpr, ins in app.segment:
@@ -1082,8 +1069,7 @@ def main(argv):
                 if inst != 0x00000000: break
             #     f = True
                 addr += 4
-            if addr >= end:
-                break
+            if addr >= end: break
             # if f: print("    0x%08X," % addr)
             dst.append(addr)
             inst_maxb = 0
@@ -1103,90 +1089,88 @@ def main(argv):
         g_addr |= dst
     g_addr = sorted(g_addr)
     d_addr = sorted(d_addr)
-    app_h += "extern const CALL call_table[%d+1];\n" % len(g_addr)
+    h.write("extern const CALL call_table[%d+1];\n" % len(g_addr))
     if len(app.dcall) > 0:
-        app_h += "extern const PTR dcall_table[%d+1];\n" % len(app.dcall)
+        h.write("extern const PTR dcall_table[%d+1];\n" % len(app.dcall))
     if len(app.cache) > 0:
-        app_h += "extern const CACHE cache_table[%d];\n" % len(app.cache)
-    app_h += "\n"
-    app_c = (
+        h.write("extern const CACHE cache_table[%d];\n" % len(app.cache))
+    h.write("\n")
+    f = open(os.path.join(path_build, "app.c"), "w")
+    f.write((
         "#include \"types.h\"\n"
         "#include \"app.h\"\n"
         "#include \"cpu.h\"\n"
         "\n"
         "const CALL call_table[%d+1] =\n"
         "{\n"
-    ) % len(g_addr)
-    for addr in g_addr:
-        app_c += "    {0x%08XU, app_%08X},\n" % (addr, addr)
-    app_c += (
+    ) % len(g_addr))
+    for addr in g_addr: f.write("    {0x%08XU, app_%08X},\n" % (addr, addr))
+    f.write(
         "    {0xFFFFFFFFU, NULL},\n"
         "};\n"
     )
     if len(app.dcall) > 0:
-        app_c += (
+        f.write((
             "\n"
             "const PTR dcall_table[%d+1] =\n"
             "{\n"
-        ) % len(app.dcall)
-        for addr in app.dcall:
-            app_c += "    0x%08XU,\n" % (addr & 0x1FFFFFFF)
-        app_c += (
+        ) % len(app.dcall))
+        for addr in app.dcall: f.write("    0x%08XU,\n" % (addr & 0x1FFFFFFF))
+        f.write(
             "    0xFFFFFFFFU,\n"
             "};\n"
         )
-    app_c += "\n"
+    f.write("\n")
     if len(app.cache) > 0:
-        app_c += (
+        f.write((
             "const CACHE cache_table[%d] =\n"
             "{\n"
-        ) % len(app.cache)
+        ) % len(app.cache))
         for start, end in app.cache:
-            app_c += "    {0x%08XU, 0x%08XU},\n" % (start, end-start)
-        app_c += "};\n"
+            f.write("    {0x%08XU, 0x%08XU},\n" % (start, end-start))
+        f.write("};\n")
     for addr in d_addr:
         name = "void app_%08X(void)" % addr
-        app_h += "extern %s;\n" % name
-        app_c += (
+        h.write("extern %s;\n" % name)
+        f.write((
             "\n"
             "%s\n"
             "{\n"
             "    switch (__dcall(0x%08XU))\n"
             "    {\n"
-        ) % (name, addr)
+        ) % (name, addr))
         for src, start, end, dst, pat, xpr, ins in app.segment:
             if addr in dst:
-                app_c += "        case 0x%08XU: app_%08X_%08X(); break;\n" % (
+                f.write("        case 0x%08XU: app_%08X_%08X(); break;\n" % (
                     src, addr, src
-                )
-        app_c += (
+                ))
+        f.write(
             "    }\n"
             "}\n"
         )
-    with open(os.path.join(path_build, "app.c"), "w") as f: f.write(app_c)
+    f.close()
     jtbl = set()
     for src, start, end, dst, pat, xpr, ins in app.segment:
         offs = start - src
-        app_c = (
+        f = open(os.path.join(path_build, "%08X.c" % src), "w")
+        f.write((
             "#define __%s_%08X_C__\n"
             "#include \"types.h\"\n"
             "#include \"app.h\"\n"
             "#include \"cpu.h\"\n"
             "#include \"sys.h\"\n"
             "#include \"lib.h\"\n"
-        ) % (argv[1], src)
+        ) % (argv[1], src))
         for addr in dst:
             addr_s = addr
-            if addr in d_addr:
-                name = "void app_%08X_%08X(void)" % (addr, src)
-            else:
-                name = "void app_%08X(void)" % addr
-            app_h += "extern %s;\n" % name
-            app_c += (
+            if addr in d_addr:  name = "void app_%08X_%08X(void)" % (addr, src)
+            else:               name = "void app_%08X(void)" % addr
+            h.write("extern %s;\n" % name)
+            f.write((
                 "\n"
                 "%s\n"
                 "{\n"
-            ) % name
+            ) % name)
             inst_maxb = 0
             reg_flag = chk_flag = app.reg
             rll_flag = 0
@@ -1202,33 +1186,32 @@ def main(argv):
                 addr += 4
                 if end: break
             if jr:
-                app_c += (
+                f.write(
                     "    static void *const jr[] =\n"
                     "    {\n"
                 )
                 for addr in range(addr_s, addr, 4):
-                    app_c += "        &&_%08X,\n" % addr
+                    f.write("        &&_%08X,\n" % addr)
                     btbl.add(addr)
-                app_c += "    };\n"
+                f.write("    };\n")
             for t, reg in reg_table:
                 for flag, r in reg:
                     if app.reg & flag: continue
                     if (reg_flag | chk_flag) & flag:
-                        app_c += "    unused %s %s;\n" % (
+                        f.write("    unused %s %s;\n" % (
                             "s64" if rll_flag & flag else t, r
-                        )
+                        ))
             for addr, ln in line:
-                if addr in btbl:    app_c += "_%08X:;\n" % addr
-                if addr in ins:     app_c += ins[addr]
-                app_c += ln
-            app_c += "}\n"
-        with open(os.path.join(path_build, "%08X.c" % src), "w") as f:
-            f.write(app_c)
-    app_h += (
+                if addr in btbl:    f.write("_%08X:;\n" % addr)
+                if addr in ins:     f.write(ins[addr])
+                f.write(ln)
+            f.write("}\n")
+        f.close()
+    h.write(
         "\n"
         "#endif /* __APP_H__ */\n"
     )
-    with open(os.path.join(path_build, "app.h"), "w") as f: f.write(app_h)
+    h.close()
     code = 0
     for addr in sorted(jtbl):
         for src, start, end, dst, pat, xpr, ins in app.segment:

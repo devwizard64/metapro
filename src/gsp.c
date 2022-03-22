@@ -137,6 +137,11 @@ TXTCACHE;
 
 typedef struct vtxf
 {
+#ifdef GSP_SWVTX
+    f32 x;
+    f32 y;
+    f32 z;
+#endif
     f32 s;
     f32 t;
     u8  shade[4];
@@ -622,7 +627,11 @@ static void gsp_flush_fog(void)
 }
 
 #define gsp_flush_mp()          gsp_set_mp(MP)
+#ifdef GSP_SWVTX
+#define gsp_flush_mm()
+#else
 #define gsp_flush_mm()          gsp_set_mm(MM)
+#endif
 #define gsp_flush_vp()          \
     gsp_set_vp(                                 \
         gsp_viewport.x - gsp_viewport.w,        \
@@ -689,7 +698,9 @@ static void gdp_tri(const u8 *t)
 #endif
     for (i = 0; i < 3; i++)
     {
+    #ifndef GSP_SWVTX
         VTX  *v  = &gsp_vtx_buf[t[i]];
+    #endif
         VTXF *vf = &gsp_vtxf_buf[t[i]];
         float s = gdp_texture_scale[0] * vf->s;
         float t = gdp_texture_scale[1] * vf->t;
@@ -702,17 +713,29 @@ static void gdp_tri(const u8 *t)
     #ifndef GSP_SWFOG
         glFogCoordf(vf->shade[3]);
     #endif
+    #ifdef GSP_SWVTX
+        glVertex3f(vf->x, vf->y, vf->z);
+    #else
         glVertex3s(v->x, v->y, v->z);
     #endif
+    #endif
     #ifdef GEKKO
+    #ifdef GSP_SWVTX
+        GX_Position3f32(vf->x, vf->y, vf->z);
+    #else
         GX_Position3s16(v->x, v->y, v->z);
+    #endif
         GX_Color4u8(col[0], col[1], col[2], col[3]);
         GX_TexCoord2f32(s, t);
     #endif
     #ifdef __NDS__
         glColor3b(col[0], col[1], col[2]);
         glTexCoord2f(s, t);
+    #ifdef GSP_SWVTX
+        glVertex3v16(vf->x, vf->y, vf->z);
+    #else
         glVertex3v16(v->x, v->y, v->z);
+    #endif
     #endif
     }
 #if defined(__NATIVE__) || defined(__NDS__) || defined(__3DS__)
@@ -747,9 +770,11 @@ static void gsp_start_rect(void)
 {
     if (gdp_rect == 0)
     {
+    #ifndef GSP_SWVTX
         f32 mf[4][4];
         mtx_identity(mf);
         gsp_set_mm(mf);
+    #endif
         gsp_set_vp(0, 1280, 0, 960);
         gsp_set_cull(G_CULL_BACK);
     }
@@ -808,7 +833,9 @@ static void gsp_flush_rect(void)
 static void gsp_fillrect(u32 w0, u32 w1)
 {
 #ifndef __NDS__
+#ifndef GSP_SWVTX
     VTX  *v  = &gsp_vtx_buf[GSP_VTX_LEN];
+#endif
     VTXF *vf = &gsp_vtxf_buf[GSP_VTX_LEN];
     int xh = w0 >> 12 & 0xFFF;
     int yh = w0 >>  0 & 0xFFF;
@@ -826,11 +853,15 @@ static void gsp_fillrect(u32 w0, u32 w1)
     }
     for (i = 0; i < 4; i++)
     {
+    #ifdef GSP_SWVTX
+        vf[i].x = i == 0 || i == 3 ? xl : xh;
+        vf[i].y = i == 2 || i == 3 ? yl : yh;
+        vf[i].z = 0;
+    #else
         v[i].x = i == 0 || i == 3 ? xl : xh;
         v[i].y = i == 2 || i == 3 ? yl : yh;
         v[i].z = 0;
-        v[i].s = 0;
-        v[i].t = 0;
+    #endif
         vf[i].shade[0] = r;
         vf[i].shade[1] = g;
         vf[i].shade[2] = b;
@@ -847,7 +878,9 @@ static void gsp_fillrect(u32 w0, u32 w1)
 static void gsp_texrect(void)
 {
 #ifndef __NDS__
+#ifndef GSP_SWVTX
     VTX  *v  = &gsp_vtx_buf[GSP_VTX_LEN];
+#endif
     VTXF *vf = &gsp_vtxf_buf[GSP_VTX_LEN];
     int   xh = (s16)(gdp_texrect[0] >> 8) >> 4;
     int   yh = (s16)(gdp_texrect[0] << 4) >> 4;
@@ -897,9 +930,15 @@ static void gsp_texrect(void)
     vf[3].t = tl;
     for (i = 0; i < 4; i++)
     {
+    #ifdef GSP_SWVTX
+        vf[i].x = i == 0 || i == 3 ? xl : xh;
+        vf[i].y = i == 2 || i == 3 ? yl : yh;
+        vf[i].z = 0;
+    #else
         v[i].x = i == 0 || i == 3 ? xl : xh;
         v[i].y = i == 2 || i == 3 ? yl : yh;
         v[i].z = 0;
+    #endif
         vf[i].shade[0] = 0xFF;
         vf[i].shade[1] = 0xFF;
         vf[i].shade[2] = 0xFF;
@@ -913,7 +952,9 @@ static void gsp_texrect(void)
 #ifdef GSP_F3DEX2
 static void gsp_bg(uObjBg *bg)
 {
+#ifndef GSP_SWVTX
     VTX  *v  = &gsp_vtx_buf[GSP_VTX_LEN];
+#endif
     VTXF *vf = &gsp_vtxf_buf[GSP_VTX_LEN];
     TILE *tile = &gdp_tile[0];
     void *timg = gsp_addr(bg->image_ptr);
@@ -940,9 +981,15 @@ static void gsp_bg(uObjBg *bg)
     gsp_start_texrect();
     for (i = 0; i < 4; i++)
     {
+    #ifdef GSP_SWVTX
+        vf[i].x  = i == 0 || i == 3 ? xl : xh;
+        vf[i].y  = i == 2 || i == 3 ? yl : yh;
+        vf[i].z  = 0;
+    #else
         v[i].x  = i == 0 || i == 3 ? xl : xh;
         v[i].y  = i == 2 || i == 3 ? yl : yh;
         v[i].z  = 0;
+    #endif
         vf[i].s = i == 0 || i == 3 ?  0 :  1;
         vf[i].t = i == 2 || i == 3 ?  0 :  1;
         vf[i].shade[0] = 0xFF;
@@ -1691,6 +1738,9 @@ void gsp_cache(void)
 
 void gsp_update(PTR ucode, u32 *dl)
 {
+#ifdef GSP_SWVTX
+    f32 mf[4][4];
+#endif
 #ifdef APP_UNK4
     if (gsp_new_cache)
 #endif
@@ -1728,6 +1778,10 @@ void gsp_update(PTR ucode, u32 *dl)
 #endif
 #ifdef __3DS__
     pglSelectScreen(GFX_TOP, GFX_LEFT);
+#endif
+#ifdef GSP_SWVTX
+    mtx_identity(mf);
+    gsp_set_mm(mf);
 #endif
     gsp_new_texture = false;
     gsp_start(ucode, dl);

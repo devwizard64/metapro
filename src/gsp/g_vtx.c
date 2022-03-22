@@ -53,8 +53,19 @@ static void gsp_g_vtx(u32 w0, u32 w1)
     }
     do
     {
+        float x;
+        float y;
+        float z;
         int s;
         int t;
+    #ifdef GSP_SWVTX
+        x = v->x;
+        y = v->y;
+        z = v->z;
+        vf->x = MDOT4(MM, 0);
+        vf->y = MDOT4(MM, 1);
+        vf->z = MDOT4(MM, 2);
+    #endif
         if (gsp_geometry_mode & G_TEXTURE_GEN)
         {
             LIGHTF *lx = &gsp_lightf_buf[0];
@@ -78,13 +89,13 @@ static void gsp_g_vtx(u32 w0, u32 w1)
         vf->t = t;
         if (gsp_geometry_mode & G_LIGHTING)
         {
-            float x = v->r;
-            float y = v->g;
-            float z = v->b;
-            uint  r = gsp_light_buf[gsp_light_no].col[0].r;
-            uint  g = gsp_light_buf[gsp_light_no].col[0].g;
-            uint  b = gsp_light_buf[gsp_light_no].col[0].b;
-            uint  i;
+            uint r = gsp_light_buf[gsp_light_no].col[0].r;
+            uint g = gsp_light_buf[gsp_light_no].col[0].g;
+            uint b = gsp_light_buf[gsp_light_no].col[0].b;
+            uint i;
+            x = v->r;
+            y = v->g;
+            z = v->b;
             for (i = 2; i < gsp_light_no; i++)
             {
                 LIGHTF *lf = &gsp_lightf_buf[i];
@@ -112,15 +123,14 @@ static void gsp_g_vtx(u32 w0, u32 w1)
     #if defined(GSP_SWFOG) || defined(__NATIVE__)
         if (gsp_geometry_mode & G_FOG)
         {
-            float x = v->x;
-            float y = v->y;
-            float z = v->z;
-            float nz = MDOT4(gsp_mtx_mvp, 2);
-            float nw = MDOT4(gsp_mtx_mvp, 3);
-            int   a;
-            z = nz/nw;
-            if (z > 1) z = -1;
-            a = gsp_fog_o + (int)(gsp_fog_m*z);
+            float d;
+            int a;
+            x = v->x;
+            y = v->y;
+            z = v->z;
+            d = MDOT4(gsp_mtx_mvp, 2) / MDOT4(gsp_mtx_mvp, 3);
+            if (d > 1) d = -1;
+            a = gsp_fog_o + (int)(gsp_fog_m*d);
             if (a < 0x00) a = 0x00;
             if (a > 0xFF) a = 0xFF;
             vf->shade[3] = a;
