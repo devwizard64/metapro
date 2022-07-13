@@ -199,7 +199,7 @@ LIB_SE(UCZLJ0_801D2CB0)
 /* UNK4E0 */
 #define lib_osStopThread() {thread_stop(thread_find(a0));}
 #define lib_osEepromWrite() \
-    {eeprom_write(a1, a2, 8); v0 = 0;}
+    {eeprom_write(a1, cpu_ptr(a2), 8); v0 = 0;}
 #define lib_osViGetNextFramebuffer() {v0 = video_buf;}
 #define lib_osEPiLinkHandle() {v0 = 0;}
 #define lib_osGetThreadPri() {v0 = thread_find(a0)->pri;}
