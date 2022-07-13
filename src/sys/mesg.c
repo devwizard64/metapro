@@ -1,5 +1,4 @@
-EVENT os_event_table[OS_NUM_EVENTS] = {0};
-EVENT os_event_vi = {0};
+__OSEventState __osEventStateTab[OS_NUM_EVENTS] = {0};
 
 #if 0
 static void mesg_print(OSMesgQueue *mq)
@@ -68,7 +67,7 @@ int mesg_recv(OSMesgQueue *mq, PTR msg, int flag)
     return 0;
 }
 
-void os_event(EVENT *event)
+void os_event(__OSEventState *es)
 {
-    if (event->mq != NULL) mesg_send(event->mq, event->msg, OS_MESG_NOBLOCK);
+    if (es->mq != NULLPTR) mesg_send(cpu_ptr(es->mq), es->msg, OS_MESG_NOBLOCK);
 }

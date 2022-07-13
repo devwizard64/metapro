@@ -14,9 +14,6 @@ const u8  cpu_l_shift[]  = { 0,  8, 16, 24};
 const u8  cpu_r_shift[]  = {24, 16,  8,  0};
 
 u8 cpu_dram[CPU_DRAM_SIZE];
-#if EEPROM_SIZE > 0
-u64 eeprom[EEPROM_SIZE];
-#endif
 CPU cpu;
 
 #ifdef APP_DCALL
@@ -39,17 +36,17 @@ PTR __tlb(PTR addr)
 }
 #endif
 
-void __break(unused uint code)
+void __break(unused int code)
 {
 #ifndef APP_UNK4
     if (os_thread != NULL)
     {
-        os_event(&os_event_table[OS_EVENT_FAULT]);
+        os_event(&__osEventStateTab[OS_EVENT_CPU_BREAK]);
         thread_destroy(os_thread);
     }
     else
     {
-        exit(EXIT_FAILURE);
+        exit(1);
     }
 #endif
 }
@@ -169,10 +166,7 @@ void dma(void *dst, PTR src, u32 size)
     {
         PTR app  = dcall_table[i];
         PTR addr = __ptr(dst);
-        if (app >= addr && app < addr+size)
-        {
-            dcall_ptr[i] = src;
-        }
+        if (app >= addr && app < addr+size) dcall_ptr[i] = src;
     }
 #endif
 #ifdef APP_CACHE
@@ -186,36 +180,50 @@ void dma(void *dst, PTR src, u32 size)
         }
     }
 #endif
-    f = fopen(PATH_APP, "rb");
-    fseek(f, src, SEEK_SET);
-    fread(dst, 1, size, f);
-    cpu_swap(dst, dst, size);
-    fclose(f);
-    gsp_cache();
-}
-
-#if EEPROM_SIZE > 0
-static void eeprom_read(void)
-{
-    FILE *f = fopen(PATH_EEPROM, "rb");
-    if (f != NULL)
+    if ((f = fopen(PATH_APP, "rb")) != NULL)
     {
-        fread(eeprom, 1, sizeof(eeprom), f);
+        fseek(f, src, SEEK_SET);
+        fread(dst, 1, size, f);
         fclose(f);
+        cpu_swap(dst, dst, size);
     }
     else
     {
-        memset(eeprom, 0xFF, sizeof(eeprom));
+        eprint("could not read '" PATH_APP "'\n");
+    }
+#if defined(GSP_F3D) || defined(GSP_F3DEX2)
+    gsp_cache();
+#endif
+}
+
+#if EEPROM
+void eeprom_read(void *dst, uint src, u32 size)
+{
+    FILE *f;
+    if ((f = fopen(PATH_EEPROM, "rb")) != NULL)
+    {
+        fseek(f, 8*src, SEEK_SET);
+        fread(dst, 1, size, f);
+        fclose(f);
+        byteswap(dst, dst, size);
+    }
+    else
+    {
+        memset(dst, ~0, size);
     }
 }
 
-void eeprom_write(void)
+void eeprom_write(uint dst, const void *src, u32 size)
 {
-    FILE *f = fopen(PATH_EEPROM, "wb");
-    if (f != NULL)
+    FILE *f;
+    if ((f = fopen(PATH_EEPROM, "r+b")) != NULL)
     {
-        fwrite(eeprom, 1, sizeof(eeprom), f);
+        char *data = malloc(size);
+        byteswap(data, src, size);
+        fseek(f, 8*dst, SEEK_SET);
+        fwrite(data, 1, size, f);
         fclose(f);
+        free(data);
     }
     else
     {
@@ -224,36 +232,70 @@ void eeprom_write(void)
 }
 #endif
 
+#ifdef SRAM
+void sram_read(void *dst, PTR src, u32 size)
+{
+    FILE *f;
+    if ((f = fopen(PATH_SRAM, "rb")) != NULL)
+    {
+        fseek(f, src, SEEK_SET);
+        fread(dst, 1, size, f);
+        fclose(f);
+    }
+    else
+    {
+        memset(dst, ~0, size);
+    }
+}
+
+void sram_write(PTR dst, const void *src, u32 size)
+{
+    FILE *f;
+    if ((f = fopen(PATH_SRAM, "r+b")) != NULL)
+    {
+        fseek(f, dst, SEEK_SET);
+        fwrite(src, 1, size, f);
+        fclose(f);
+    }
+    else
+    {
+        wdebug("could not write '" PATH_SRAM "'\n");
+    }
+}
+#endif
+
 void cpu_init(void)
 {
     FILE *f;
-    u32 mode;
-#ifdef APP_CACHE
-    uint i;
-#endif
-    f = fopen(PATH_APP, "rb");
-    if (f == NULL) eprint("could not read '" PATH_APP "'\n");
-    fread(&mode, 1, sizeof(mode), f);
-    switch (mode)
+    if ((f = fopen(PATH_APP, "rb")) != NULL)
     {
-        case 0x40123780: cpu_swap = __byteswap; break;
-        case 0x37804012: cpu_swap = __halfswap; break;
-        case 0x12408037: cpu_swap = __wordswap; break;
+    #ifdef APP_CACHE
+        uint i;
+    #endif
+        u32 mode;
+        fread(&mode, 1, sizeof(mode), f);
+        switch (mode)
+        {
+            case 0x40123780: cpu_swap = __byteswap; break;
+            case 0x37804012: cpu_swap = __halfswap; break;
+            case 0x12408037: cpu_swap = __wordswap; break;
+        }
+    #ifdef APP_CACHE
+        for (i = 0; i < lenof(cache_ptr); i++)
+        {
+            const CACHE *cache = &cache_table[i];
+            fseek(f, cache->addr, SEEK_SET);
+            cache_ptr[i] = malloc(cache->size);
+            fread(cache_ptr[i], 1, cache->size, f);
+            cpu_swap(cache_ptr[i], cache_ptr[i], cache->size);
+        }
+    #endif
+        fclose(f);
     }
-#ifdef APP_CACHE
-    for (i = 0; i < lenof(cache_ptr); i++)
+    else
     {
-        const CACHE *cache = &cache_table[i];
-        fseek(f, cache->addr, SEEK_SET);
-        cache_ptr[i] = malloc(cache->size);
-        fread(cache_ptr[i], 1, cache->size, f);
-        cpu_swap(cache_ptr[i], cache_ptr[i], cache->size);
+        eprint("could not read '" PATH_APP "'\n");
     }
-#endif
-    fclose(f);
-#if EEPROM_SIZE > 0
-    eeprom_read();
-#endif
 }
 
 void cpu_exit(void)
@@ -266,17 +308,14 @@ void cpu_exit(void)
 
 void cpu_save(void)
 {
-    FILE *f = fopen(PATH_DRAM, "wb");
-    if (f != NULL)
+    FILE *f;
+    if ((f = fopen(PATH_DRAM, "wb")) != NULL)
     {
         fwrite(cpu_dram, 1, sizeof(cpu_dram), f);
     #ifdef APP_DCALL
         fwrite(dcall_ptr, 1, sizeof(dcall_ptr), f);
     #endif
         fclose(f);
-    #if EEPROM_SIZE > 0
-        eeprom_write();
-    #endif
     }
     else
     {
@@ -286,18 +325,17 @@ void cpu_save(void)
 
 void cpu_load(void)
 {
-    FILE *f = fopen(PATH_DRAM, "rb");
-    if (f != NULL)
+    FILE *f;
+    if ((f = fopen(PATH_DRAM, "rb")) != NULL)
     {
         fread(cpu_dram, 1, sizeof(cpu_dram), f);
     #ifdef APP_DCALL
         fread(dcall_ptr, 1, sizeof(dcall_ptr), f);
     #endif
         fclose(f);
-    #if EEPROM_SIZE > 0
-        eeprom_read();
-    #endif
+    #if defined(GSP_F3D) || defined(GSP_F3DEX2)
         gsp_cache();
+    #endif
     }
     else
     {

@@ -6,15 +6,15 @@ void mtx_read(f32 *dst, const s16 *src)
     do
     {
     #ifdef __EB__
-        dst[0x00] = (1.0F/0x10000) * (s32)(src[0x00] << 16 | (u16)src[0x10]);
-        dst[0x01] = (1.0F/0x10000) * (s32)(src[0x01] << 16 | (u16)src[0x11]);
+        dst[0] = (1.0F/0x10000) * (s32)(src[0x00] << 16 | (u16)src[0x10]);
+        dst[1] = (1.0F/0x10000) * (s32)(src[0x01] << 16 | (u16)src[0x11]);
     #else
-        dst[0x00] = (1.0F/0x10000) * (s32)(src[0x01] << 16 | (u16)src[0x11]);
-        dst[0x01] = (1.0F/0x10000) * (s32)(src[0x00] << 16 | (u16)src[0x10]);
+        dst[0] = (1.0F/0x10000) * (s32)(src[0x01] << 16 | (u16)src[0x11]);
+        dst[1] = (1.0F/0x10000) * (s32)(src[0x00] << 16 | (u16)src[0x10]);
     #endif
-        dst += 0x02;
-        src += 0x02;
-        cnt -= 0x02;
+        dst += 2;
+        src += 2;
+        cnt -= 2;
     }
     while (cnt > 0);
 }
@@ -24,8 +24,8 @@ void mtx_write(s16 *dst, const f32 *src)
     uint cnt = 4*4;
     do
     {
-        s32 a = 0x10000 * src[0x00];
-        s32 b = 0x10000 * src[0x01];
+        s32 a = 0x10000 * src[0];
+        s32 b = 0x10000 * src[1];
     #ifdef __EB__
         dst[0x00] = a >> 16;
         dst[0x01] = b >> 16;
@@ -37,19 +37,19 @@ void mtx_write(s16 *dst, const f32 *src)
         dst[0x10] = b >>  0;
         dst[0x11] = a >>  0;
     #endif
-        dst += 0x02;
-        src += 0x02;
-        cnt -= 0x02;
+        dst += 2;
+        src += 2;
+        cnt -= 2;
     }
     while (cnt > 0);
 }
 
 void mtx_cat(f32 mf[4][4], f32 a[4][4], f32 b[4][4])
 {
-    uint y;
+    int y;
+    int x;
     for (y = 0; y < 4; y++)
     {
-        uint x;
         for (x = 0; x < 4; x++)
         {
             mf[y][x] =

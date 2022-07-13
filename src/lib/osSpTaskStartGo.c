@@ -19,10 +19,12 @@ void lib_osSpTaskStartGo(void)
     task.yield_data_ptr     = __tlb(task.yield_data_ptr);
     switch (task.type)
     {
+    #if defined(GSP_F3D) || defined(GSP_F3DEX2)
         case M_GFXTASK:
             rsp_gfxtask(task.ucode, &cpu_dram[task.data_ptr]);
-            os_event(&os_event_table[OS_EVENT_DP]);
+            os_event(&__osEventStateTab[OS_EVENT_DP]);
             break;
+    #endif
     #ifdef LLE
         default:
             rsp_main(&task);
@@ -42,9 +44,9 @@ void lib_osSpTaskStartGo(void)
             break;
     #endif
         default:
-            wdebug("unknown task %d\n", task.type);
+            wdebug("unknown task %u\n", task.type);
             break;
     #endif
     }
-    os_event(&os_event_table[OS_EVENT_SP]);
+    os_event(&__osEventStateTab[OS_EVENT_SP]);
 }

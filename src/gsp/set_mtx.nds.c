@@ -1,6 +1,6 @@
 static void mtx_cvt(int *dst, const f32 *src)
 {
-    uint i;
+    int i;
     for (i = 0; i < 16; i++) dst[i] = floattof32(src[i]);
 }
 

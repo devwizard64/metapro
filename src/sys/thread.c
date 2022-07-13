@@ -92,13 +92,13 @@ void thread_init(PTR addr, s32 id, PTR entry, s32 arg, s32 s, u32 pri)
     thread->stack   = malloc(THREAD_STACK_SIZE);
 #endif
 #ifdef __PPC__
-    thread->stack   = memalign(0x20, THREAD_STACK_SIZE+0x10);
+    thread->stack   = memalign(32, THREAD_STACK_SIZE+16);
 #endif
 #ifdef __arm__
-    thread->stack   = memalign(0x10, THREAD_STACK_SIZE);
+    thread->stack   = memalign(16, THREAD_STACK_SIZE);
 #endif
     thread->a0      = arg;
-    thread->sp      = s - 0x10;
+    thread->sp      = s - 16;
     thread->init    = true;
     thread->ready   = true;
     thread->qlink   = false;

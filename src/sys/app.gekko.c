@@ -36,7 +36,7 @@ static void app_init(void)
         framebuffer, 20, 20, video_rmode->fbWidth, video_rmode->xfbHeight,
         2*video_rmode->fbWidth
     );
-    GX_Init(MEM_K0_TO_K1(memalign(0x20, 0x40000)), 0x40000);
+    GX_Init(MEM_K0_TO_K1(memalign(32, 0x40000)), 0x40000);
     GX_SetCopyClear((GXColor){0x00, 0x00, 0x00, 0xFF}, GX_MAX_Z24);
     GX_SetCopyFilter(
         video_rmode->aa, video_rmode->sample_pattern, GX_TRUE,
@@ -90,14 +90,14 @@ static const u16 input_config[] =
 
 void input_update(void)
 {
+    int pad;
+    int i;
     uint mask = PAD_ScanPads();
-    uint pad;
-    uint i;
     if (SYS_ResetButtonDown()) sys_reset = true;
     if (PAD_ButtonsHeld(0) & PAD_TRIGGER_Z)
     {
         uint down = PAD_ButtonsDown(0);
-        if (down & PAD_BUTTON_START)    exit(EXIT_SUCCESS);
+        if (down & PAD_BUTTON_START)    exit(0);
         if (down & PAD_BUTTON_X)        sys_fast ^= false^true;
         if (down & PAD_BUTTON_LEFT)     sys_save = true;
         if (down & PAD_BUTTON_RIGHT)    sys_load = true;
@@ -134,11 +134,11 @@ void audio_update(void *src, size_t size)
     size_t len;
     data = &audio_table[audio_index];
     audio_index ^= 1;
-    len = (size+0x1F) & ~0x1F;
+    len = (size+31) & ~31;
     if (*data != NULL) free(*data);
-    *data = memalign(0x20, len);
+    *data = memalign(32, len);
     wordswap(*data, src, size);
-    memset(*data+size, 0x00, len-size);
+    memset(*data+size, 0, len-size);
     DCFlushRange(*data, len);
     AUDIO_InitDMA((u32)*data, len);
     AUDIO_StartDMA();

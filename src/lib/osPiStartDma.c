@@ -6,7 +6,7 @@
 
 void lib_osPiStartDma(void)
 {
-    s32   direction = a2;
+    int   direction = a2;
     PTR   devAddr   = a3;
     void *vAddr     = cpu_ptr(*cpu_s32(sp+0x10));
     u32   nbytes    =        (*cpu_u32(sp+0x14));

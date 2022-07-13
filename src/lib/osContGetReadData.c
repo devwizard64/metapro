@@ -6,8 +6,8 @@
 
 void lib_osContGetReadData(void)
 {
+    int i;
     PTR pad;
-    uint i;
     for (i = 0; i < MAXCONTROLLERS; i++)
     {
         os_cont_pad[i].button  = 0;

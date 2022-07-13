@@ -79,7 +79,7 @@ static void app_update(void)
         switch (event.type)
         {
             case SDL_QUIT:
-                exit(EXIT_SUCCESS);
+                exit(0);
                 break;
             case SDL_WINDOWEVENT:
                 switch (event.window.event)
@@ -102,7 +102,7 @@ static void app_update(void)
                 break;
         }
     }
-    if (SDL_GetQueuedAudioSize(audio_device) > 16384)
+    if (SDL_GetQueuedAudioSize(audio_device) > 32768)
     {
         SDL_ClearQueuedAudio(audio_device);
     }
@@ -118,15 +118,15 @@ static const s8 input_config[][2] =
 
 void input_update(void)
 {
+    int i;
     const u8 *keys = SDL_GetKeyboardState(NULL);
-    uint mask;
-    uint i;
     os_cont_pad[0].button  = 0;
     os_cont_pad[0].stick_x = 0;
     os_cont_pad[0].stick_y = 0;
     os_cont_pad[0].errno_  = 0;
     if (joystick != NULL)
     {
+        uint mask;
         for (mask = 0x8000, i = 0; i < 16; i++, mask >>= 1)
         {
             int id  = input_config[i][0];
@@ -187,13 +187,20 @@ void input_update(void)
 
 void audio_update(void *src, size_t size)
 {
-    void *data = malloc(size);
-    wordswap(data, src, size);
+    void *data;
+    if (SDL_GetQueuedAudioSize(audio_device) < 2048)
+    {
+        memset(data = malloc(2048), 0, 2048);
+        SDL_QueueAudio(audio_device, data, 2048);
+        free(data);
+    }
+    wordswap(data = malloc(size), src, size);
     SDL_QueueAudio(audio_device, data, size);
     free(data);
 }
 
 s32 audio_size(void)
 {
-    return SDL_GetQueuedAudioSize(audio_device);
+    Uint32 size = SDL_GetQueuedAudioSize(audio_device);
+    return size < 4096 ? 0 : size-4096;
 }

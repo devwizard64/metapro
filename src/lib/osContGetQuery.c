@@ -4,8 +4,8 @@
 
 void lib_osContGetQuery(void)
 {
+    int i;
     PTR status = a0;
-    uint i;
     for (i = 0; i < MAXCONTROLLERS; i++)
     {
         *cpu_u16(status+0) = os_cont_status[i].type;

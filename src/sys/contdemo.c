@@ -7,8 +7,8 @@ static void contdemo_init(void)
 #ifdef INPUT_WRITE
     contdemo_data = contdemo = malloc(4*30*60*60*2);
 #else
-    FILE *f = fopen(PATH_INPUT, "rb");
-    if (f != NULL)
+    FILE *f;
+    if ((f = fopen(PATH_INPUT, "rb")) != NULL)
     {
         fseek(f, 0, SEEK_END);
         contdemo_size = ftell(f);
@@ -28,8 +28,8 @@ static void contdemo_exit(void)
 static void contdemo_save(void)
 {
 #ifdef INPUT_WRITE
-    FILE *f = fopen(PATH_INPUT, "wb");
-    if (f != NULL)
+    FILE *f;
+    if ((f = fopen(PATH_INPUT, "wb")) != NULL)
     {
         fwrite(contdemo_data, 1, contdemo-contdemo_data, f);
         fclose(f);
@@ -44,8 +44,8 @@ static void contdemo_save(void)
 static void contdemo_load(void)
 {
 #ifdef INPUT_WRITE
-    FILE *f = fopen(PATH_INPUT, "rb");
-    if (f != NULL)
+    FILE *f;
+    if ((f = fopen(PATH_INPUT, "rb")) != NULL)
     {
         size_t size;
         fseek(f, 0, SEEK_END);
@@ -77,7 +77,7 @@ void contdemo_update(void)
         os_cont_pad[0].stick_x = contdemo[2];
         os_cont_pad[0].stick_y = contdemo[3];
         pdebug(
-            "X:%+4d  Y:%+4d  [%c%c%c|%c%c%c%c%c%c|%c%c%c]  F:%d\n",
+            "X:%+4d  Y:%+4d  [%c%c%c|%c%c%c%c%c%c|%c%c%c]  F:%u\n",
             os_cont_pad[0].stick_x,
             os_cont_pad[0].stick_y,
             (os_cont_pad[0].button & 0x0200) ? '<' : ' ',

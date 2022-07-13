@@ -39,15 +39,15 @@ static const u16 input_config[] =
 
 void input_update(void)
 {
+    int i;
     uint held;
     uint down;
-    uint i;
     scanKeys();
     held = keysHeld();
     down = keysDown();
     if (held & KEY_Y)
     {
-        if (down & KEY_START)   exit(EXIT_SUCCESS);
+        if (down & KEY_START)   exit(0);
         if (down & KEY_SELECT)  sys_reset = true;
     }
     else
@@ -82,10 +82,9 @@ static u8 audio_index = 0;
 
 void audio_update(void *src, size_t size)
 {
-    s16 *data = src;
-    struct audio *audio;
     uint i;
-    audio = audio_table[audio_index];
+    s16 *data = src;
+    struct audio *audio = audio_table[audio_index];
     audio_index ^= 1;
     if (audio[0].data != NULL)
     {
@@ -112,5 +111,5 @@ void audio_update(void *src, size_t size)
 
 s32 audio_size(void)
 {
-    return 0x200;
+    return 512;
 }

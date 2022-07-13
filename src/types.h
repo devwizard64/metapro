@@ -15,10 +15,12 @@
 
 #if defined(__NDS__) || defined(__3DS__)
 #define FMT_d   "ld"
+#define FMT_u   "lu"
 #define FMT_x   "lx"
 #define FMT_X   "lX"
 #else
 #define FMT_d   "d"
+#define FMT_u   "u"
 #define FMT_x   "x"
 #define FMT_X   "X"
 #endif
@@ -50,7 +52,7 @@ typedef  int32_t s32;
 typedef uint32_t u32;
 typedef  int64_t s64;
 typedef uint64_t u64;
-typedef u8       bool;
+typedef char     bool;
 #endif
 
 #ifdef GEKKO

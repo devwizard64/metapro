@@ -14,7 +14,7 @@
 #define debugi(...) {}
 #endif
 
-#define pause() {if (getchar() < 0) exit(EXIT_FAILURE);}
+#define pause() {if (getchar() < 0) exit(1);}
 
 #define SP_MEM_ADDR     0
 #define SP_DRAM_ADDR    1
@@ -126,45 +126,49 @@ static const char *const str_element[] =
 };
 #endif
 
-static void rsp_dma_rd(u32 len)
+static u32 rsp_dma_rd(u32 len)
 {
-    PTR mem  = rsp.mem_addr;
-    PTR dram = rsp.dram_addr;
-    uint skip   = (len >> 20        );
+    uint bank = rsp.mem_addr & 0x1000;
+    uint mem  = rsp.mem_addr & 0xFF8;
+    PTR  dram = rsp.dram_addr & 0xFFFFF8;
+    uint skip   = (len >> 20 & 0xFF8);
     uint count  = (len >> 12 &  0xFF);
-    uint length = (len >>  0 & 0xFFF) | 7;
-    uint c;
-    uint l;
-    for (c = 0; c <= count; c++)
+    uint length = (len >>  0 & 0xFF8) + 8;
+    uint i;
+    for (i = 0; i <= count; i++)
     {
-        for (l = 0; l <= length; l++)
-        {
-            rsp_mem[mem++ & 0x1FFF] = cpu_dram[dram++^AX_B];
-        }
+        __byteswap(&rsp_mem[bank | (mem & 0xFFF)], &cpu_dram[dram], length);
+        mem  += length;
+        dram += length;
         dram += skip;
     }
+    rsp.mem_addr  = bank | mem;
+    rsp.dram_addr = dram;
+    return (len & 0xFF800000) | 0xFF8;
 }
 
-static void rsp_dma_wr(u32 len)
+static u32 rsp_dma_wr(u32 len)
 {
-    PTR mem  = rsp.mem_addr;
-    PTR dram = rsp.dram_addr;
-    uint skip   = (len >> 20        );
+    uint bank = rsp.mem_addr & 0x1000;
+    uint mem  = rsp.mem_addr & 0xFF8;
+    PTR  dram = rsp.dram_addr & 0xFFFFF8;
+    uint skip   = (len >> 20 & 0xFF8);
     uint count  = (len >> 12 &  0xFF);
-    uint length = (len >>  0 & 0xFFF) | 7;
-    uint c;
-    uint l;
-    for (c = 0; c <= count; c++)
+    uint length = (len >>  0 & 0xFF8) + 8;
+    uint i;
+    for (i = 0; i <= count; i++)
     {
-        for (l = 0; l <= length; l++)
-        {
-            cpu_dram[dram++^AX_B] = rsp_mem[mem++ & 0x1FFF];
-        }
+        __byteswap(&cpu_dram[dram], &rsp_mem[bank | (mem & 0xFFF)], length);
+        mem  += length;
+        dram += length;
         dram += skip;
     }
+    rsp.mem_addr  = bank | mem;
+    rsp.dram_addr = dram;
+    return (len & 0xFF800000) | 0xFF8;
 }
 
-static void rsp_branch(PTR addr)
+static void rsp_branch(uint addr)
 {
     if (rsp.bcode == 0)
     {
@@ -548,8 +552,8 @@ static void rsp_mfc0(u32 inst)
     {
         case SP_MEM_ADDR:   rt = rsp.mem_addr;  break;
         case SP_DRAM_ADDR:  rt = rsp.dram_addr; break;
-        case SP_RD_LEN:     rt = 0;             break;
-        case SP_WR_LEN:     rt = 0;             break;
+        case SP_RD_LEN:     rt = rsp.rd_len;    break;
+        case SP_WR_LEN:     rt = rsp.wr_len;    break;
         case SP_STATUS:     rt = 0;             break;
         case SP_DMA_FULL:   rt = 0;             break;
         case SP_DMA_BUSY:   rt = 0;             break;
@@ -574,14 +578,15 @@ static void rsp_mtc0(u32 inst)
     if ((INST_RD == SP_RD_LEN || INST_RD == SP_WR_LEN) && rt == -1)
     {
         wdebug("rsp: bad dma\n");
+        rsp.bcode = -1;
         return;
     }
     switch (INST_RD)
     {
         case SP_MEM_ADDR:   rsp.mem_addr  = rt; break;
         case SP_DRAM_ADDR:  rsp.dram_addr = rt; break;
-        case SP_RD_LEN:     rsp_dma_rd(rt); break;
-        case SP_WR_LEN:     rsp_dma_wr(rt); break;
+        case SP_RD_LEN:     rsp.rd_len = rsp_dma_rd(rt); break;
+        case SP_WR_LEN:     rsp.wr_len = rsp_dma_wr(rt); break;
         case SP_STATUS:     break;
         case SP_DMA_FULL:   break;
         case SP_DMA_BUSY:   break;
@@ -666,7 +671,7 @@ static void rsp_ctc2(unused u32 inst)
 
 static void rsp_vmulf(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++)
     {
         s64 x = (int)vs.s[i] * (int)vt.s[ev[i]];
@@ -678,7 +683,7 @@ static void rsp_vmulf(u32 inst)
 
 static void rsp_vmulu(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++)
     {
         s64 x = (int)vs.s[i] * (int)vt.s[ev[i]];
@@ -704,7 +709,7 @@ static void rsp_vmulq(unused u32 inst)
 
 static void rsp_vmudl(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++)
     {
         s64 x = (int)vs.u[i] * (int)vt.u[ev[i]];
@@ -716,7 +721,7 @@ static void rsp_vmudl(u32 inst)
 
 static void rsp_vmudm(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++)
     {
         s64 x = (int)vs.s[i] * (int)vt.u[ev[i]];
@@ -728,7 +733,7 @@ static void rsp_vmudm(u32 inst)
 
 static void rsp_vmudn(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++)
     {
         s64 x = (int)vs.u[i] * (int)vt.s[ev[i]];
@@ -740,7 +745,7 @@ static void rsp_vmudn(u32 inst)
 
 static void rsp_vmudh(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++)
     {
         s64 x = (int)vs.s[i] * (int)vt.s[ev[i]];
@@ -752,7 +757,7 @@ static void rsp_vmudh(u32 inst)
 
 static void rsp_vmacf(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++)
     {
         s64 x = (int)vs.s[i] * (int)vt.s[ev[i]];
@@ -764,7 +769,7 @@ static void rsp_vmacf(u32 inst)
 
 static void rsp_vmacu(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++)
     {
         s64 x = (int)vs.s[i] * (int)vt.s[ev[i]];
@@ -791,7 +796,7 @@ static void rsp_vmacq(unused u32 inst)
 
 static void rsp_vmadl(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++)
     {
         s64 x = (int)vs.u[i] * (int)vt.u[ev[i]];
@@ -803,7 +808,7 @@ static void rsp_vmadl(u32 inst)
 
 static void rsp_vmadm(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++)
     {
         s64 x = (int)vs.s[i] * (int)vt.u[ev[i]];
@@ -815,7 +820,7 @@ static void rsp_vmadm(u32 inst)
 
 static void rsp_vmadn(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++)
     {
         s64 x = (int)vs.u[i] * (int)vt.s[ev[i]];
@@ -827,7 +832,7 @@ static void rsp_vmadn(u32 inst)
 
 static void rsp_vmadh(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++)
     {
         s64 x = (int)vs.s[i] * (int)vt.s[ev[i]];
@@ -839,7 +844,7 @@ static void rsp_vmadh(u32 inst)
 
 static void rsp_vadd(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++)
     {
         int x = (int)vs.s[i] + (int)vt.s[ev[i]] + (rsp.vco >> i & 1);
@@ -851,7 +856,7 @@ static void rsp_vadd(u32 inst)
 
 static void rsp_vsub(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++)
     {
         int x = (int)vs.s[i] - (int)vt.s[ev[i]] - (rsp.vco >> i & 1);
@@ -870,7 +875,7 @@ static void rsp_vabs(unused u32 inst)
 
 static void rsp_vaddc(u32 inst)
 {
-    uint i;
+    int i;
     rsp.vco = 0;
     for (i = 0; i < 8; i++)
     {
@@ -883,7 +888,7 @@ static void rsp_vaddc(u32 inst)
 
 static void rsp_vsubc(u32 inst)
 {
-    uint i;
+    int i;
     rsp.vco = 0;
     for (i = 0; i < 8; i++)
     {
@@ -896,7 +901,7 @@ static void rsp_vsubc(u32 inst)
 
 static void rsp_vsar(u32 inst)
 {
-    uint i;
+    int i;
     switch (INST_EV)
     {
         case 8|0:
@@ -917,9 +922,9 @@ static void rsp_vsar(u32 inst)
 
 static void rsp_vlt(u32 inst)
 {
+    int i;
     uint vco = rsp.vco;
     uint vce = rsp.vce;
-    uint i;
     rsp.vcc = 0;
     rsp.vco = 0;
     rsp.vce = 0;
@@ -956,9 +961,9 @@ static void rsp_vne(unused u32 inst)
 
 static void rsp_vge(u32 inst)
 {
+    int i;
     uint vco = rsp.vco;
     uint vce = rsp.vce;
-    uint i;
     rsp.vcc = 0;
     rsp.vco = 0;
     rsp.vce = 0;
@@ -981,10 +986,10 @@ static void rsp_vge(u32 inst)
 
 static void rsp_vcl(u32 inst)
 {
+    int i;
     uint vcc = rsp.vcc;
     uint vco = rsp.vco;
     uint vce = rsp.vce;
-    uint i;
     rsp.vcc = 0;
     rsp.vco = 0;
     rsp.vce = 0;
@@ -1042,42 +1047,42 @@ static void rsp_vmrg(unused u32 inst)
 
 static void rsp_vand(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++) vd.s[i] = rsp.acc[i] = vs.s[i] & vt.s[ev[i]];
     debugi("vand $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS);
 }
 
 static void rsp_vnand(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++) vd.s[i] = rsp.acc[i] = ~(vs.s[i] & vt.s[ev[i]]);
     debugi("vnand $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS);
 }
 
 static void rsp_vor(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++) vd.s[i] = rsp.acc[i] = vs.s[i] | vt.s[ev[i]];
     debugi("vor $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS);
 }
 
 static void rsp_vnor(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++) vd.s[i] = rsp.acc[i] = ~(vs.s[i] | vt.s[ev[i]]);
     debugi("vnor $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS);
 }
 
 static void rsp_vxor(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++) vd.s[i] = rsp.acc[i] = vs.s[i] ^ vt.s[ev[i]];
     debugi("vxor $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS);
 }
 
 static void rsp_vnxor(u32 inst)
 {
-    uint i;
+    int i;
     for (i = 0; i < 8; i++) vd.s[i] = rsp.acc[i] = ~(vs.s[i] ^ vt.s[ev[i]]);
     debugi("vnxor $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS);
 }
@@ -1408,7 +1413,7 @@ static void rsp_ltv(u32 inst)
 {
     u8 *x = &rsp_mem[(rs+INST_OFFB) & 0xFFF];
     uint e = INST_E >> 1;
-    uint i;
+    int i;
     for (i = 0; i < 8; i++)
     {
         rsp.vreg[INST_VT+e].b[2*i+(0^VX)] = *x++;
@@ -1578,7 +1583,7 @@ static void rsp_stv(u32 inst)
 {
     u8 *x = &rsp_mem[(rs+INST_OFFB) & 0xFFF];
     uint e = INST_E >> 1;
-    uint i;
+    int i;
     for (i = 0; i < 8; i++)
     {
         *x++ = rsp.vreg[INST_VT+e].b[2*i+(0^VX)];
@@ -1713,15 +1718,18 @@ void rsp_main(OSTask *task)
         &cpu_dram[task->ucode_boot],
         task->ucode_boot_size
     );
-    rsp.pc = 0x04001000;
     rsp.bcode = 0;
-    while (true)
+    rsp.pc = 0;
+    for (;;)
     {
-        u8 *x = &rsp_mem[0x1000 + (rsp.pc & 0xFFF)];
+        u8 *x = &rsp_mem[0x1000 | (rsp.pc & 0xFFF)];
         u32 inst = x[0] << 24 | x[1] << 16 | x[2] << 8 | x[3];
         rsp.pc += 4;
-        //if ((rsp.pc & 0xFFF) == 0x000) edebug("rsp: pc over 0x%08X\n", rsp.pc);
+    #if 0
+        if ((rsp.pc & 0xFFF) == 0x000) edebug("rsp: pc over 0x%08X\n", rsp.pc);
+    #else
         if ((rsp.pc & 0xFFF) == 0x000) return;
+    #endif
         rsp.reg[0] = 0;
         rsp_op(inst);
     #ifdef RSP_DEBUG
@@ -1730,7 +1738,7 @@ void rsp_main(OSTask *task)
     #endif
         if (step)
         {
-            uint i;
+            int i;
             for (i = 0; i < 32; i += 4)
             {
                 printf(
@@ -1768,7 +1776,7 @@ void rsp_main(OSTask *task)
                 );
             }
             printf(
-                "VCC:%04X  VCO:%04X  VCE:%02X  MEM_ADDR:%08X  DRAM_ADDR:%08X\n",
+                "VCC:%04X  VCO:%04X  VCE:%02X  MEM_ADDR:%04X  DRAM_ADDR:%08X\n",
                 rsp.vcc, rsp.vco, rsp.vce, rsp.mem_addr, rsp.dram_addr
             );
             pause();

@@ -25,7 +25,8 @@ SRC_OBJ := \
 	$(BUILD)/src/cpu.o  \
 	$(BUILD)/src/rsp.o  \
 	$(BUILD)/src/gsp.o  \
-	$(BUILD)/src/asp.o
+	$(BUILD)/src/asp.o  \
+	$(BUILD)/src/seq.o
 
 LIB_OBJ := \
 	$(BUILD)/src/lib/osSpTaskStartGo.o      \
@@ -155,7 +156,7 @@ $(PICAGL)/lib/libpicaGL.a:
 
 .PHONY: clean
 clean:
-	rm -rf build
+	rm -f -r build
 
 print-%:
 	$(info $* = $(flavor $*): [$($*)]) @true

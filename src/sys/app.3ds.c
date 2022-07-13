@@ -26,7 +26,7 @@ static void app_exit(void)
 
 static void app_update(void)
 {
-    if (!aptMainLoop()) exit(EXIT_SUCCESS);
+    if (!aptMainLoop()) exit(0);
 }
 
 static const u32 input_config[] =
@@ -51,17 +51,17 @@ static const u32 input_config[] =
 
 void input_update(void)
 {
+    int i;
     circlePosition stick;
     u32 held;
     u32 down;
-    uint i;
     hidScanInput();
     hidCircleRead(&stick);
     held = hidKeysHeld();
     down = hidKeysDown();
     if (held & KEY_Y)
     {
-        if (down & KEY_START)   exit(EXIT_SUCCESS);
+        if (down & KEY_START)   exit(0);
         if (down & KEY_SELECT)  sys_reset = true;
         if (down & KEY_ZL)      sys_save  = true;
         if (down & KEY_ZR)      sys_load  = true;
@@ -103,5 +103,5 @@ void audio_update(void *src, size_t size)
 
 s32 audio_size(void)
 {
-    return 0x200;
+    return 512;
 }

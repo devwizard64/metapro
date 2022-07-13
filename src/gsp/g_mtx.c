@@ -10,6 +10,9 @@ static void gsp_g_mtx(u32 w0, u32 w1)
     uint flag;
     gsp_flush_rect();
 #ifdef APP_UNSM
+#ifdef APP_J0
+    if (w1 == 0x020144B0)
+#endif
 #ifdef APP_E0
     if (w1 == 0x02017310)
 #endif

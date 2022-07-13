@@ -88,6 +88,13 @@ typedef struct os_task
 }
 OSTask;
 
+typedef struct os_event_state
+{
+    PTR mq;
+    PTR msg;
+}
+__OSEventState;
+
 #endif /* __ASSEMBLER__ */
 
 #endif /* __ULTRA64_H__ */

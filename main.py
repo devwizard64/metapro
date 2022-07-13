@@ -1136,12 +1136,12 @@ def main(argv):
             "\n"
             "%s\n"
             "{\n"
-            "    switch (__dcall(0x%08XU))\n"
+            "    switch (__dcall(0x%08X))\n"
             "    {\n"
         ) % (name, addr))
         for src, start, end, dst, pat, xpr, ins in app.segment:
             if addr in dst:
-                f.write("        case 0x%08XU: app_%08X_%08X(); break;\n" % (
+                f.write("        case 0x%08X: app_%08X_%08X(); break;\n" % (
                     src, addr, src
                 ))
         f.write(

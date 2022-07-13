@@ -18,7 +18,7 @@ reg   = (
 )
 
 header = (
-    "#define EEPROM_TYPE             1\n"
+    "#define EEPROM                  1\n"
     "#define AUDIO_FREQ              32000\n"
     "#define GSP_F3DEX\n"
     "#define GSP_F3DEX2\n"

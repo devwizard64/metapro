@@ -4,9 +4,9 @@
 
 void lib_osContInit(void)
 {
+    int i;
     PTR status = a2;
     uint bitpattern = 0;
-    uint i;
     for (i = 0; i < MAXCONTROLLERS; i++)
     {
         if (os_cont_status[i].errno_ == 0) bitpattern |= 1 << i;

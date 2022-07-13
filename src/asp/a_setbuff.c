@@ -1,9 +1,9 @@
 static void asp_a_setbuff(u32 w0, u32 w1)
 {
     uint flag    = w0 >> 16;
-    uint dmemin  = w0 >>  0 & 0xFFFF;
+    uint dmemin  = w0 & 0xFFFF;
     uint dmemout = w1 >> 16;
-    uint count   = w1 >>  0 & 0xFFFF;
+    uint count   = w1 & 0xFFFF;
     dmemin  += asp_sample;
     dmemout += asp_sample;
     if (flag & A_AUX)

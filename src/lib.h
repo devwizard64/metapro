@@ -24,15 +24,15 @@
 #define lib_osMapTLB()
 #define lib_osUnmapTLBAll()
 #define lib_osCreateMesgQueue() {mesg_init(cpu_ptr(a0), a1, a2);}
-#define lib_osSetEventMesg()                \
-{                                           \
-    os_event_table[a0].mq  = cpu_ptr(a1);   \
-    os_event_table[a0].msg = a2;            \
-}
-#define lib_osViSetEvent()          \
+#define lib_osSetEventMesg()        \
 {                                   \
-    os_event_vi.mq  = cpu_ptr(a0);  \
-    os_event_vi.msg = a1;           \
+    __osEventStateTab[a0].mq  = a1; \
+    __osEventStateTab[a0].msg = a2; \
+}
+#define lib_osViSetEvent()                      \
+{                                               \
+    __osEventStateTab[OS_EVENT_VI].mq  = a0;    \
+    __osEventStateTab[OS_EVENT_VI].msg = a1;    \
 }
 #define lib_osCreateThread() \
     {thread_init(a0, a1, a2, a3, *cpu_s32(sp+0x10), *cpu_s32(sp+0x14));}
@@ -57,7 +57,7 @@ extern void lib_osInitialize(void);
     {v0 = mesg_send(cpu_ptr(a0), 0, OS_MESG_NOBLOCK);}
 extern void lib_osContGetReadData(void);
 extern void lib_osContInit(void);
-#define lib_osEepromProbe() {v0 = EEPROM_TYPE;}
+#define lib_osEepromProbe() {v0 = EEPROM;}
 #define lib___ull_rem()                 \
 {                                       \
     u64 _a = (u64)a0 << 32 | (u32)a1;   \
@@ -102,9 +102,9 @@ extern void lib_osContInit(void);
 extern void lib_osPiStartDma(void);
 #define lib_osInvalICache()
 #define lib_osEepromLongRead() \
-    {byteswap(cpu_ptr(a2), &eeprom[a1], a3); v0 = 0;}
+    {eeprom_read(cpu_ptr(a2), a1, a3); v0 = 0;}
 #define lib_osEepromLongWrite() \
-    {byteswap(&eeprom[a1], cpu_ptr(a2), a3); eeprom_write(); v0 = 0;}
+    {eeprom_write(a1, cpu_ptr(a2), a3); v0 = 0;}
 extern void lib_guOrtho(void);
 extern void lib_guPerspective(void);
 #define lib_osGetTime() {v0 = 0; v1 = 0;}
@@ -154,7 +154,7 @@ LIB_SE(__osPiRelAccess)
     timer_init(                                             \
         a0, (u64)a2 << 32 | (u32)a3,                        \
         (u64)*cpu_u32(sp+0x10) << 32 | *cpu_u32(sp+0x14),   \
-        cpu_ptr(*cpu_u32(sp+0x18)), *cpu_u32(sp+0x1C)       \
+        *cpu_u32(sp+0x18), *cpu_u32(sp+0x1C)                \
     );                                                      \
 }
 
@@ -199,7 +199,7 @@ LIB_SE(UCZLJ0_801D2CB0)
 /* UNK4E0 */
 #define lib_osStopThread() {thread_stop(thread_find(a0));}
 #define lib_osEepromWrite() \
-    {byteswap(&eeprom[a1], cpu_ptr(a2), 8); eeprom_write(); v0 = 0;}
+    {eeprom_write(a1, a2, 8); v0 = 0;}
 #define lib_osViGetNextFramebuffer() {v0 = video_buf;}
 #define lib_osEPiLinkHandle() {v0 = 0;}
 #define lib_osGetThreadPri() {v0 = thread_find(a0)->pri;}

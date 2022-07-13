@@ -23,11 +23,13 @@ typedef struct rsp
     u16 vcc;
     u16 vco;
     u8  vce;
-    PTR mem_addr;
-    PTR dram_addr;
-    PTR pc;
-    PTR baddr;
     s8  bcode;
+    u16 baddr;
+    u16 pc;
+    u16 mem_addr;
+    PTR dram_addr;
+    u32 rd_len;
+    u32 wr_len;
 }
 RSP;
 

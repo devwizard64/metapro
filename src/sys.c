@@ -105,10 +105,10 @@ static void sys_update(void)
     {
         sys_reset  = false;
         sys_prenmi = 30;
-        os_event(&os_event_table[OS_EVENT_PRENMI]);
+        os_event(&__osEventStateTab[OS_EVENT_PRENMI]);
     }
     timer_update();
-    os_event(&os_event_vi);
+    os_event(&__osEventStateTab[OS_EVENT_VI]);
     longjmp(sys_jmp, THREAD_YIELD_QUEUE);
 }
 
@@ -187,8 +187,8 @@ void sys_main(void (*start)(void))
 void eexit(void)
 {
 #ifndef __NATIVE__
-    uint i;
+    int i;
     for (i = 0; i < 180; i++) sleep_frame();
 #endif
-    exit(EXIT_FAILURE);
+    exit(1);
 }

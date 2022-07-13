@@ -16,6 +16,7 @@
 
 #define PATH_APP    PATH_ROOT "app.bin"
 #define PATH_EEPROM PATH_ROOT "eeprom.bin"
+#define PATH_SRAM   PATH_ROOT "sram.bin"
 #define PATH_DRAM   PATH_ROOT "dram.bin"
 #define PATH_INPUT  PATH_ROOT "input.bin"
 
@@ -24,9 +25,8 @@
 #else
 #define CPU_DRAM_SIZE   0x400000
 #endif
-#define EEPROM_SIZE     (64*EEPROM_TYPE*EEPROM_TYPE)
 
-#define ARG_F(x)        (*((f32 *)&(x)))
+#define ARG_F(x)        (*(f32 *)&(x))
 
 #ifdef __EB__
 #define IX      1
@@ -43,7 +43,9 @@
 #endif
 #define AX_W    0
 
-#if defined(__UNSME0_0021F4C0_C__) || defined(__UNSMC3_0020AAF0_C__)
+#if defined(__UNSMJ0_0021D7D0_C__) || \
+    defined(__UNSME0_0021F4C0_C__) || \
+    defined(__UNSMC3_0020AAF0_C__)
 #define __tlb(addr)                                             \
 (                                                               \
     ((PTR)(addr) >= 0x04000000U && (PTR)(addr) < 0x04040000U) ? \
@@ -70,25 +72,25 @@ extern PTR __tlb(PTR addr);
 
 #define __lwl(addr, val)                        \
 {                                               \
-    PTR  _addr = addr;                          \
-    uint _i    = _addr & 3;                     \
+    PTR _addr = addr;                           \
+    int _i = _addr & 3;                         \
     _addr &= ~3;                                \
     val &= cpu_lwl_mask[_i];                    \
     val |= *cpu_u32(_addr) << cpu_l_shift[_i];  \
 }
 #define __lwr(addr, val)                        \
 {                                               \
-    PTR  _addr = addr;                          \
-    uint _i    = _addr & 3;                     \
+    PTR _addr = addr;                           \
+    int _i = _addr & 3;                         \
     _addr &= ~3;                                \
     val &= cpu_lwr_mask[_i];                    \
     val |= *cpu_u32(_addr) >> cpu_r_shift[_i];  \
 }
 #define __swl(addr, val)                        \
 {                                               \
-    PTR  _addr = addr;                          \
-    u32  _val  = val;                           \
-    uint _i    = _addr & 3;                     \
+    PTR _addr = addr;                           \
+    u32 _val  = val;                            \
+    int _i = _addr & 3;                         \
     _addr &= ~3;                                \
     _val <<= cpu_l_shift[_i];                   \
     _val |= *cpu_u32(_addr) & cpu_swl_mask[_i]; \
@@ -96,9 +98,9 @@ extern PTR __tlb(PTR addr);
 }
 #define __swr(addr, val)                        \
 {                                               \
-    PTR  _addr = addr;                          \
-    u32  _val  = val;                           \
-    uint _i    = _addr & 3;                     \
+    PTR _addr = addr;                           \
+    u32 _val  = val;                            \
+    int _i = _addr & 3;                         \
     _addr &= ~3;                                \
     _val <<= cpu_r_shift[_i];                   \
     _val |= *cpu_u32(_addr) & cpu_swr_mask[_i]; \
@@ -157,23 +159,25 @@ extern const u8  cpu_l_shift[];
 extern const u8  cpu_r_shift[];
 
 extern u8 cpu_dram[CPU_DRAM_SIZE];
-#if EEPROM_SIZE > 0
-extern u64 eeprom[EEPROM_SIZE];
-#endif
 extern CPU cpu;
 
-extern void __break(uint code);
+extern void __break(int code);
 extern void __call(PTR addr);
 #ifdef APP_DCALL
-extern u32  __dcall(PTR addr);
+extern PTR  __dcall(PTR addr);
 #endif
 extern void *__nullswap(void *dst, const void *src, u32 size);
 extern void *__byteswap(void *dst, const void *src, u32 size);
 extern void *__halfswap(void *dst, const void *src, u32 size);
 extern void *__wordswap(void *dst, const void *src, u32 size);
 extern void dma(void *dst, PTR src, u32 size);
-#if EEPROM_SIZE > 0
-extern void eeprom_write(void);
+#if EEPROM
+extern void eeprom_read(void *dst, uint src, u32 size);
+extern void eeprom_write(uint dst, const void *src, u32 size);
+#endif
+#ifdef SRAM
+extern void sram_read(void *dst, PTR src, u32 size);
+extern void sram_write(PTR dst, const void *src, u32 size);
 #endif
 extern void cpu_init(void);
 extern void cpu_exit(void);

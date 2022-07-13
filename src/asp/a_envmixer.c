@@ -44,7 +44,7 @@ static void asp_a_envmixer(u32 w0, u32 w1)
     s32   RRamp, LRamp;
     s32   LAdderStart, RAdderStart, LAdderEnd, RAdderEnd;
     s32   oMainR, oMainL, oAuxR, oAuxL;
-    memset(zero, 0x00, sizeof(zero));
+    memset(zero, 0, sizeof(zero));
     if (flag & A_INIT)
     {
         LVol = asp_vol_l * (s32)asp_volrate_l;
@@ -84,7 +84,7 @@ static void asp_a_envmixer(u32 w0, u32 w1)
     oAuxL = MultQ15(Wet, (LTrg >> 16));
     oMainR = MultQ15(Dry, (RTrg >> 16));
     oAuxR = MultQ15(Wet, (RTrg >> 16));
-    for (int y = 0; y < asp_count; y += 0x10)
+    for (int y = 0; y < asp_count; y += 16)
     {
         if (LAdderStart != LTrg)
         {
@@ -162,5 +162,5 @@ static void asp_a_envmixer(u32 w0, u32 w1)
     *asp_u16(0x0FA2) = LAdderStart;
     *asp_s16(0x0FA2) = RAdderStart >> 16;
     *asp_u16(0x0FA4) = RAdderStart;
-    wordswap(addr, asp_s16(0x0F90), 0x50);
+    wordswap(addr, asp_s16(0x0F90), 80);
 }

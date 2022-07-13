@@ -13,13 +13,6 @@
 
 #ifndef __ASSEMBLER__
 
-typedef struct event
-{
-    OSMesgQueue *mq;
-    PTR msg;
-}
-EVENT;
-
 typedef struct thread
 {
     struct thread *lprev;
@@ -46,7 +39,7 @@ typedef struct timer
     PTR     addr;
     u64     countdown;
     u64     interval;
-    EVENT   event;
+    __OSEventState event;
 }
 TIMER;
 
@@ -77,12 +70,12 @@ extern void contdemo_update(void);
 extern OSContStatus os_cont_status[MAXCONTROLLERS];
 extern OSContPad os_cont_pad[MAXCONTROLLERS];
 
-extern EVENT os_event_table[OS_NUM_EVENTS];
-extern EVENT os_event_vi;
+extern __OSEventState __osEventStateTab[OS_NUM_EVENTS];
+extern __OSEventState __osEventStateVi;
 extern void mesg_init(OSMesgQueue *mq, PTR msg, s32 count);
 extern int mesg_recv(OSMesgQueue *mq, PTR msg, int flag);
 extern int mesg_send(OSMesgQueue *mq, PTR msg, int flag);
-extern void os_event(EVENT *event);
+extern void os_event(__OSEventState *es);
 
 extern THREAD *os_thread;
 extern THREAD *thread_find(PTR addr);
@@ -95,9 +88,7 @@ extern void thread_yield(int arg);
 extern void thread_fault(void);
 
 extern TIMER *timer_find(PTR addr);
-extern void timer_init(
-    PTR addr, u64 countdown, u64 interval, OSMesgQueue *mq, PTR msg
-);
+extern void timer_init(PTR addr, u64 countdown, u64 interval, PTR mq, PTR msg);
 extern void timer_destroy(TIMER *timer);
 
 extern void sys_init(void);

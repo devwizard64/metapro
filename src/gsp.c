@@ -6,6 +6,8 @@
 
 /* #define GSP_DEBUG */
 
+#if defined(GSP_F3D) || defined(GSP_F3DEX2)
+
 #ifdef WIN32
 #define GSP_SWFOG
 #endif
@@ -445,12 +447,10 @@ static void gdp_set_texture(
     txtcache = gdp_txtcache;
     while (txtcache != NULL)
     {
-        if
-        (
-            txtcache->timg == timg &&
-            txtcache->fmt  == fmt  &&
+        if (
+            txtcache->timg == timg && txtcache->fmt == fmt
         #ifndef __NDS__
-            txtcache->tf   == tf
+            && txtcache->tf == tf
         #endif
         )
         {
@@ -684,7 +684,7 @@ static void gsp_flush_fog(void)
 
 static void gdp_tri(const u8 *t)
 {
-    uint i;
+    int i;
     if (gsp_new_texture)    {gsp_new_texture = false; gsp_flush_texture();}
     if (gsp_new_fog)        {gsp_new_fog     = false; gsp_flush_fog();    }
 #ifdef __NDS__
@@ -833,6 +833,7 @@ static void gsp_flush_rect(void)
 static void gsp_fillrect(u32 w0, u32 w1)
 {
 #ifndef __NDS__
+    int i;
 #ifndef GSP_SWVTX
     VTX  *v  = &gsp_vtx_buf[GSP_VTX_LEN];
 #endif
@@ -844,7 +845,6 @@ static void gsp_fillrect(u32 w0, u32 w1)
     uint r = RGBA16_R(gdp_fill);
     uint g = RGBA16_G(gdp_fill);
     uint b = RGBA16_B(gdp_fill);
-    uint i;
     gsp_start_fillrect();
     if (gdp_cycle)
     {
@@ -878,6 +878,7 @@ static void gsp_fillrect(u32 w0, u32 w1)
 static void gsp_texrect(void)
 {
 #ifndef __NDS__
+    int i;
 #ifndef GSP_SWVTX
     VTX  *v  = &gsp_vtx_buf[GSP_VTX_LEN];
 #endif
@@ -892,7 +893,6 @@ static void gsp_texrect(void)
     float th;
     float dsdx = (32/4.0F/0x0400) * (s16)(gdp_texrect[3] >> 16);
     float dtdy = (32/4.0F/0x0400) * (s16)(gdp_texrect[3] >>  0);
-    uint  i;
     gsp_start_texrect();
     if (gdp_cycle)
     {
@@ -952,6 +952,7 @@ static void gsp_texrect(void)
 #ifdef GSP_F3DEX2
 static void gsp_bg(uObjBg *bg)
 {
+    int i;
 #ifndef GSP_SWVTX
     VTX  *v  = &gsp_vtx_buf[GSP_VTX_LEN];
 #endif
@@ -966,7 +967,6 @@ static void gsp_bg(uObjBg *bg)
     uint w = bg->image_w/4;
     uint h = bg->image_h/4;
     uint size = w*h << bg->image_siz >> 1;
-    uint i;
     gdp_texture_scale[0] = 1;
     gdp_texture_scale[1] = 1;
     tile->pal = bg->image_pal;
@@ -1872,3 +1872,5 @@ void gsp_image(unused void *img)
     */
 #endif
 }
+
+#endif

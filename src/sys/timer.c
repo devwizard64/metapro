@@ -7,7 +7,7 @@ static void timer_print(void)
     while (list != NULL)
     {
         pdebug(
-            "addr=%08" FMT_X "  c=%d  i=%d  event=%08" FMT_X ",%" FMT_d "\n",
+            "addr=%08" FMT_X "  c=%u  i=%u  event=%08" FMT_X ",%" FMT_d "\n",
             list->addr,
             (uint)(list->countdown/46875),
             (uint)(list->interval /46875),
@@ -47,7 +47,7 @@ TIMER *timer_find(PTR addr)
     return timer;
 }
 
-void timer_init(PTR addr, u64 countdown, u64 interval, OSMesgQueue *mq, PTR msg)
+void timer_init(PTR addr, u64 countdown, u64 interval, PTR mq, PTR msg)
 {
     TIMER *timer = timer_find(addr);
     if (timer == NULL)
