@@ -127,6 +127,7 @@ $(BUILD)/win32/app.exe: $(W32_OBJ)
 
 $(BUILD)/osx/app.elf: $(OSX_OBJ)
 	$(OSX_LD) $(OSX_LDFLAG) -o $@ $(OSX_OBJ) -lm -framework SDL2 -framework OpenGL
+	install_name_tool -add_rpath $(HOME)/Library/Frameworks $@
 
 $(BUILD)/gcn/app.dol: $(DOL_OBJ)
 	$(DOL_LD) $(DOL_LDFLAG) -Wl,-Map,$(@:.dol=.map) -o $(@:.dol=.elf) $(DOL_OBJ) -lfat -lm -logc
