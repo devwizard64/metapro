@@ -189,7 +189,7 @@ void dma(void *dst, PTR src, u32 size)
     }
     else
     {
-        eprint("could not read '" PATH_APP "'\n");
+        eprint("could not read '%s'\n", PATH_APP);
     }
 #if defined(GSP_F3D) || defined(GSP_F3DEX2)
     gsp_cache();
@@ -216,7 +216,10 @@ void eeprom_read(void *dst, uint src, u32 size)
 void eeprom_write(uint dst, const void *src, u32 size)
 {
     FILE *f;
-    if ((f = fopen(PATH_EEPROM, "r+b")) != NULL)
+    if (
+        (f = fopen(PATH_EEPROM, "r+b")) != NULL ||
+        (f = fopen(PATH_EEPROM, "wb")) != NULL
+    )
     {
         char *data = malloc(size);
         byteswap(data, src, size);
@@ -227,7 +230,7 @@ void eeprom_write(uint dst, const void *src, u32 size)
     }
     else
     {
-        wdebug("could not write '" PATH_EEPROM "'\n");
+        wdebug("could not write '%s'\n", PATH_EEPROM);
     }
 }
 #endif
@@ -262,7 +265,7 @@ void sram_write(PTR dst, const void *src, u32 size)
     }
     else
     {
-        wdebug("could not write '" PATH_SRAM "'\n");
+        wdebug("could not write '%s'\n", PATH_SRAM);
     }
 }
 #endif
@@ -297,7 +300,7 @@ void cpu_init(void)
     }
     else
     {
-        eprint("could not read '" PATH_APP "'\n");
+        eprint("could not read '%s'\n", PATH_APP);
     }
 }
 
@@ -322,7 +325,7 @@ void cpu_save(void)
     }
     else
     {
-        wdebug("could not write '" PATH_DRAM "'\n");
+        wdebug("could not write '%s'\n", PATH_DRAM);
     }
 }
 
@@ -342,6 +345,6 @@ void cpu_load(void)
     }
     else
     {
-        wdebug("could not read '" PATH_DRAM "'\n");
+        wdebug("could not read '%s'\n", PATH_DRAM);
     }
 }

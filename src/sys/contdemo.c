@@ -36,7 +36,7 @@ static void contdemo_save(void)
     }
     else
     {
-        wdebug("could not write '" PATH_INPUT "'\n");
+        wdebug("could not write '%s'\n", PATH_INPUT);
     }
 #endif
 }
@@ -57,7 +57,7 @@ static void contdemo_load(void)
     }
     else
     {
-        wdebug("could not read '" PATH_INPUT "'\n");
+        wdebug("could not read '%s'\n", PATH_INPUT);
     }
 #endif
 }

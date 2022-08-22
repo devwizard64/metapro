@@ -29,7 +29,7 @@ void seq_init(int argc, char *argv[])
     }
     if ((f = fopen("config.txt", "r")) == NULL)
     {
-        eprint("could not read 'config.txt'\n");
+        eprint("could not read '%s'\n", "config.txt");
     }
     while (fgets(str, sizeof(str), f) != NULL)
     {
