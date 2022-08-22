@@ -160,27 +160,27 @@ lib = {
     0x800D5D50: "osViGetCurrentFramebuffer",
 
     0x801C9B50: "osSetTime",
-    0x801C9E28: "UCZLJ0_801C9E28",
-    0x801C9EC0: "UCZLJ0_801C9EC0",
-    0x801C9F90: "UCZLJ0_801C9F90",
-    0x801C9FFC: "UCZLJ0_801C9FFC",
-    0x801CA030: "UCZLJ0_801CA030",
-    0x801CA070: "UCZLJ0_801CA070",
-    0x801CA1F0: "UCZLJ0_801CA1F0",
-    0x801CA740: "UCZLJ0_801CA740",
+    0x801C9E28: "UCZLJ00_801C9E28",
+    0x801C9EC0: "UCZLJ00_801C9EC0",
+    0x801C9F90: "UCZLJ00_801C9F90",
+    0x801C9FFC: "UCZLJ00_801C9FFC",
+    0x801CA030: "UCZLJ00_801CA030",
+    0x801CA070: "UCZLJ00_801CA070",
+    0x801CA1F0: "UCZLJ00_801CA1F0",
+    0x801CA740: "UCZLJ00_801CA740",
     0x801CAB04: "LeoReset",
     0x801CABB8: "LeoResetClear",
     0x801CBEF0: "LeoLBAToByte",
-    0x801CC190: "UCZLJ0_801CC190",
+    0x801CC190: "UCZLJ00_801CC190",
     0x801CCCD0: "LeoSpdlMotor",
     0x801CE120: "LeoDriveExist",
-    0x801CE630: "UCZLJ0_801CE630",
+    0x801CE630: "UCZLJ00_801CE630",
     0x801CE680: "LeoByteToLBA",
-    0x801CF0B0: "UCZLJ0_801CF0B0",
-    0x801CFBB0: "UCZLJ0_801CFBB0",
+    0x801CF0B0: "UCZLJ00_801CF0B0",
+    0x801CFBB0: "UCZLJ00_801CFBB0",
     0x801D2170: "LeoCJCreateLeoManager",
     0x801D2A80: "LeoCACreateLeoManager",
-    0x801D2CB0: "UCZLJ0_801D2CB0",
+    0x801D2CB0: "UCZLJ00_801D2CB0",
 }
 
 a00_pat = {
@@ -190,18 +190,18 @@ a00_pat = {
 }
 
 a01_pat = {
-    0x8001B174: [0x00000000], # z_effect_soft_sprite
-    0x8001B4E0: [0x8C620008], # z_effect_soft_sprite
-    0x8001EBFC: [0x00000000], # z_DLF
-    0x800250F0: [0x00000000], # z_actor
-    0x800251A4: [0x00001025], # z_actor
-    0x800251B8: [0x8E030008], # z_actor
-    0x800251CC: [0x8E020008], # z_actor
-    0x800251DC: [0x8E020008], # z_actor
-    0x80066E10: [0x3C02800F, 0x8C421C04], # z_map_mark
+    0x8001B174: [0x00000000], # z_effect_soft_sprite.c
+    0x8001B4E0: [0x8C620008], # z_effect_soft_sprite.c
+    0x8001EBFC: [0x00000000], # z_DLF.c
+    0x800250F0: [0x00000000], # z_actor.c
+    0x800251A4: [0x00001025], # z_actor.c
+    0x800251B8: [0x8E030008], # z_actor.c
+    0x800251CC: [0x8E020008], # z_actor.c
+    0x800251DC: [0x8E020008], # z_actor.c
+    0x80066E10: [0x3C02800F, 0x8C421C04], # z_map_mark.c
     0x80099C74: [0x8E0E000C], # KaleidoArea_allocp
     0x80099D54: [0x00001025], # KaleidoArea_allocp
-    0x800CCD50: [0x00C01025], # SP
+    0x800CCD50: [0x00C01025], # loadfragment2.c
 }
 
 segment = [

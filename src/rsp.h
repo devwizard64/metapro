@@ -1,11 +1,7 @@
 #ifndef __RSP_H__
 #define __RSP_H__
 
-#include "types.h"
-
 #include "ultra64.h"
-
-#ifndef __ASSEMBLER__
 
 typedef union vreg
 {
@@ -42,7 +38,5 @@ extern void gsp_update(PTR ucode, u32 *dl);
 extern void gsp_image(void *img);
 
 extern void asp_update(u32 *al, uint size);
-
-#endif /* __ASSEMBLER__ */
 
 #endif /* __RSP_H__ */

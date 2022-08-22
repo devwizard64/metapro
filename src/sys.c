@@ -7,10 +7,10 @@
 
 #include "ultra64.h"
 
-static bool sys_reset = false;
-static bool sys_fast  = false;
-static bool sys_save  = false;
-static bool sys_load  = false;
+static bool sys_reset = FALSE;
+static bool sys_fast  = FALSE;
+static bool sys_save  = FALSE;
+static bool sys_load  = FALSE;
 static u8 sys_prenmi = 0;
 
 static jmp_buf sys_jmp;
@@ -81,13 +81,13 @@ static void sys_update(void)
 {
     if (sys_save)
     {
-        sys_save = false;
+        sys_save = FALSE;
         cpu_save();
         contdemo_save();
     }
     if (sys_load)
     {
-        sys_load = false;
+        sys_load = FALSE;
         cpu_load();
         contdemo_load();
     }
@@ -103,83 +103,83 @@ static void sys_update(void)
     }
     else if (sys_reset)
     {
-        sys_reset  = false;
+        sys_reset  = FALSE;
         sys_prenmi = 30;
         os_event(&__osEventStateTab[OS_EVENT_PRENMI]);
     }
-    timer_update();
+    tm_update();
     os_event(&__osEventStateTab[OS_EVENT_VI]);
-    longjmp(sys_jmp, THREAD_YIELD_QUEUE);
+    longjmp(sys_jmp, TH_QUEUE);
 }
 
 void sys_main(void (*start)(void))
 {
     int arg = setjmp(sys_jmp);
-    if (arg != THREAD_YIELD_NULL)
+    if (arg != 0)
     {
         THREAD *queue;
-        THREAD *thread;
+        THREAD *th;
         s32 pri;
-        thread = os_thread;
+        th = os_thread;
         os_thread = NULL;
-        if (arg == THREAD_YIELD_DESTROY)
+        if (arg == TH_DESTROY)
         {
-            thread_destroy(thread);
-            thread = NULL;
+            th_destroy(th);
+            th = NULL;
         }
-        if (thread != NULL) memcpy(&thread->cpu, &cpu, sizeof(cpu));
-        if (arg == THREAD_YIELD_BREAK) sys_update();
+        if (th != NULL) memcpy(&th->cpu, &cpu, sizeof(CPU));
+        if (arg == TH_BREAK) sys_update();
         queue = os_thread_queue;
-        thread = NULL;
+        th = NULL;
         pri = OS_PRIORITY_IDLE;
         while (queue != NULL)
         {
             if (queue->ready && pri < queue->pri)
             {
-                thread = queue;
+                th = queue;
                 pri = queue->pri;
             }
             queue = queue->qnext;
         }
         if (pri == OS_PRIORITY_IDLE) sys_update();
-        os_thread = thread;
-        memcpy(&cpu, &thread->cpu, sizeof(cpu));
-        if (thread->init)
+        os_thread = th;
+        memcpy(&cpu, &th->cpu, sizeof(CPU));
+        if (th->init)
         {
-            void *stack = thread->stack + THREAD_STACK_SIZE;
-            thread->init = false;
-        #ifdef __GNUC__
+            void *stack = th->stack + TH_STACK_SIZE;
+            th->init = FALSE;
+#ifdef __GNUC__
             asm volatile(
-            #ifdef __i386__
+#ifdef __i386__
                 "mov %[stack], %%esp"
-            #endif
-            #ifdef __x86_64__
+#endif
+#ifdef __x86_64__
                 "mov %[stack], %%rsp"
-            #endif
-            #ifdef __PPC__
-                "mr 1, %[stack]"
-            #endif
-            #ifdef __arm__
+#endif
+#if defined(__arm__) || defined(__arm64__)
                 "mov sp, %[stack]"
-            #endif
+#endif
+#ifdef __PPC__
+                "mr 1, %[stack]"
+#endif
                 : [stack] "+r" (stack) ::
             );
-        #else
-        #error add asm here
-        #endif
+#else
+#error add asm here
+#endif
             __call(os_thread->entry);
-            thread_destroy(os_thread);
+            th_destroy(os_thread);
         }
         else
         {
-            longjmp(thread->jmp, 1);
+            longjmp(th->jmp, 1);
         }
     }
     if (setjmp(sys_nmi) != 0)
     {
         os_thread = NULL;
-        while (os_thread_list != NULL) thread_destroy(os_thread_list);
-        while (os_timer_list  != NULL) timer_destroy(os_timer_list);
+        while (os_thread_list != NULL) th_destroy(os_thread_list);
+        while (os_timer_list  != NULL) tm_destroy(os_timer_list);
     }
     start();
 }

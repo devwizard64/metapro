@@ -24,7 +24,7 @@ static void gsp_g_vtx(u32 w0, u32 w1)
     if (gsp_new_light)
     {
         uint i;
-        gsp_new_light = false;
+        gsp_new_light = FALSE;
         for (i = 0; i < gsp_light_no; i++)
         {
             LIGHT  *l  = &gsp_light_buf[i];
@@ -58,14 +58,14 @@ static void gsp_g_vtx(u32 w0, u32 w1)
         float z;
         int s;
         int t;
-    #ifdef GSP_SWVTX
+#ifdef GSP_SWVTX
         x = v->x;
         y = v->y;
         z = v->z;
         vf->x = MDOT4(MM, 0);
         vf->y = MDOT4(MM, 1);
         vf->z = MDOT4(MM, 2);
-    #endif
+#endif
         if (gsp_geometry_mode & G_TEXTURE_GEN)
         {
             LIGHTF *lx = &gsp_lightf_buf[0];
@@ -120,7 +120,7 @@ static void gsp_g_vtx(u32 w0, u32 w1)
             vf->shade[1] = v->g;
             vf->shade[2] = v->b;
         }
-    #if defined(GSP_SWFOG) || defined(__NATIVE__)
+#if defined(GSP_SWFOG) || defined(__NATIVE__)
         if (gsp_geometry_mode & G_FOG)
         {
             float d;
@@ -136,7 +136,7 @@ static void gsp_g_vtx(u32 w0, u32 w1)
             vf->shade[3] = a;
         }
         else
-    #endif
+#endif
         {
             vf->shade[3] = v->a;
         }

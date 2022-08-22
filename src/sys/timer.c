@@ -1,7 +1,7 @@
 static TIMER *os_timer_list = NULL;
 
 #if 0
-static void timer_print(void)
+static void tm_print(void)
 {
     TIMER *list = os_timer_list;
     while (list != NULL)
@@ -18,81 +18,71 @@ static void timer_print(void)
 }
 #endif
 
-static void timer_link(TIMER *timer)
+static void tm_link(TIMER *tm)
 {
     TIMER **list = &os_timer_list;
     TIMER  *prev = NULL;
     while (*list != NULL)
     {
-        if (*list == timer) return;
+        if (*list == tm) return;
         prev = *list;
         list = &prev->next;
     }
-    *list = timer;
-    timer->prev = prev;
-    timer->next = NULL;
+    *list = tm;
+    tm->prev = prev;
+    tm->next = NULL;
 }
 
-static void timer_unlink(TIMER *timer)
+static void tm_unlink(TIMER *tm)
 {
-    if (timer->prev != NULL) timer->prev->next = timer->next;
-    else                     os_timer_list     = timer->next;
-    if (timer->next != NULL) timer->next->prev = timer->prev;
+    if (tm->prev != NULL) tm->prev->next = tm->next;
+    else                  os_timer_list  = tm->next;
+    if (tm->next != NULL) tm->next->prev = tm->prev;
 }
 
-TIMER *timer_find(PTR addr)
+TIMER *tm_find(PTR addr)
 {
-    TIMER *timer = os_timer_list;
-    while (timer != NULL && timer->addr != addr) timer = timer->next;
-    return timer;
+    TIMER *tm;
+    for (tm = os_timer_list; tm != NULL && tm->addr != addr; tm = tm->next);
+    return tm;
 }
 
-void timer_init(PTR addr, u64 countdown, u64 interval, PTR mq, PTR msg)
+void tm_create(PTR addr, u64 countdown, u64 interval, PTR mq, PTR msg)
 {
-    TIMER *timer = timer_find(addr);
-    if (timer == NULL)
+    TIMER *tm = tm_find(addr);
+    if (tm == NULL) tm_link(tm = malloc(sizeof(TIMER)));
+    tm->addr      = addr;
+    tm->countdown = countdown > 0 ? countdown : interval;
+    tm->interval  = interval;
+    tm->event.mq  = mq;
+    tm->event.msg = msg;
+}
+
+void tm_destroy(TIMER *tm)
+{
+    if (tm != NULL)
     {
-        timer = malloc(sizeof(*timer));
-        timer_link(timer);
-    }
-    timer->addr      = addr;
-    timer->countdown = countdown > 0 ? countdown : interval;
-    timer->interval  = interval;
-    timer->event.mq  = mq;
-    timer->event.msg = msg;
-}
-
-void timer_destroy(TIMER *timer)
-{
-    if (timer != NULL)
-    {
-        timer_unlink(timer);
-        free(timer);
+        tm_unlink(tm);
+        free(tm);
     }
 }
 
-static void timer_update(void)
+static void tm_update(void)
 {
-    TIMER *timer = os_timer_list;
-    while (timer != NULL)
+    TIMER *tm = os_timer_list;
+    while (tm != NULL)
     {
-        TIMER *next = timer->next;
-        if (timer->countdown >= 781250)
+        TIMER *next = tm->next;
+        if (tm->countdown >= 781250)
         {
-            timer->countdown -= 781250;
+            tm->countdown -= 781250;
         }
         else
         {
-            os_event(&timer->event);
-            if (timer->interval > 0)
-            {
-                timer->countdown += timer->interval;
-            }
-            else
-            {
-                timer_destroy(timer);
-            }
+            os_event(&tm->event);
+            if (tm->interval > 0)   tm->countdown += tm->interval;
+            else                    tm_destroy(tm);
         }
-        timer = next;
+        tm = next;
     }
 }

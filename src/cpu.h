@@ -1,10 +1,7 @@
 #ifndef __CPU_H__
 #define __CPU_H__
 
-#include "types.h"
 #include "app.h"
-
-#ifndef __ASSEMBLER__
 
 #if defined(__NATIVE__) && defined(DEBUG)
 #define PATH_ROOT   "app" SEP APP_PATH SEP
@@ -43,9 +40,9 @@
 #endif
 #define AX_W    0
 
-#if defined(__UNSMJ0_0021D7D0_C__) || \
-    defined(__UNSME0_0021F4C0_C__) || \
-    defined(__UNSMC3_0020AAF0_C__)
+#if defined(__UNSMJ00_0021D7D0_C__) || \
+    defined(__UNSME00_0021F4C0_C__) || \
+    defined(__UNSMC03_0020AAF0_C__)
 #define __tlb(addr)                                             \
 (                                                               \
     ((PTR)(addr) >= 0x04000000U && (PTR)(addr) < 0x04040000U) ? \
@@ -183,7 +180,5 @@ extern void cpu_init(void);
 extern void cpu_exit(void);
 extern void cpu_save(void);
 extern void cpu_load(void);
-
-#endif /* __ASSEMBLER__ */
 
 #endif /* __CPU_H__ */

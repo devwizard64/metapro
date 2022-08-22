@@ -430,27 +430,28 @@ VTX;
 
 typedef struct light
 {
+#ifdef __EB__
     struct
     {
-    #ifdef __EB__
         u8 r;
         u8 g;
         u8 b;
         u8 f;
-    #else
-        u8 f;
-        u8 b;
-        u8 g;
-        u8 r;
-    #endif
     }
     col[2];
-#ifdef __EB__
     s8 x;
     s8 y;
     s8 z;
     u8 f;
 #else
+    struct
+    {
+        u8 f;
+        u8 b;
+        u8 g;
+        u8 r;
+    }
+    col[2];
     u8 f;
     s8 z;
     s8 y;

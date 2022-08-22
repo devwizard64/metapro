@@ -36,13 +36,13 @@ PTR __tlb(PTR addr)
 }
 #endif
 
-void __break(unused int code)
+void __break(UNUSED int code)
 {
 #ifndef APP_UNK4
     if (os_thread != NULL)
     {
         os_event(&__osEventStateTab[OS_EVENT_CPU_BREAK]);
-        thread_destroy(os_thread);
+        th_stop(os_thread);
     }
     else
     {
@@ -82,7 +82,7 @@ PTR __dcall(PTR addr)
 }
 #endif
 
-void *__nullswap(void *dst, unused const void *src, unused u32 size)
+void *__nullswap(void *dst, UNUSED const void *src, UNUSED u32 size)
 {
     return dst;
 }
@@ -251,7 +251,10 @@ void sram_read(void *dst, PTR src, u32 size)
 void sram_write(PTR dst, const void *src, u32 size)
 {
     FILE *f;
-    if ((f = fopen(PATH_SRAM, "r+b")) != NULL)
+    if (
+        (f = fopen(PATH_SRAM, "r+b")) != NULL ||
+        (f = fopen(PATH_SRAM, "wb")) != NULL
+    )
     {
         fseek(f, dst, SEEK_SET);
         fwrite(src, 1, size, f);
@@ -269,9 +272,9 @@ void cpu_init(void)
     FILE *f;
     if ((f = fopen(PATH_APP, "rb")) != NULL)
     {
-    #ifdef APP_CACHE
+#ifdef APP_CACHE
         uint i;
-    #endif
+#endif
         u32 mode;
         fread(&mode, 1, sizeof(mode), f);
         switch (mode)
@@ -280,7 +283,7 @@ void cpu_init(void)
             case 0x37804012: cpu_swap = __halfswap; break;
             case 0x12408037: cpu_swap = __wordswap; break;
         }
-    #ifdef APP_CACHE
+#ifdef APP_CACHE
         for (i = 0; i < lenof(cache_ptr); i++)
         {
             const CACHE *cache = &cache_table[i];
@@ -289,7 +292,7 @@ void cpu_init(void)
             fread(cache_ptr[i], 1, cache->size, f);
             cpu_swap(cache_ptr[i], cache_ptr[i], cache->size);
         }
-    #endif
+#endif
         fclose(f);
     }
     else
@@ -312,9 +315,9 @@ void cpu_save(void)
     if ((f = fopen(PATH_DRAM, "wb")) != NULL)
     {
         fwrite(cpu_dram, 1, sizeof(cpu_dram), f);
-    #ifdef APP_DCALL
+#ifdef APP_DCALL
         fwrite(dcall_ptr, 1, sizeof(dcall_ptr), f);
-    #endif
+#endif
         fclose(f);
     }
     else
@@ -329,13 +332,13 @@ void cpu_load(void)
     if ((f = fopen(PATH_DRAM, "rb")) != NULL)
     {
         fread(cpu_dram, 1, sizeof(cpu_dram), f);
-    #ifdef APP_DCALL
+#ifdef APP_DCALL
         fread(dcall_ptr, 1, sizeof(dcall_ptr), f);
-    #endif
+#endif
         fclose(f);
-    #if defined(GSP_F3D) || defined(GSP_F3DEX2)
+#if defined(GSP_F3D) || defined(GSP_F3DEX2)
         gsp_cache();
-    #endif
+#endif
     }
     else
     {

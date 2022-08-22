@@ -4,7 +4,7 @@ static float audio_mix[12] = {1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 static void app_init(void)
 {
-    osSetSpeedupEnable(true);
+    osSetSpeedupEnable(TRUE);
     video_resize_1(400, 240);
     gfxInitDefault();
     consoleInit(GFX_BOTTOM, NULL);
@@ -62,13 +62,13 @@ void input_update(void)
     if (held & KEY_Y)
     {
         if (down & KEY_START)   exit(0);
-        if (down & KEY_SELECT)  sys_reset = true;
-        if (down & KEY_ZL)      sys_save  = true;
-        if (down & KEY_ZR)      sys_load  = true;
+        if (down & KEY_SELECT)  sys_reset = TRUE;
+        if (down & KEY_ZL)      sys_save  = TRUE;
+        if (down & KEY_ZR)      sys_load  = TRUE;
     }
     else
     {
-        if (down & KEY_SELECT)  sys_fast ^= false^true;
+        if (down & KEY_SELECT)  sys_fast ^= FALSE^TRUE;
     }
     os_cont_pad[0].button = 0;
     os_cont_pad[0].stick_x = stick.dx/2;

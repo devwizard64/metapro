@@ -172,7 +172,7 @@ static GDP_TRIANGLE *gdp_triangle;
 static TXTCACHE *gdp_txtcache;
 static GDP_TF gdp_tf;
 
-static u8 gdp_tmem[0x1000];
+static u8 gdp_tmem[0x2000];
 static TILE gdp_tile[8];
 static u16 *gdp_cimg;
 static u8  *gdp_timg;
@@ -250,7 +250,7 @@ static const char *const str_im_fmt[] = {"RGBA", "YUV", "CI", "IA", "I"};
 
 static void *gsp_addr(PTR addr)
 {
-    return &gsp_addr_table[addr >> 24 & 0x0F][addr >>  0 & 0x00FFFFFF];
+    return &gsp_addr_table[addr >> 24 & 0xF][addr & 0xFFFFFF];
 }
 
 #ifdef __NATIVE__
@@ -397,7 +397,7 @@ static int gdp_texture_sizeno(int x)
 }
 
 static void *gdp_texture_resize(
-    void *buf, unused TXTARG *arg, uint dw, uint dh, uint sw, uint sh
+    void *buf, UNUSED TXTARG *arg, uint dw, uint dh, uint sw, uint sh
 )
 {
     void *data = malloc(2*dw*dh);
@@ -449,18 +449,18 @@ static void gdp_set_texture(
     {
         if (
             txtcache->timg == timg && txtcache->fmt == fmt
-        #ifndef __NDS__
+#ifndef __NDS__
             && txtcache->tf == tf
-        #endif
+#endif
         )
         {
-        #if defined(__NATIVE__) || defined(__NDS__) || defined(__3DS__)
+#if defined(__NATIVE__) || defined(__NDS__) || defined(__3DS__)
             glBindTexture(GL_TEXTURE_2D, txtcache->name);
-        #endif
-        #ifdef GEKKO
+#endif
+#ifdef GEKKO
             GX_InvalidateTexAll();
             GX_LoadTexObj(&txtcache->obj, GX_TEXMAP0);
-        #endif
+#endif
             return;
         }
         txtcache = txtcache->next;
@@ -468,14 +468,14 @@ static void gdp_set_texture(
     texture = gdp_texture_table[fmt];
     if (texture != NULL)
     {
-    #if defined(__NATIVE__) || defined(__NDS__) || defined(__3DS__)
+#if defined(__NATIVE__) || defined(__NDS__) || defined(__3DS__)
         u8 *buf;
-    #ifdef __NDS__
+#ifdef __NDS__
         int sizex;
         int sizey;
         int param;
-    #endif
-    #endif
+#endif
+#endif
         TXTARG arg;
         txtcache = malloc(sizeof(TXTCACHE));
         txtcache->next = gdp_txtcache;
@@ -483,14 +483,14 @@ static void gdp_set_texture(
         txtcache->timg = timg;
         txtcache->fmt  = fmt;
         txtcache->tf   = tf;
-    #if defined(__NATIVE__) || defined(__NDS__) || defined(__3DS__)
+#if defined(__NATIVE__) || defined(__NDS__) || defined(__3DS__)
         buf = texture(&arg, src, w, h);
-    #ifndef __NDS__
+#ifndef __NDS__
         glFlush();
-    #endif
+#endif
         glGenTextures(1, &txtcache->name);
         glBindTexture(GL_TEXTURE_2D, txtcache->name);
-    #ifdef __NDS__
+#ifdef __NDS__
         sizex = gdp_texture_sizeno(w);
         sizey = gdp_texture_sizeno(h);
         if (8U << sizex != w || 8U << sizey != h)
@@ -503,7 +503,7 @@ static void gdp_set_texture(
         if ( (cms & G_TX_MIRROR))   param |= GL_TEXTURE_FLIP_S;
         if ( (cmt & G_TX_MIRROR))   param |= GL_TEXTURE_FLIP_T;
         glTexImage2D(GL_TEXTURE_2D, 0, arg.type, sizex, sizey, 0, param, buf);
-    #else
+#else
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gdp_tf);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gdp_tf);
         glTexParameteri(
@@ -512,22 +512,22 @@ static void gdp_set_texture(
         glTexParameteri(
             GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, gdp_texture_cm_table[cmt]
         );
-    #ifdef __NATIVE__
+#ifdef __NATIVE__
         glTexImage2D(
             GL_TEXTURE_2D, 0, arg.internalFormat, w, h, 0, arg.format, arg.type,
             buf
         );
-    #endif
-    #ifdef __3DS__
+#endif
+#ifdef __3DS__
         glTexImage2D(
             GL_TEXTURE_2D, 0, arg.internalFormat, w, h, 0, GL_RGBA,
             GL_UNSIGNED_BYTE, buf
         );
-    #endif
-    #endif
+#endif
+#endif
         free(buf);
-    #endif
-    #ifdef GEKKO
+#endif
+#ifdef GEKKO
         txtcache->buf = texture(&arg, src, w, h);
         GX_InitTexObj(
             &txtcache->obj, txtcache->buf, w, h, arg.fmt,
@@ -538,16 +538,16 @@ static void gdp_set_texture(
         GX_InitTexObjFilterMode(&txtcache->obj, gdp_tf, gdp_tf);
         GX_InvalidateTexAll();
         GX_LoadTexObj(&txtcache->obj, GX_TEXMAP0);
-    #endif
+#endif
     }
     else
     {
-    #ifdef GSP_DEBUG
+#ifdef GSP_DEBUG
         wdebug(
             "unknown texture fmt G_IM_FMT_%s, G_IM_SIZ_%db\n",
             str_im_fmt[fmt >> 2], 4 << (fmt & 3)
         );
-    #endif
+#endif
     }
 }
 
@@ -573,6 +573,7 @@ static void gsp_flush_texture(void)
     }
     gdp_texture_scale[0] = gdp_texture_shift_table[tile->shift[0]] / w;
     gdp_texture_scale[1] = gdp_texture_shift_table[tile->shift[1]] / h;
+    memcpy(gdp_tmem+0x1000, gdp_tmem, 0x1000);
     gdp_set_texture(
         gdp_timg, src, tile->fmt, gdp_tf, w, h,
         tile->cm[0], tile->cm[1]
@@ -584,7 +585,7 @@ static void gsp_flush_fog(void)
 #ifndef GSP_SWFOG
     if (gsp_geometry_mode & G_FOG)
     {
-    #if defined(__NATIVE__) || defined(__3DS__)
+#if defined(__NATIVE__) || defined(__3DS__)
         GLfloat col[4];
         col[0] = (1.0F/0xFF) * gdp_fog[0];
         col[1] = (1.0F/0xFF) * gdp_fog[1];
@@ -592,14 +593,14 @@ static void gsp_flush_fog(void)
         col[3] = (1.0F/0xFF) * gdp_fog[3];
         glEnable(GL_FOG);
         glFogfv(GL_FOG_COLOR, col);
-    #endif
-    #ifdef GEKKO
+#endif
+#ifdef GEKKO
         float start = (float)(0x000-gsp_fog_o)/gsp_fog_m;
         float end   = (float)(0x100-gsp_fog_o)/gsp_fog_m;
         GXColor col = {gdp_fog[0], gdp_fog[1], gdp_fog[2], gdp_fog[3]};
         GX_SetFog(GX_FOG_LIN, 1+start, 1+end, 1, 2, col);
-    #endif
-    #ifdef __NDS__
+#endif
+#ifdef __NDS__
         glEnable(GL_FOG);
         glFogColor(
             gdp_fog[0] >> 3,
@@ -608,20 +609,20 @@ static void gsp_flush_fog(void)
             gdp_fog[3] >> 3
         );
         gsp_polyfmt |= POLY_FOG;
-    #endif
+#endif
     }
     else
     {
-    #if defined(__NATIVE__) || defined(__3DS__)
+#if defined(__NATIVE__) || defined(__3DS__)
         glDisable(GL_FOG);
-    #endif
-    #ifdef GEKKO
+#endif
+#ifdef GEKKO
         GX_SetFog(GX_FOG_NONE, 0, 0, 0, 0, (GXColor){0});
-    #endif
-    #ifdef __NDS__
+#endif
+#ifdef __NDS__
         glDisable(GL_FOG);
         gsp_polyfmt &= ~POLY_FOG;
-    #endif
+#endif
     }
 #endif
 }
@@ -685,8 +686,8 @@ static void gsp_flush_fog(void)
 static void gdp_tri(const u8 *t)
 {
     int i;
-    if (gsp_new_texture)    {gsp_new_texture = false; gsp_flush_texture();}
-    if (gsp_new_fog)        {gsp_new_fog     = false; gsp_flush_fog();    }
+    if (gsp_new_texture)    {gsp_new_texture = FALSE; gsp_flush_texture();}
+    if (gsp_new_fog)        {gsp_new_fog     = FALSE; gsp_flush_fog();    }
 #ifdef __NDS__
     glPolyFmt(gsp_polyfmt);
 #endif
@@ -698,45 +699,45 @@ static void gdp_tri(const u8 *t)
 #endif
     for (i = 0; i < 3; i++)
     {
-    #ifndef GSP_SWVTX
+#ifndef GSP_SWVTX
         VTX  *v  = &gsp_vtx_buf[t[i]];
-    #endif
+#endif
         VTXF *vf = &gsp_vtxf_buf[t[i]];
         float s = gdp_texture_scale[0] * vf->s;
         float t = gdp_texture_scale[1] * vf->t;
         u8 col[4];
         gdp_combine_cc(col, vf);
         gdp_combine_ac(col, vf);
-    #if defined(__NATIVE__) || defined(__3DS__)
+#if defined(__NATIVE__) || defined(__3DS__)
         glColor4ub(col[0], col[1], col[2], col[3]);
         glTexCoord2f(s, t);
-    #ifndef GSP_SWFOG
+#ifndef GSP_SWFOG
         glFogCoordf(vf->shade[3]);
-    #endif
-    #ifdef GSP_SWVTX
+#endif
+#ifdef GSP_SWVTX
         glVertex3f(vf->x, vf->y, vf->z);
-    #else
+#else
         glVertex3s(v->x, v->y, v->z);
-    #endif
-    #endif
-    #ifdef GEKKO
-    #ifdef GSP_SWVTX
+#endif
+#endif
+#ifdef GEKKO
+#ifdef GSP_SWVTX
         GX_Position3f32(vf->x, vf->y, vf->z);
-    #else
+#else
         GX_Position3s16(v->x, v->y, v->z);
-    #endif
+#endif
         GX_Color4u8(col[0], col[1], col[2], col[3]);
         GX_TexCoord2f32(s, t);
-    #endif
-    #ifdef __NDS__
+#endif
+#ifdef __NDS__
         glColor3b(col[0], col[1], col[2]);
         glTexCoord2f(s, t);
-    #ifdef GSP_SWVTX
+#ifdef GSP_SWVTX
         glVertex3v16(vf->x, vf->y, vf->z);
-    #else
+#else
         glVertex3v16(v->x, v->y, v->z);
-    #endif
-    #endif
+#endif
+#endif
     }
 #if defined(__NATIVE__) || defined(__NDS__) || defined(__3DS__)
     glEnd();
@@ -770,11 +771,11 @@ static void gsp_start_rect(void)
 {
     if (gdp_rect == 0)
     {
-    #ifndef GSP_SWVTX
+#ifndef GSP_SWVTX
         f32 mf[4][4];
         mtx_identity(mf);
         gsp_set_mm(mf);
-    #endif
+#endif
         gsp_set_vp(0, 1280, 0, 960);
         gsp_set_cull(G_CULL_BACK);
     }
@@ -803,11 +804,11 @@ static void gsp_start_texrect(void)
         if (gdp_cycle) gdp_set_cc(0xFC121824, 0xFF33FFFF);
         mtx_ortho(
             mf,
-        #ifdef VIDEO_DYNRES
+#ifdef VIDEO_DYNRES
             4*video_l, 4*video_r,
-        #else
+#else
             0, 1280,
-        #endif
+#endif
             960, 0, 0, 2
         );
         gsp_set_mp(mf);
@@ -853,15 +854,15 @@ static void gsp_fillrect(u32 w0, u32 w1)
     }
     for (i = 0; i < 4; i++)
     {
-    #ifdef GSP_SWVTX
+#ifdef GSP_SWVTX
         vf[i].x = i == 0 || i == 3 ? xl : xh;
         vf[i].y = i == 2 || i == 3 ? yl : yh;
         vf[i].z = 0;
-    #else
+#else
         v[i].x = i == 0 || i == 3 ? xl : xh;
         v[i].y = i == 2 || i == 3 ? yl : yh;
         v[i].z = 0;
-    #endif
+#endif
         vf[i].shade[0] = r;
         vf[i].shade[1] = g;
         vf[i].shade[2] = b;
@@ -930,15 +931,15 @@ static void gsp_texrect(void)
     vf[3].t = tl;
     for (i = 0; i < 4; i++)
     {
-    #ifdef GSP_SWVTX
+#ifdef GSP_SWVTX
         vf[i].x = i == 0 || i == 3 ? xl : xh;
         vf[i].y = i == 2 || i == 3 ? yl : yh;
         vf[i].z = 0;
-    #else
+#else
         v[i].x = i == 0 || i == 3 ? xl : xh;
         v[i].y = i == 2 || i == 3 ? yl : yh;
         v[i].z = 0;
-    #endif
+#endif
         vf[i].shade[0] = 0xFF;
         vf[i].shade[1] = 0xFF;
         vf[i].shade[2] = 0xFF;
@@ -981,15 +982,15 @@ static void gsp_bg(uObjBg *bg)
     gsp_start_texrect();
     for (i = 0; i < 4; i++)
     {
-    #ifdef GSP_SWVTX
+#ifdef GSP_SWVTX
         vf[i].x  = i == 0 || i == 3 ? xl : xh;
         vf[i].y  = i == 2 || i == 3 ? yl : yh;
         vf[i].z  = 0;
-    #else
+#else
         v[i].x  = i == 0 || i == 3 ? xl : xh;
         v[i].y  = i == 2 || i == 3 ? yl : yh;
         v[i].z  = 0;
-    #endif
+#endif
         vf[i].s = i == 0 || i == 3 ?  0 :  1;
         vf[i].t = i == 2 || i == 3 ?  0 :  1;
         vf[i].shade[0] = 0xFF;
@@ -1008,34 +1009,33 @@ static void gsp_start_S2DEX2(void);
 #endif
 static void gsp_start(PTR ucode, u32 *dl)
 {
-    uint i;
     switch (ucode)
     {
 #ifdef GSP_F3DEX
-    #ifdef APP_UNKT
-    #ifdef APP_E0
+#ifdef APP_UNKT
+#ifdef APP_E00
         /* F3DEX */
         case 0x000D9040:    break;
         /* F3DLX */
         case 0x000DA420:    break;
-    #endif
-    #endif
-    #ifdef APP_UCZL
-    #if defined(APP_J0) || defined(APP_E0)
+#endif
+#endif
+#ifdef APP_UCZL
+#if defined(APP_J00) || defined(APP_E00)
         case 0x000E3F70:    gsp_start_F3DEX2(); break;
         case 0x000E5300:    gsp_start_S2DEX2(); break;
-    #endif
-    #endif
-    #ifdef APP_UNK4
-    #ifdef APP_E0
+#endif
+#endif
+#ifdef APP_UNK4
+#ifdef APP_E00
         case 0x00039E90:    gsp_start_F3DEX2(); break;
         case 0x0003B220:
             pdebug("notice: using L3DEX2\n");
             gsp_start_F3DEX2();
             break;
         case 0x0003C3B0:    gsp_start_S2DEX2(); break;
-    #endif
-    #endif
+#endif
+#endif
         default:
             edebug("unknown ucode 0x%08" FMT_X "\n", ucode);
             break;
@@ -1052,11 +1052,10 @@ static void gsp_start(PTR ucode, u32 *dl)
     gsp_light_buf[1].y =   0;
     gsp_light_buf[1].z =   0;
     gsp_mtx_modelview = gsp_mtx_modelview_stack;
-    for (i = 0; i < lenof(gsp_addr_table); i++) gsp_addr_table[i] = cpu_dram;
     gsp_dl_stack[0] = dl;
     gsp_dl_index = 0;
-    gsp_new_fog   = false;
-    gsp_new_light = true;
+    gsp_new_fog   = FALSE;
+    gsp_new_light = TRUE;
 }
 
 #include "gsp/g_spnoop.c"
@@ -1109,12 +1108,12 @@ static void gsp_start(PTR ucode, u32 *dl)
 
 #define gsp_g_quad              gsp_g_tri2
 
-static void gsp_g_special_3(unused u32 w0, unused u32 w1)
+static void gsp_g_special_3(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_SPECIAL_3\n");
 }
 
-static void gsp_g_special_2(unused u32 w0, unused u32 w1)
+static void gsp_g_special_2(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_SPECIAL_2\n");
 }
@@ -1122,13 +1121,13 @@ static void gsp_g_special_2(unused u32 w0, unused u32 w1)
 #ifdef APP_UNK4
 #include "gsp/g_special_1.c"
 #else
-static void gsp_g_special_1(unused u32 w0, unused u32 w1)
+static void gsp_g_special_1(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_SPECIAL_1\n");
 }
 #endif
 
-static void gsp_g_dma_io(unused u32 w0, unused u32 w1)
+static void gsp_g_dma_io(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_DMA_IO\n");
 }
@@ -1148,17 +1147,17 @@ static void gsp_g_dma_io(unused u32 w0, unused u32 w1)
 #include "gsp/g_setothermode_h.c"
 #include "gsp/g_rdphalf_2.c"
 
-static void gsp_g_obj_rectangle(unused u32 w0, unused u32 w1)
+static void gsp_g_obj_rectangle(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_OBJ_RECTANGLE\n");
 }
 
-static void gsp_g_obj_sprite(unused u32 w0, unused u32 w1)
+static void gsp_g_obj_sprite(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_OBJ_SPRITE\n");
 }
 
-static void gsp_g_select_dl(unused u32 w0, unused u32 w1)
+static void gsp_g_select_dl(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_SELECT_DL\n");
 }
@@ -1168,12 +1167,12 @@ static void gsp_g_select_dl(unused u32 w0, unused u32 w1)
 #include "gsp/g_bg_copy.c"
 #include "gsp/g_obj_rendermode.c"
 
-static void gsp_g_obj_rectangle_r(unused u32 w0, unused u32 w1)
+static void gsp_g_obj_rectangle_r(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_OBJ_RECTANGLE_R\n");
 }
 
-static void gsp_g_obj_movemem(unused u32 w0, unused u32 w1)
+static void gsp_g_obj_movemem(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_OBJ_MOVEMEM\n");
 }
@@ -1721,7 +1720,7 @@ void gsp_init(void)
     glAlphaFunc(2);
 #endif
     gdp_txtcache = NULL;
-    gsp_new_cache = false;
+    gsp_new_cache = FALSE;
 }
 
 void gsp_exit(void)
@@ -1733,11 +1732,12 @@ void gsp_exit(void)
 
 void gsp_cache(void)
 {
-    gsp_new_cache = true;
+    gsp_new_cache = TRUE;
 }
 
 void gsp_update(PTR ucode, u32 *dl)
 {
+    int i;
 #ifdef GSP_SWVTX
     f32 mf[4][4];
 #endif
@@ -1745,16 +1745,16 @@ void gsp_update(PTR ucode, u32 *dl)
     if (gsp_new_cache)
 #endif
     {
-        gsp_new_cache = false;
+        gsp_new_cache = FALSE;
         while (gdp_txtcache != NULL)
         {
             TXTCACHE *txtcache = gdp_txtcache;
-        #if defined(__NATIVE__) || defined(__NDS__) || defined(__3DS__)
+#if defined(__NATIVE__) || defined(__NDS__) || defined(__3DS__)
             glDeleteTextures(1, &txtcache->name);
-        #endif
-        #ifdef GEKKO
+#endif
+#ifdef GEKKO
             free(txtcache->buf);
-        #endif
+#endif
             gdp_txtcache = txtcache->next;
             free(txtcache);
         }
@@ -1769,7 +1769,7 @@ void gsp_update(PTR ucode, u32 *dl)
     GX_SetViewport(0, 0, video_w, video_h, 0, 1);
     GX_SetScissor(0, 0, video_w, video_h);
     GX_InvVtxCache();
-    gsp_decal = false;
+    gsp_decal = FALSE;
 #endif
 #ifdef __NDS__
     glViewport(0, 0, video_w-1, video_h-1);
@@ -1783,19 +1783,20 @@ void gsp_update(PTR ucode, u32 *dl)
     mtx_identity(mf);
     gsp_set_mm(mf);
 #endif
-    gsp_new_texture = false;
+    for (i = 0; i < 16; i++) gsp_addr_table[i] = cpu_dram;
+    gsp_new_texture = FALSE;
     gsp_start(ucode, dl);
     do
     {
         void (*cmd)(u32, u32);
         u32 w0 = gsp_dl_stack[gsp_dl_index][0];
         u32 w1 = gsp_dl_stack[gsp_dl_index][1];
-    #ifdef GSP_DEBUG
+#ifdef GSP_DEBUG
         pdebug(
             "0x%08X: (%02X) %08X %08X\n",
             __ptr(gsp_dl_stack[gsp_dl_index]), gsp_cmd[w0 >> 24], w0, w1
         );
-    #endif
+#endif
         gsp_dl_stack[gsp_dl_index] += 2;
         cmd = gsp_table[w0 >> 24];
         if (cmd != NULL)
@@ -1827,7 +1828,7 @@ void gsp_update(PTR ucode, u32 *dl)
 #endif
 }
 
-void gsp_image(unused void *img)
+void gsp_image(UNUSED void *img)
 {
 #ifdef __NATIVE__
     /*

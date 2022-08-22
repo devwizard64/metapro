@@ -223,7 +223,7 @@ a00_ins = {
     "        }\n"
     "    }\n",
     # audio sleep
-    0x80317938: "    thread_yield(THREAD_YIELD_BREAK);\n",
+    0x80317938: "    th_yield(TH_BREAK);\n",
 }
 
 segment = [

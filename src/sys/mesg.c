@@ -14,7 +14,7 @@ static void mesg_print(OSMesgQueue *mq)
 }
 #endif
 
-void mesg_init(OSMesgQueue *mq, PTR msg, s32 count)
+void mesg_create(OSMesgQueue *mq, PTR msg, s32 count)
 {
     mq->recv  = NULLPTR;
     mq->send  = NULLPTR;
@@ -31,16 +31,16 @@ int mesg_send(OSMesgQueue *mq, PTR msg, int flag)
         if (flag == OS_MESG_NOBLOCK) return -1;
         if (mq->send != NULLPTR) edebug("illegal SendMesgBLOCK");
         mq->send = os_thread->addr;
-        os_thread->ready = false;
-        thread_yield(THREAD_YIELD_QUEUE);
+        os_thread->ready = FALSE;
+        th_yield(TH_QUEUE);
     }
     *cpu_s32(mq->msg + 4*((mq->index+mq->count) % mq->len)) = msg;
     mq->count++;
     if (mq->recv != NULLPTR)
     {
-        thread_find(mq->recv)->ready = true;
+        th_find(mq->recv)->ready = TRUE;
         mq->recv = NULLPTR;
-        if (os_thread != NULL) thread_yield(THREAD_YIELD_QUEUE);
+        if (os_thread != NULL) th_yield(TH_QUEUE);
     }
     return 0;
 }
@@ -52,17 +52,17 @@ int mesg_recv(OSMesgQueue *mq, PTR msg, int flag)
         if (flag == OS_MESG_NOBLOCK) return -1;
         if (mq->recv != NULLPTR) edebug("illegal RecvMesgBLOCK");
         mq->recv = os_thread->addr;
-        os_thread->ready = false;
-        thread_yield(THREAD_YIELD_QUEUE);
+        os_thread->ready = FALSE;
+        th_yield(TH_QUEUE);
     }
     if (msg != NULLPTR) *cpu_s32(msg) = *cpu_s32(mq->msg + 4*mq->index);
     mq->index = (mq->index+1) % mq->len;
     mq->count--;
     if (mq->send != NULLPTR)
     {
-        thread_find(mq->send)->ready = true;
+        th_find(mq->send)->ready = TRUE;
         mq->send = NULLPTR;
-        if (os_thread != NULL) thread_yield(THREAD_YIELD_QUEUE);
+        if (os_thread != NULL) th_yield(TH_QUEUE);
     }
     return 0;
 }

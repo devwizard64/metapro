@@ -1004,7 +1004,7 @@ def main(argv):
         "#include \"types.h\"\n"
         "\n"
         "#define APP_U%c%c%c\n"
-        "#define APP_%c%d\n"
+        "#define APP_%c%02X\n"
     ) % struct.unpack(">59xBBBBB", data[:0x40]))
     if len(app.dcall) > 0: h.write("#define APP_DCALL\n")
     if len(app.cache) > 0: h.write("#define APP_CACHE\n")
@@ -1198,7 +1198,7 @@ def main(argv):
                 for flag, r in reg:
                     if app.reg & flag: continue
                     if (reg_flag | chk_flag) & flag:
-                        f.write("    unused %s %s;\n" % (
+                        f.write("    UNUSED %s %s;\n" % (
                             "s64" if rll_flag & flag else t, r
                         ))
             for addr, ln in line:

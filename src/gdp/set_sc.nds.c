@@ -1,3 +1,3 @@
-static void gdp_set_sc(unused int l, unused int r, unused int t, unused int b)
+static void gdp_set_sc(UNUSED int l, UNUSED int r, UNUSED int t, UNUSED int b)
 {
 }

@@ -6,22 +6,22 @@
 #endif
 static void gsp_g_mtx(u32 w0, u32 w1)
 {
-    f32  mf[4][4];
+    f32 mf[4][4];
     uint flag;
     gsp_flush_rect();
 #ifdef APP_UNSM
-#ifdef APP_J0
+#ifdef APP_J00
     if (w1 == 0x020144B0)
 #endif
-#ifdef APP_E0
+#ifdef APP_E00
     if (w1 == 0x02017310)
 #endif
     {
-    #if 1
+#if 1
         mtx_ortho(mf, video_l, video_r, 0, 240, 0, 2);
-    #else
+#else
         mtx_ortho_bg(mf, 0, 320, 0, 240, 0, 2);
-    #endif
+#endif
     }
     else
 #endif
@@ -63,10 +63,10 @@ static void gsp_g_mtx(u32 w0, u32 w1)
             mtx_cat(MM, mf, src);
         }
         gsp_flush_mm();
-    #ifdef APP_UNK4
+#ifdef APP_UNK4
         mtx_write(gsp_mtx, &MM[0][0]);
-    #endif
-        gsp_new_light = true;
+#endif
+        gsp_new_light = TRUE;
     }
 #if defined(GSP_SWFOG) || defined(__NATIVE__)
     mtx_cat(gsp_mtx_mvp, MM, MP);

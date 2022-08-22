@@ -93,10 +93,10 @@ static void app_update(void)
             case SDL_KEYDOWN:
                 switch (event.key.keysym.scancode)
                 {
-                    case SDL_SCANCODE_F1:   sys_reset = true;       break;
-                    case SDL_SCANCODE_F4:   sys_fast ^= false^true; break;
-                    case SDL_SCANCODE_F5:   sys_save = true;        break;
-                    case SDL_SCANCODE_F7:   sys_load = true;        break;
+                    case SDL_SCANCODE_F1:   sys_reset = TRUE;       break;
+                    case SDL_SCANCODE_F4:   sys_fast ^= FALSE^TRUE; break;
+                    case SDL_SCANCODE_F5:   sys_save = TRUE;        break;
+                    case SDL_SCANCODE_F7:   sys_load = TRUE;        break;
                     default: break;
                 }
                 break;

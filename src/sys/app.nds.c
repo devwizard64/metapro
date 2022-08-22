@@ -48,11 +48,11 @@ void input_update(void)
     if (held & KEY_Y)
     {
         if (down & KEY_START)   exit(0);
-        if (down & KEY_SELECT)  sys_reset = true;
+        if (down & KEY_SELECT)  sys_reset = TRUE;
     }
     else
     {
-        if (down & KEY_SELECT)  sys_fast ^= false^true;
+        if (down & KEY_SELECT)  sys_fast ^= FALSE^TRUE;
     }
     os_cont_pad[0].button  = 0;
     os_cont_pad[0].stick_x = 0;
@@ -102,10 +102,10 @@ void audio_update(void *src, size_t size)
         audio[1].data[i/2] = data[i+0];
     }
     audio[0].id = soundPlaySample(
-        audio[0].data, SoundFormat_16Bit, size, AUDIO_FREQ, 127,   0, true, 0
+        audio[0].data, SoundFormat_16Bit, size, AUDIO_FREQ, 127,   0, TRUE, 0
     );
     audio[1].id = soundPlaySample(
-        audio[1].data, SoundFormat_16Bit, size, AUDIO_FREQ, 127, 127, true, 0
+        audio[1].data, SoundFormat_16Bit, size, AUDIO_FREQ, 127, 127, TRUE, 0
     );
 }
 

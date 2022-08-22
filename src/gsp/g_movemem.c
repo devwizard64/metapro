@@ -39,7 +39,7 @@ static void gsp_g_movemem(u32 w0, u32 w1)
             }
             else if (index >= G_MV_LOOKATY && index < G_MV_L7+2)
             {
-                gsp_new_light = true;
+                gsp_new_light = TRUE;
             }
         }
     }
@@ -60,7 +60,7 @@ static void gsp_g_movemem(u32 w0, u32 w1)
                     gsp_flush_vp();
                     break;
                 case G_MV_LIGHT:
-                    gsp_new_light = true;
+                    gsp_new_light = TRUE;
                     break;
             }
         }

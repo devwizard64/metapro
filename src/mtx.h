@@ -1,10 +1,6 @@
 #ifndef __MTX_H__
 #define __MTX_H__
 
-#include "types.h"
-
-#ifndef __ASSEMBLER__
-
 #define MDOT3(m, i) ((m)[0][i]*x + (m)[1][i]*y + (m)[2][i]*z)
 #define IDOT3(m, i) ((m)[i][0]*x + (m)[i][1]*y + (m)[i][2]*z)
 #define MDOT4(m, i) (MDOT3(m, i) + (m)[3][i])
@@ -33,7 +29,5 @@ extern void mtx_ortho(
 extern void mtx_perspective(
     f32 mf[4][4], float fovy, float aspect, float n, float f
 );
-
-#endif /* __ASSEMBLER__ */
 
 #endif /* __MTX_H__ */

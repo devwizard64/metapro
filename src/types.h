@@ -1,8 +1,8 @@
 #ifndef __TYPES_H__
 #define __TYPES_H__
 
-#define false   0
-#define true    1
+#define FALSE   0
+#define TRUE    1
 
 #define MIN(a, b)               ((a) < (b) ? (a) : (b))
 #define MAX(a, b)               ((a) > (b) ? (a) : (b))
@@ -25,13 +25,10 @@
 #define FMT_X   "X"
 #endif
 
-#ifndef __ASSEMBLER__
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
-#include <malloc.h>
 #include <setjmp.h>
 
 #include <math.h>
@@ -41,8 +38,12 @@
 #include <time.h>
 
 #include <SDL2/SDL.h>
+#ifdef __APPLE__
+#include <OpenGL/gl.h>
+#else
 #include <GL/gl.h>
 #include <GL/glext.h>
+#endif
 
 typedef  int8_t  s8;
 typedef uint8_t  u8;
@@ -56,6 +57,7 @@ typedef char     bool;
 #endif
 
 #ifdef GEKKO
+#include <malloc.h>
 #include <gccore.h>
 #include <fat.h>
 #endif
@@ -79,23 +81,18 @@ typedef unsigned int    uint;
 typedef float           f32;
 typedef double          f64;
 
-#define lenof(x)        (sizeof((x)) / sizeof((x)[0]))
-
-#define NULLPTR 0
-typedef u32 PTR;
-
 #ifdef __GNUC__
 #if __BYTE_ORDER__ == __ORDER_BIG_ENDIAN__
 #define __EB__
 #endif
-#define unused          __attribute__((unused))
-#define fallthrough     __attribute__((fallthrough))
-#define forceinline     __attribute__((always_inline))
+#define UNUSED          __attribute__((unused))
 #else
-#define unused
-#define fallthrough
-#define forceinline
+#define UNUSED
 #endif
+#define lenof(x)        (sizeof((x)) / sizeof((x)[0]))
+
+#define NULLPTR 0
+typedef u32 PTR;
 
 extern void eexit(void);
 #define wprint(...) fprintf(stderr, "warning: " __VA_ARGS__)
@@ -109,7 +106,5 @@ extern void eexit(void);
 #define wdebug(...) {}
 #define edebug(...) {}
 #endif
-
-#endif /* __ASSEMBLER__ */
 
 #endif /* __TYPES_H__ */

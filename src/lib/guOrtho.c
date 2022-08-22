@@ -16,10 +16,10 @@ void lib_guOrtho(void)
 #ifdef VIDEO_DYNRES
     if (n == 0 && f == 3)
     {
-    #ifdef __NDS__
+#ifdef __NDS__
         n = -3;
         f = 0;
-    #endif
+#endif
         mtx_ortho_bg(mf, l, r, b, t, n, f);
     }
     else

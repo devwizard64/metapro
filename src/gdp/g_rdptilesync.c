@@ -1,5 +1,5 @@
 #ifdef DEBUG
-static void gdp_g_rdptilesync(unused u32 w0, unused u32 w1)
+static void gdp_g_rdptilesync(UNUSED u32 w0, UNUSED u32 w1)
 {
 }
 #else

@@ -1,16 +1,16 @@
-static void asp_a_interleave(unused u32 w0, unused u32 w1)
+static void asp_a_interleave(UNUSED u32 w0, UNUSED u32 w1)
 {
     if (asp_count > 0)
     {
         s16 *dmemout = asp_s16(asp_dmemout);
-    #ifdef ASP_MAIN1
+#ifdef ASP_MAIN1
         s16 *inl = asp_s16(asp_sample + (w1 >> 16   ));
         s16 *inr = asp_s16(asp_sample + (w1 & 0xFFFF));
-    #endif
-    #ifdef ASP_NAUDIO
+#endif
+#ifdef ASP_NAUDIO
         s16 *inl = asp_s16(asp_aux_0);
         s16 *inr = asp_s16(asp_dmemout);
-    #endif
+#endif
         uint count = (asp_count+15) & ~15;
         do
         {

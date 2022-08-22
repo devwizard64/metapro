@@ -202,7 +202,7 @@ a00_ins = {
     # hud draw power
     0x802E2344: "    t8 -= BORDER_HT-8;\n",
     # audio sleep
-    0x80316918: "    thread_yield(THREAD_YIELD_BREAK);\n",
+    0x80316918: "    th_yield(TH_BREAK);\n",
 }
 
 segment = [

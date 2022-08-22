@@ -1,5 +1,4 @@
-APP     ?= UNSME0
-TARGET  ?= native
+APP     ?= UNSME00
 DEBUG   ?= 1
 ifeq ($(DEBUG),0)
 	LLE ?= 0
@@ -14,149 +13,205 @@ LIBNDS  := $(DEVKITPRO)/libnds
 LIBCTRU := $(DEVKITPRO)/libctru
 PICAGL  := picaGL
 
-BUILD   := build/$(APP)/$(TARGET)
-
 SRC_OBJ := \
-	$(BUILD)/src/main.o \
-	$(BUILD)/src/demo.o \
-	$(BUILD)/src/tm.o   \
-	$(BUILD)/src/sys.o  \
-	$(BUILD)/src/mtx.o  \
-	$(BUILD)/src/cpu.o  \
-	$(BUILD)/src/rsp.o  \
-	$(BUILD)/src/gsp.o  \
-	$(BUILD)/src/asp.o  \
-	$(BUILD)/src/seq.o
+	src/main.o  \
+	src/demo.o  \
+	src/dbtm.o  \
+	src/sys.o   \
+	src/mtx.o   \
+	src/cpu.o   \
+	src/rsp.o   \
+	src/gsp.o   \
+	src/asp.o   \
+	src/seq.o
 
 LIB_OBJ := \
-	$(BUILD)/src/lib/osSpTaskStartGo.o      \
-	$(BUILD)/src/lib/osInitialize.o         \
-	$(BUILD)/src/lib/osContGetReadData.o    \
-	$(BUILD)/src/lib/osContInit.o           \
-	$(BUILD)/src/lib/osPiStartDma.o         \
-	$(BUILD)/src/lib/guOrtho.o              \
-	$(BUILD)/src/lib/guPerspective.o        \
-	$(BUILD)/src/lib/osEPiStartDma.o        \
-	$(BUILD)/src/lib/osContGetQuery.o
+	src/lib/osSpTaskStartGo.o   \
+	src/lib/osInitialize.o      \
+	src/lib/osContGetReadData.o \
+	src/lib/osContInit.o        \
+	src/lib/osPiStartDma.o      \
+	src/lib/guOrtho.o           \
+	src/lib/guPerspective.o     \
+	src/lib/osEPiStartDma.o     \
+	src/lib/osContGetQuery.o
 
-APP_OBJ := $(shell python3 main.py $(APP) $(BUILD)/app/)
-APP_SRC := $(addprefix build/$(APP)/,$(notdir $(APP_OBJ:.o=.c)))
+APP_OBJ := $(shell python3 main.py $(APP) app/)
 
-FLAG    += -fno-strict-aliasing -Isrc -Ibuild/$(APP) $(OPT)
+BUILD   := build/$(APP)
+FLAG    := -fno-strict-aliasing -Isrc -I$(BUILD) $(OPT)
 ifneq ($(DEBUG),0)
 	FLAG    += -ggdb3 -DDEBUG
 endif
 ifneq ($(LLE),0)
 	FLAG    += -DLLE
 endif
+FLAG    += -Wall -Wextra
+WARN    := -Wno-uninitialized
 
-ifeq ($(TARGET),native)
-	CC      := gcc
-	LD      := gcc
-	CCFLAG  := -fno-pie $(FLAG) -D__NATIVE__
-	LDFLAG  := -no-pie
-	ifeq ($(DEBUG),0)
-		LDFLAG  += -s
-	endif
-	LIB     := -lm -lSDL2 -lGL
-else ifeq ($(TARGET),win32)
-	CC      := i686-w64-mingw32-gcc
-	LD      := i686-w64-mingw32-gcc
-	CCFLAG  := -mwindows $(FLAG) -D__NATIVE__
-	LDFLAG  := -mwindows
-	ifeq ($(DEBUG),0)
-		LDFLAG  += -s
-	endif
-	LIB     := -lmingw32 -lm -lSDL2main -lSDL2 -lopengl32
-else ifeq ($(TARGET),gcn)
-	CC      := powerpc-eabi-gcc
-	LD      := powerpc-eabi-gcc
-	CCFLAG  := -mogc -mcpu=750 -meabi -mhard-float
-	LDFLAG  := $(CCFLAG)
-	CCFLAG  += -ffunction-sections -fwrapv
-	CCFLAG  += -I$(LIBOGC)/include
-	LDFLAG  += -L$(LIBOGC)/lib/cube
-	CCFLAG  += $(FLAG) -DGEKKO -D__GCN__
-	LIB     := -lfat -lm -logc
-else ifeq ($(TARGET),wii)
-	CC      := powerpc-eabi-gcc
-	LD      := powerpc-eabi-gcc
-	CCFLAG  := -mrvl -mcpu=750 -meabi -mhard-float
-	LDFLAG  := $(CCFLAG)
-	CCFLAG  += -ffunction-sections -fwrapv
-	CCFLAG  += -I$(LIBOGC)/include
-	LDFLAG  += -L$(LIBOGC)/lib/wii
-	CCFLAG  += $(FLAG) -DGEKKO -D__WII__
-	LIB     := -lfat -lm -logc
-else ifeq ($(TARGET),nds)
-	CC      := arm-none-eabi-gcc
-	LD      := arm-none-eabi-gcc
-	CCFLAG  := -march=armv5te -mtune=arm946e-s
-	LDFLAG  := $(CCFLAG) -specs=dsi_arm9.specs
-	CCFLAG  += -fomit-frame-pointer -ffunction-sections
-	CCFLAG  += -I$(LIBNDS)/include
-	LDFLAG  += -L$(LIBNDS)/lib
-	CCFLAG  += $(FLAG) -DARM9 -D__NDS__
-	LIB     := -lfat -lm -lnds9
-else ifeq ($(TARGET),3ds)
-	CC      := arm-none-eabi-gcc
-	LD      := arm-none-eabi-gcc
-	CCFLAG  := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
-	LDFLAG  := $(CCFLAG) -specs=3dsx.specs
-	CCFLAG  += -mword-relocations -fomit-frame-pointer -ffunction-sections
-	CCFLAG  += -I$(LIBCTRU)/include -I$(PICAGL)/include
-	LDFLAG  += -L$(LIBCTRU)/lib -L$(PICAGL)/lib
-	CCFLAG  += $(FLAG) -DARM11 -D_3DS -D__3DS__
-	LIB     := -lpicaGL -lm -lctru
+CC      := gcc
+LD      := gcc
+CCFLAG  := -fno-pie $(FLAG) -D__NATIVE__
+LDFLAG  := -no-pie
+
+W32_CC      := i686-w64-mingw32-gcc
+W32_LD      := i686-w64-mingw32-gcc
+W32_ARCH    := -mwindows
+W32_CCFLAG  := $(W32_ARCH) $(FLAG) -D__NATIVE__
+W32_LDFLAG  := $(W32_ARCH)
+
+OSX_CC      := gcc
+OSX_LD      := gcc
+OSX_CCFLAG  := -F$(HOME)/Library/Frameworks $(FLAG) -D__NATIVE__
+OSX_LDFLAG  := -F$(HOME)/Library/Frameworks
+
+DOL_CC      := powerpc-eabi-gcc
+DOL_LD      := powerpc-eabi-gcc
+DOL_ARCH    := -mogc -mcpu=750 -meabi -mhard-float
+DOL_CCFLAG  := $(DOL_ARCH) -ffunction-sections -fwrapv
+DOL_CCFLAG  += -I$(LIBOGC)/include $(FLAG) -DGEKKO -D__GCN__
+DOL_LDFLAG  := $(DOL_ARCH) -L$(LIBOGC)/lib/cube
+
+RVL_CC      := powerpc-eabi-gcc
+RVL_LD      := powerpc-eabi-gcc
+RVL_ARCH    := -mrvl -mcpu=750 -meabi -mhard-float
+RVL_CCFLAG  := $(RVL_ARCH) -ffunction-sections -fwrapv
+RVL_CCFLAG  += -I$(LIBOGC)/include $(FLAG) -DGEKKO -D__WII__
+RVL_LDFLAG  := $(RVL_ARCH) -L$(LIBOGC)/lib/wii
+
+NTR_CC      := arm-none-eabi-gcc
+NTR_LD      := arm-none-eabi-gcc
+NTR_ARCH    := -march=armv5te -mtune=arm946e-s
+NTR_CCFLAG  := $(NTR_ARCH) -fomit-frame-pointer -ffunction-sections
+NTR_CCFLAG  += -I$(LIBNDS)/include $(FLAG) -DARM9 -D__NDS__
+NTR_LDFLAG  := $(NTR_ARCH) -specs=dsi_arm9.specs -L$(LIBNDS)/lib
+
+CTR_CC      := arm-none-eabi-gcc
+CTR_LD      := arm-none-eabi-gcc
+CTR_ARCH    := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
+CTR_CCFLAG  := $(CTR_ARCH) -mword-relocations -fomit-frame-pointer -ffunction-sections
+CTR_CCFLAG  += -I$(LIBCTRU)/include -I$(PICAGL)/include $(FLAG) -DARM11 -D_3DS -D__3DS__
+CTR_LDFLAG  := $(CTR_ARCH) -specs=3dsx.specs -L$(LIBCTRU)/lib -L$(PICAGL)/lib
+
+ifeq ($(DEBUG),0)
+	LDFLAG  += -s
+	W32_LDFLAG  += -s
 endif
 
-CCFLAG  += -Wall -Wextra
-WFLAG   := -Wno-uninitialized
+OBJ     := $(addprefix $(BUILD)/native/,$(SRC_OBJ) $(LIB_OBJ) $(APP_OBJ))
+W32_OBJ := $(addprefix $(BUILD)/win32/,$(SRC_OBJ) $(LIB_OBJ) $(APP_OBJ))
+OSX_OBJ := $(addprefix $(BUILD)/osx/,$(SRC_OBJ) $(LIB_OBJ) $(APP_OBJ))
+DOL_OBJ := $(addprefix $(BUILD)/gcn/,$(SRC_OBJ) $(LIB_OBJ) $(APP_OBJ))
+RVL_OBJ := $(addprefix $(BUILD)/wii/,$(SRC_OBJ) $(LIB_OBJ) $(APP_OBJ))
+NTR_OBJ := $(addprefix $(BUILD)/nds/,$(SRC_OBJ) $(LIB_OBJ) $(APP_OBJ))
+CTR_OBJ := $(addprefix $(BUILD)/3ds/,$(SRC_OBJ) $(LIB_OBJ) $(APP_OBJ))
 
-.PHONY: default native win32 gcn wii nds 3ds
-default: $(TARGET)
-native: $(BUILD)/app.elf
-win32:  $(BUILD)/app.exe
-gcn:    $(BUILD)/app.dol
-wii:    $(BUILD)/app.dol
-nds:    $(BUILD)/app.nds
-3ds:    $(BUILD)/app.3dsx
-
-$(BUILD)/%.dol: $(BUILD)/%.elf
-	elf2dol $< $@
-
-$(BUILD)/%.nds: $(BUILD)/%.elf
-	ndstool -c $@ -9 $<
-
-$(BUILD)/%.3dsx: $(BUILD)/%.elf
-	3dsxtool $< $@
-
-$(BUILD)/app.elf $(BUILD)/app.exe: $(SRC_OBJ) $(LIB_OBJ) $(APP_OBJ)
-	$(LD) $(LDFLAG) -Wl,-Map,$(basename $@).map -o $@ $^ $(LIB)
-
--include $(SRC_OBJ:.o=.d)
--include $(LIB_OBJ:.o=.d)
-$(BUILD)/src/%.o: src/%.c build/$(APP)/app.h | $(BUILD)/src $(BUILD)/src/lib
-	$(CC) $(CCFLAG) -MMD -MP -c -o $@ $<
-
--include $(APP_OBJ:.o=.d)
-$(BUILD)/app/%.o: build/$(APP)/%.c | $(BUILD)/app
-	$(CC) $(CCFLAG) $(WFLAG) -MMD -MP -c -o $@ $<
-
-$(APP_SRC): build/$(APP)/app.h
-build/$(APP)/app.h: main.py | build/$(APP)
-	python3 main.py $(APP)
-
-build/$(APP) $(BUILD)/src $(BUILD)/src/lib $(BUILD)/app:
-	mkdir -p $@
-
-build/$(APP)/3ds/app.elf: $(PICAGL)/lib/libpicaGL.a
-$(PICAGL)/lib/libpicaGL.a:
-	make -j1 -C picaGL
+.PHONY: native win32 osx gcn wii nds 3ds
+native: $(BUILD)/native/app.elf
+win32:  $(BUILD)/win32/app.exe
+osx:    $(BUILD)/osx/app.elf
+gcn:    $(BUILD)/gcn/app.dol
+wii:    $(BUILD)/wii/app.dol
+nds:    $(BUILD)/nds/app.nds
+3ds:    $(BUILD)/3ds/app.3dsx
 
 .PHONY: clean
 clean:
 	rm -f -r build
 
-print-%:
-	$(info $* = $(flavor $*): [$($*)]) @true
+$(BUILD)/native/app.elf: $(OBJ)
+	$(LD) $(LDFLAG) -Wl,-Map,$(@:.elf=.map) -o $@ $(OBJ) -lm -lSDL2 -lGL
+
+$(BUILD)/win32/app.exe: $(W32_OBJ)
+	$(W32_LD) $(W32_LDFLAG) -Wl,-Map,$(@:.exe=.map) -o $@ $(W32_OBJ) -lmingw32 -lm -lSDL2main -lSDL2 -lopengl32
+
+$(BUILD)/osx/app.elf: $(OSX_OBJ)
+	$(OSX_LD) $(OSX_LDFLAG) -o $@ $(OSX_OBJ) -lm -framework SDL2 -framework OpenGL
+
+$(BUILD)/gcn/app.dol: $(DOL_OBJ)
+	$(DOL_LD) $(DOL_LDFLAG) -Wl,-Map,$(@:.dol=.map) -o $(@:.dol=.elf) $(DOL_OBJ) -lfat -lm -logc
+	elf2dol $(@:.dol=.elf) $@
+
+$(BUILD)/wii/app.dol: $(RVL_OBJ)
+	$(RVL_LD) $(RVL_LDFLAG) -Wl,-Map,$(@:.dol=.map) -o $(@:.dol=.elf) $(RVL_OBJ) -lfat -lm -logc
+	elf2dol $(@:.dol=.elf) $@
+
+$(BUILD)/nds/app.nds: $(NTR_OBJ)
+	$(NTR_LD) $(NTR_LDFLAG) -Wl,-Map,$(@:.nds=.map) -o $(@:.nds=.elf) $(NTR_OBJ) -lfat -lm -lnds9
+	ndstool -c $@ -9 $(@:.nds=.elf)
+
+$(BUILD)/3ds/app.3dsx: $(CTR_OBJ) $(PICAGL)/lib/libpicaGL.a
+	$(CTR_LD) $(CTR_LDFLAG) -Wl,-Map,$(@:.3dsx=.map) -o $(@:.3dsx=.elf) $(CTR_OBJ) -lpicaGL -lm -lctru
+	3dsxtool $(@:.3dsx=.elf) $@
+
+$(BUILD)/native/src/%.o: src/%.c $(BUILD)/app.h
+	@mkdir -p $(dir $@)
+	$(CC) $(CCFLAG) -MMD -MP -c -o $@ $<
+
+$(BUILD)/win32/src/%.o: src/%.c $(BUILD)/app.h
+	@mkdir -p $(dir $@)
+	$(W32_CC) $(W32_CCFLAG) -MMD -MP -c -o $@ $<
+
+$(BUILD)/osx/src/%.o: src/%.c $(BUILD)/app.h
+	@mkdir -p $(dir $@)
+	$(OSX_CC) $(OSX_CCFLAG) -MMD -MP -c -o $@ $<
+
+$(BUILD)/gcn/src/%.o: src/%.c $(BUILD)/app.h
+	@mkdir -p $(dir $@)
+	$(DOL_CC) $(DOL_CCFLAG) -MMD -MP -c -o $@ $<
+
+$(BUILD)/wii/src/%.o: src/%.c $(BUILD)/app.h
+	@mkdir -p $(dir $@)
+	$(RVL_CC) $(RVL_CCFLAG) -MMD -MP -c -o $@ $<
+
+$(BUILD)/nds/src/%.o: src/%.c $(BUILD)/app.h
+	@mkdir -p $(dir $@)
+	$(NTR_CC) $(NTR_CCFLAG) -MMD -MP -c -o $@ $<
+
+$(BUILD)/3ds/src/%.o: src/%.c $(BUILD)/app.h
+	@mkdir -p $(dir $@)
+	$(CTR_CC) $(CTR_CCFLAG) -MMD -MP -c -o $@ $<
+
+$(BUILD)/native/app/%.o: $(BUILD)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
+
+$(BUILD)/win32/app/%.o: $(BUILD)/%.c
+	@mkdir -p $(dir $@)
+	$(W32_CC) $(W32_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
+
+$(BUILD)/osx/app/%.o: $(BUILD)/%.c
+	@mkdir -p $(dir $@)
+	$(OSX_CC) $(OSX_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
+
+$(BUILD)/gcn/app/%.o: $(BUILD)/%.c
+	@mkdir -p $(dir $@)
+	$(DOL_CC) $(DOL_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
+
+$(BUILD)/wii/app/%.o: $(BUILD)/%.c
+	@mkdir -p $(dir $@)
+	$(RVL_CC) $(RVL_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
+
+$(BUILD)/nds/app/%.o: $(BUILD)/%.c
+	@mkdir -p $(dir $@)
+	$(NTR_CC) $(NTR_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
+
+$(BUILD)/3ds/app/%.o: $(BUILD)/%.c
+	@mkdir -p $(dir $@)
+	$(CTR_CC) $(CTR_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
+
+-include $(OBJ:.o=.d)
+-include $(W32_OBJ:.o=.d)
+-include $(OSX_OBJ:.o=.d)
+-include $(DOL_OBJ:.o=.d)
+-include $(RVL_OBJ:.o=.d)
+-include $(NTR_OBJ:.o=.d)
+-include $(CTR_OBJ:.o=.d)
+
+$(addprefix $(BUILD)/,$(notdir $(APP_OBJ:.o=.c))): $(BUILD)/app.h
+$(BUILD)/app.h: main.py
+	@mkdir -p $(dir $@)
+	python3 main.py $(APP)
+
+$(PICAGL)/lib/libpicaGL.a:
+	make -j1 -C picaGL

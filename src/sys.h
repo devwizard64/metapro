@@ -1,17 +1,13 @@
 #ifndef __SYS_H__
 #define __SYS_H__
 
-#include "types.h"
 #include "cpu.h"
 
 #include "ultra64.h"
 
-#define THREAD_YIELD_NULL       0
-#define THREAD_YIELD_QUEUE      1
-#define THREAD_YIELD_BREAK      2
-#define THREAD_YIELD_DESTROY    3
-
-#ifndef __ASSEMBLER__
+#define TH_QUEUE        1
+#define TH_BREAK        2
+#define TH_DESTROY      3
 
 typedef struct thread
 {
@@ -72,28 +68,26 @@ extern OSContPad os_cont_pad[MAXCONTROLLERS];
 
 extern __OSEventState __osEventStateTab[OS_NUM_EVENTS];
 extern __OSEventState __osEventStateVi;
-extern void mesg_init(OSMesgQueue *mq, PTR msg, s32 count);
+extern void mesg_create(OSMesgQueue *mq, PTR msg, s32 count);
 extern int mesg_recv(OSMesgQueue *mq, PTR msg, int flag);
 extern int mesg_send(OSMesgQueue *mq, PTR msg, int flag);
 extern void os_event(__OSEventState *es);
 
 extern THREAD *os_thread;
-extern THREAD *thread_find(PTR addr);
-extern void thread_init(PTR addr, s32 id, PTR entry, s32 arg, s32 s, u32 pri);
-extern void thread_destroy(THREAD *thread);
-extern void thread_start(THREAD *thread);
-extern void thread_stop(THREAD *thread);
-extern s32 thread_id(void);
-extern void thread_yield(int arg);
-extern void thread_fault(void);
+extern THREAD *th_find(PTR addr);
+extern void th_create(PTR addr, s32 id, PTR entry, s32 arg, s32 s, u32 pri);
+extern void th_destroy(THREAD *th);
+extern void th_start(THREAD *th);
+extern void th_stop(THREAD *th);
+extern s32 th_id(void);
+extern void th_yield(int arg);
+extern void th_fault(void);
 
-extern TIMER *timer_find(PTR addr);
-extern void timer_init(PTR addr, u64 countdown, u64 interval, PTR mq, PTR msg);
-extern void timer_destroy(TIMER *timer);
+extern TIMER *tm_find(PTR addr);
+extern void tm_create(PTR addr, u64 countdown, u64 interval, PTR mq, PTR msg);
+extern void tm_destroy(TIMER *tm);
 
 extern void sys_init(void);
 extern void sys_main(void (*start)(void));
-
-#endif /* __ASSEMBLER__ */
 
 #endif /* __SYS_H__ */

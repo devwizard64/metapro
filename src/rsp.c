@@ -211,7 +211,7 @@ static s16 rsp_clamp_s(int x)
     return x;
 }
 
-static void rsp_null(unused u32 inst)
+static void rsp_null(UNUSED u32 inst)
 {
     rsp.bcode = -1;
     wdebug("illegal instruction 0x%08" FMT_X "\n", inst);
@@ -267,7 +267,7 @@ static void rsp_jalr(u32 inst)
     debugi("jalr $%d, $%d\n", INST_RD, INST_RS);
 }
 
-static void rsp_break(unused u32 inst)
+static void rsp_break(UNUSED u32 inst)
 {
     rsp.bcode = -1;
     debugi("break\n");
@@ -653,7 +653,7 @@ static void rsp_mfc2(u32 inst)
     debugi("mfc2 $%d, $v%d[%d]\n", INST_RT, INST_RD, INST_E);
 }
 
-static void rsp_cfc2(unused u32 inst)
+static void rsp_cfc2(UNUSED u32 inst)
 {
     edebug("rsp: cfc2 $%d, $c%d\n", rt, rd);
 }
@@ -664,7 +664,7 @@ static void rsp_mtc2(u32 inst)
     debugi("mtc2 $%d, $v%d[%d]\n", INST_RT, INST_RD, INST_E);
 }
 
-static void rsp_ctc2(unused u32 inst)
+static void rsp_ctc2(UNUSED u32 inst)
 {
     edebug("rsp: ctc2 $%d, $c%d\n", rt, rd);
 }
@@ -693,14 +693,14 @@ static void rsp_vmulu(u32 inst)
     debugi("vmulu $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS);
 }
 
-static void rsp_vrndp(unused u32 inst)
+static void rsp_vrndp(UNUSED u32 inst)
 {
     edebug(
         "rsp: vrndp $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS
     );
 }
 
-static void rsp_vmulq(unused u32 inst)
+static void rsp_vmulq(UNUSED u32 inst)
 {
     edebug(
         "rsp: vmulq $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS
@@ -780,14 +780,14 @@ static void rsp_vmacu(u32 inst)
     debugi("vmacu $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS);
 }
 
-static void rsp_vrndn(unused u32 inst)
+static void rsp_vrndn(UNUSED u32 inst)
 {
     edebug(
         "rsp: vrndn $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS
     );
 }
 
-static void rsp_vmacq(unused u32 inst)
+static void rsp_vmacq(UNUSED u32 inst)
 {
     edebug(
         "rsp: vmacq $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS
@@ -866,7 +866,7 @@ static void rsp_vsub(u32 inst)
     debugi("vsub $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS);
 }
 
-static void rsp_vabs(unused u32 inst)
+static void rsp_vabs(UNUSED u32 inst)
 {
     edebug(
         "rsp: vabs $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS
@@ -945,14 +945,14 @@ static void rsp_vlt(u32 inst)
     debugi("vlt $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS);
 }
 
-static void rsp_veq(unused u32 inst)
+static void rsp_veq(UNUSED u32 inst)
 {
     edebug(
         "rsp: veq $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS
     );
 }
 
-static void rsp_vne(unused u32 inst)
+static void rsp_vne(UNUSED u32 inst)
 {
     edebug(
         "rsp: vne $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS
@@ -1024,21 +1024,21 @@ static void rsp_vcl(u32 inst)
     debugi("vcl $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS);
 }
 
-static void rsp_vch(unused u32 inst)
+static void rsp_vch(UNUSED u32 inst)
 {
     edebug(
         "rsp: vch $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS
     );
 }
 
-static void rsp_vcr(unused u32 inst)
+static void rsp_vcr(UNUSED u32 inst)
 {
     edebug(
         "rsp: vcr $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS
     );
 }
 
-static void rsp_vmrg(unused u32 inst)
+static void rsp_vmrg(UNUSED u32 inst)
 {
     edebug(
         "rsp: vmrg $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS
@@ -1087,42 +1087,42 @@ static void rsp_vnxor(u32 inst)
     debugi("vnxor $v%d, $v%d, $v%d%s\n", INST_VD, INST_VS, INST_VT, INST_EVS);
 }
 
-static void rsp_vrcp(unused u32 inst)
+static void rsp_vrcp(UNUSED u32 inst)
 {
     edebug("rsp: vrcp $v%d%s, $v%d%s\n", INST_VD, INST_DES, INST_VT, INST_EVS);
 }
 
-static void rsp_vrcpl(unused u32 inst)
+static void rsp_vrcpl(UNUSED u32 inst)
 {
     edebug("rsp: vrcpl $v%d%s, $v%d%s\n", INST_VD, INST_DES, INST_VT, INST_EVS);
 }
 
-static void rsp_vrcph(unused u32 inst)
+static void rsp_vrcph(UNUSED u32 inst)
 {
     edebug("rsp: vrcph $v%d%s, $v%d%s\n", INST_VD, INST_DES, INST_VT, INST_EVS);
 }
 
-static void rsp_vmov(unused u32 inst)
+static void rsp_vmov(UNUSED u32 inst)
 {
     edebug("rsp: vmov $v%d%s, $v%d%s\n", INST_VD, INST_DES, INST_VT, INST_EVS);
 }
 
-static void rsp_vrsq(unused u32 inst)
+static void rsp_vrsq(UNUSED u32 inst)
 {
     edebug("rsp: vrsq $v%d%s, $v%d%s\n", INST_VD, INST_DES, INST_VT, INST_EVS);
 }
 
-static void rsp_vrsql(unused u32 inst)
+static void rsp_vrsql(UNUSED u32 inst)
 {
     edebug("rsp: vrsql $v%d%s, $v%d%s\n", INST_VD, INST_DES, INST_VT, INST_EVS);
 }
 
-static void rsp_vrsqh(unused u32 inst)
+static void rsp_vrsqh(UNUSED u32 inst)
 {
     edebug("rsp: vrsqh $v%d%s, $v%d%s\n", INST_VD, INST_DES, INST_VT, INST_EVS);
 }
 
-static void rsp_vnop(unused u32 inst)
+static void rsp_vnop(UNUSED u32 inst)
 {
     debugi("vnop\n");
 }
@@ -1572,7 +1572,7 @@ static void rsp_sfv(u32 inst)
     debugi("sfv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFB, INST_RS);
 }
 
-static void rsp_swv(unused u32 inst)
+static void rsp_swv(UNUSED u32 inst)
 {
     edebug(
         "rsp: swv $v%d[%d], 0x%02X($%d)\n", INST_VT, INST_E, INST_OFFB, INST_RS
@@ -1710,7 +1710,7 @@ static void rsp_op(u32 inst)
 void rsp_main(OSTask *task)
 {
 #ifdef RSP_DEBUG
-    int step = false;
+    int step = FALSE;
 #endif
     byteswap(&rsp_mem[0x0FC0], task, sizeof(OSTask));
     byteswap(
@@ -1725,17 +1725,17 @@ void rsp_main(OSTask *task)
         u8 *x = &rsp_mem[0x1000 | (rsp.pc & 0xFFF)];
         u32 inst = x[0] << 24 | x[1] << 16 | x[2] << 8 | x[3];
         rsp.pc += 4;
-    #if 0
+#if 0
         if ((rsp.pc & 0xFFF) == 0x000) edebug("rsp: pc over 0x%08X\n", rsp.pc);
-    #else
+#else
         if ((rsp.pc & 0xFFF) == 0x000) return;
-    #endif
+#endif
         rsp.reg[0] = 0;
         rsp_op(inst);
-    #ifdef RSP_DEBUG
-    #if 0
-        if ((rsp.pc & 0xFFF) == 0x5C8 /*0x644*/) step = true;
-    #endif
+#ifdef RSP_DEBUG
+#if 0
+        if ((rsp.pc & 0xFFF) == 0x5C8 /*0x644*/) step = TRUE;
+#endif
         if (step)
         {
             int i;
@@ -1781,7 +1781,7 @@ void rsp_main(OSTask *task)
             );
             pause();
         }
-    #endif
+#endif
         if (rsp.bcode < 0) break;
         if (rsp.bcode > 0 && --rsp.bcode == 0) rsp.pc = rsp.baddr;
     }

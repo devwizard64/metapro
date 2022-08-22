@@ -5,13 +5,13 @@ void mtx_read(f32 *dst, const s16 *src)
     uint cnt = 4*4;
     do
     {
-    #ifdef __EB__
+#ifdef __EB__
         dst[0] = (1.0F/0x10000) * (s32)(src[0x00] << 16 | (u16)src[0x10]);
         dst[1] = (1.0F/0x10000) * (s32)(src[0x01] << 16 | (u16)src[0x11]);
-    #else
+#else
         dst[0] = (1.0F/0x10000) * (s32)(src[0x01] << 16 | (u16)src[0x11]);
         dst[1] = (1.0F/0x10000) * (s32)(src[0x00] << 16 | (u16)src[0x10]);
-    #endif
+#endif
         dst += 2;
         src += 2;
         cnt -= 2;
@@ -26,17 +26,17 @@ void mtx_write(s16 *dst, const f32 *src)
     {
         s32 a = 0x10000 * src[0];
         s32 b = 0x10000 * src[1];
-    #ifdef __EB__
+#ifdef __EB__
         dst[0x00] = a >> 16;
         dst[0x01] = b >> 16;
         dst[0x10] = a >>  0;
         dst[0x11] = b >>  0;
-    #else
+#else
         dst[0x00] = b >> 16;
         dst[0x01] = a >> 16;
         dst[0x10] = b >>  0;
         dst[0x11] = a >>  0;
-    #endif
+#endif
         dst += 2;
         src += 2;
         cnt -= 2;

@@ -94,14 +94,14 @@ static s16 *asp_loop;       /* ? */
 static void *asp_addr(PTR addr)
 {
 #ifdef ASP_MAIN
-    return &asp_addr_table[addr >> 24 & 0x0F][addr >> 0 & 0x00FFFFFF];
+    return &asp_addr_table[addr >> 24 & 0xF][addr & 0xFFFFFF];
 #endif
 #ifdef ASP_NAUDIO
     return &cpu_dram[addr];
 #endif
 }
 
-static void asp_a_spnoop(unused u32 w0, unused u32 w1)
+static void asp_a_spnoop(UNUSED u32 w0, UNUSED u32 w1)
 {
 }
 
@@ -109,7 +109,7 @@ static void asp_a_spnoop(unused u32 w0, unused u32 w1)
 #include "asp/a_clearbuff.c"
 
 #ifdef ASP_MAIN2
-static void asp_a_addmixer(unused u32 w0, unused u32 w1)
+static void asp_a_addmixer(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("A_ADDMIXER\n");
 }
@@ -122,12 +122,12 @@ static void asp_a_addmixer(unused u32 w0, unused u32 w1)
 #include "asp/a_savebuff.c"
 
 #ifdef ASP_NAUDIO
-static void asp_a_mp3(unused u32 w0, unused u32 w1)
+static void asp_a_mp3(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("A_MP3\n");
 }
 
-static void asp_a_mp3addy(unused u32 w0, unused u32 w1)
+static void asp_a_mp3addy(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("A_MP3ADDY\n");
 }
@@ -137,7 +137,7 @@ static void asp_a_mp3addy(unused u32 w0, unused u32 w1)
 #endif
 
 #ifdef ASP_MAIN2
-static void asp_a_duplicate(unused u32 w0, unused u32 w1)
+static void asp_a_duplicate(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("A_DUPLICATE\n");
 }
@@ -151,12 +151,12 @@ static void asp_a_duplicate(unused u32 w0, unused u32 w1)
 #include "asp/a_interleave.c"
 
 #ifdef ASP_MAIN2
-static void asp_a_hilogain(unused u32 w0, unused u32 w1)
+static void asp_a_hilogain(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("A_HILOGAIN\n");
 }
 #else
-static void asp_a_polef(unused u32 w0, unused u32 w1)
+static void asp_a_polef(UNUSED u32 w0, UNUSED u32 w1)
 {
 }
 #endif
@@ -164,12 +164,12 @@ static void asp_a_polef(unused u32 w0, unused u32 w1)
 #include "asp/a_setloop.c"
 
 #ifdef ASP_MAIN2
-static void asp_a_interl(unused u32 w0, unused u32 w1)
+static void asp_a_interl(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("A_INTERL\n");
 }
 
-static void asp_a_envsetup1(unused u32 w0, unused u32 w1)
+static void asp_a_envsetup1(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("A_ENVSETUP1\n");
 }
@@ -177,7 +177,7 @@ static void asp_a_envsetup1(unused u32 w0, unused u32 w1)
 #include "asp/a_envmixer.c"
 #include "asp/a_loadbuff.c"
 
-static void asp_a_envsetup2(unused u32 w0, unused u32 w1)
+static void asp_a_envsetup2(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("A_ENVSETUP2\n");
 }

@@ -37,8 +37,6 @@
 #define M_AUDTASK               2
 #define M_NJPEGTASK             4
 
-#ifndef __ASSEMBLER__
-
 typedef struct os_mesg_queue
 {
     PTR recv;
@@ -94,7 +92,5 @@ typedef struct os_event_state
     PTR msg;
 }
 __OSEventState;
-
-#endif /* __ASSEMBLER__ */
 
 #endif /* __ULTRA64_H__ */

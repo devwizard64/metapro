@@ -1,4 +1,4 @@
-static void gsp_g_quad(unused u32 w0, u32 w1)
+static void gsp_g_quad(UNUSED u32 w0, u32 w1)
 {
     u8 a[3];
     u8 b[3];

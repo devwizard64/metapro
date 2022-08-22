@@ -9,7 +9,7 @@ static void *gdp_texture_rgba16(TXTARG *arg, const u8 *src, uint w, uint h)
     uint iy;
     uint ix;
     arg->fmt = GX_TF_RGBA8;
-    buf = dst = memalign(0x20, 4*w*h);
+    buf = dst = memalign(32, 4*w*h);
     for (ty = 0; ty < h; ty += 4)
     {
         for (tx = 0; tx < w; tx += 4)
@@ -43,7 +43,7 @@ static void *gdp_texture_rgba32(TXTARG *arg, const u8 *src, uint w, uint h)
     uint iy;
     uint ix;
     arg->fmt = GX_TF_RGBA8;
-    buf = dst = memalign(0x20, 4*w*h);
+    buf = dst = memalign(32, 4*w*h);
     for (ty = 0; ty < h; ty += 4)
     {
         for (tx = 0; tx < w; tx += 4)
@@ -80,7 +80,7 @@ static void *gdp_texture_ia4(TXTARG *arg, const u8 *src, uint w, uint h)
     uint iy;
     uint ix;
     arg->fmt = GX_TF_IA4;
-    buf = dst = memalign(0x20, w*h);
+    buf = dst = memalign(32, w*h);
     for (ty = 0; ty < h; ty += 4)
     {
         for (tx = 0; tx < w; tx += 8)
@@ -109,7 +109,7 @@ static void *gdp_texture_ia8(TXTARG *arg, const u8 *src, uint w, uint h)
     uint iy;
     uint ix;
     arg->fmt = GX_TF_IA4;
-    buf = dst = memalign(0x20, w*h);
+    buf = dst = memalign(32, w*h);
     for (ty = 0; ty < h; ty += 4)
     {
         for (tx = 0; tx < w; tx += 8)
@@ -138,7 +138,7 @@ static void *gdp_texture_ia8_face(TXTARG *arg, const u8 *src, uint w, uint h)
     uint iy;
     uint ix;
     arg->fmt = GX_TF_IA4;
-    buf = dst = memalign(0x20, w*h);
+    buf = dst = memalign(32, w*h);
     for (ty = 0; ty < h; ty += 4)
     {
         for (tx = 0; tx < w; tx += 8)
@@ -167,7 +167,7 @@ static void *gdp_texture_ia16(TXTARG *arg, const u8 *src, uint w, uint h)
     uint iy;
     uint ix;
     arg->fmt = GX_TF_IA8;
-    buf = dst = memalign(0x20, 2*w*h);
+    buf = dst = memalign(32, 2*w*h);
     for (ty = 0; ty < h; ty += 4)
     {
         for (tx = 0; tx < w; tx += 4)
@@ -197,7 +197,7 @@ static void *gdp_texture_i4(TXTARG *arg, const u8 *src, uint w, uint h)
     uint iy;
     uint ix;
     arg->fmt = GX_TF_IA4;
-    buf = dst = memalign(0x20, w*h);
+    buf = dst = memalign(32, w*h);
     for (ty = 0; ty < h; ty += 4)
     {
         for (tx = 0; tx < w; tx += 8)
@@ -226,7 +226,7 @@ static void *gdp_texture_i8(TXTARG *arg, const u8 *src, uint w, uint h)
     uint iy;
     uint ix;
     arg->fmt = GX_TF_IA8;
-    buf = dst = memalign(0x20, 2*w*h);
+    buf = dst = memalign(32, 2*w*h);
     for (ty = 0; ty < h; ty += 4)
     {
         for (tx = 0; tx < w; tx += 4)

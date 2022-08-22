@@ -164,9 +164,9 @@ a00_ins = {
 
 a01_ins = {
     # 800A74B0
-    0x800A74B8: "    thread_yield(THREAD_YIELD_BREAK);\n",
+    0x800A74B8: "    th_yield(TH_BREAK);\n",
     # 800A74D8
-    0x800A7508: "    thread_yield(THREAD_YIELD_BREAK);\n",
+    0x800A7508: "    th_yield(TH_BREAK);\n",
 }
 
 segment = [

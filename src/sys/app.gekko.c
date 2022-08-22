@@ -93,14 +93,14 @@ void input_update(void)
     int pad;
     int i;
     uint mask = PAD_ScanPads();
-    if (SYS_ResetButtonDown()) sys_reset = true;
+    if (SYS_ResetButtonDown()) sys_reset = TRUE;
     if (PAD_ButtonsHeld(0) & PAD_TRIGGER_Z)
     {
         uint down = PAD_ButtonsDown(0);
         if (down & PAD_BUTTON_START)    exit(0);
-        if (down & PAD_BUTTON_X)        sys_fast ^= false^true;
-        if (down & PAD_BUTTON_LEFT)     sys_save = true;
-        if (down & PAD_BUTTON_RIGHT)    sys_load = true;
+        if (down & PAD_BUTTON_X)        sys_fast ^= FALSE^TRUE;
+        if (down & PAD_BUTTON_LEFT)     sys_save = TRUE;
+        if (down & PAD_BUTTON_RIGHT)    sys_load = TRUE;
     }
     for (pad = 0; pad < 4; pad++)
     {

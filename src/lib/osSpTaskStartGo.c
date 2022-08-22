@@ -19,34 +19,34 @@ void lib_osSpTaskStartGo(void)
     task.yield_data_ptr     = __tlb(task.yield_data_ptr);
     switch (task.type)
     {
-    #if defined(GSP_F3D) || defined(GSP_F3DEX2)
+#if defined(GSP_F3D) || defined(GSP_F3DEX2)
         case M_GFXTASK:
             rsp_gfxtask(task.ucode, &cpu_dram[task.data_ptr]);
             os_event(&__osEventStateTab[OS_EVENT_DP]);
             break;
-    #endif
-    #ifdef LLE
+#endif
+#ifdef LLE
         default:
             rsp_main(&task);
             break;
-    #else
+#else
         case M_AUDTASK:
-        #ifndef __NDS__
-        #if defined(APP_UNSM) /* && defined(APP_E0) */
+#ifndef __NDS__
+#if defined(APP_UNSM) /* && defined(APP_E00) */
             rsp_audtask(&cpu_dram[task.data_ptr], task.data_size);
-        #endif
-        #endif
+#endif
+#endif
             break;
-    #ifdef APP_UCZL
+#ifdef APP_UCZL
         case M_NJPEGTASK:
             if (task.ucode == 0x00006210) break;
             /* 0x000E6BC0 = njpgdspMain */
             break;
-    #endif
+#endif
         default:
             wdebug("unknown task %u\n", task.type);
             break;
-    #endif
+#endif
     }
     os_event(&__osEventStateTab[OS_EVENT_SP]);
 }

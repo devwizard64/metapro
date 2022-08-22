@@ -1,11 +1,11 @@
-#define THREAD_STACK_SIZE       0x4000
+#define TH_STACK_SIZE   0x10000
 
 static THREAD *os_thread_list  = NULL;
 static THREAD *os_thread_queue = NULL;
 THREAD *os_thread = NULL;
 
 #if 0
-static void thread_print(void)
+static void th_print(void)
 {
     THREAD *queue = os_thread_queue;
     while (queue != NULL)
@@ -22,123 +22,114 @@ static void thread_print(void)
 }
 #endif
 
-static void thread_llink(THREAD *thread)
+static void th_llink(THREAD *th)
 {
     THREAD **list = &os_thread_list;
     THREAD  *prev = NULL;
     while (*list != NULL)
     {
-        if (*list == thread) return;
+        if (*list == th) return;
         prev = *list;
         list = &prev->lnext;
     }
-    *list = thread;
-    thread->lprev = prev;
-    thread->lnext = NULL;
+    *list = th;
+    th->lprev = prev;
+    th->lnext = NULL;
 }
 
-static void thread_qlink(THREAD *thread)
+static void th_qlink(THREAD *th)
 {
     THREAD **queue = &os_thread_queue;
     THREAD  *prev  = NULL;
     while (*queue != NULL)
     {
-        if (*queue == thread) return;
+        if (*queue == th) return;
         prev = *queue;
         queue = &prev->qnext;
     }
-    *queue = thread;
-    thread->qprev = prev;
-    thread->qnext = NULL;
-    thread->qlink = true;
+    *queue = th;
+    th->qprev = prev;
+    th->qnext = NULL;
+    th->qlink = TRUE;
 }
 
-static void thread_lunlink(THREAD *thread)
+static void th_lunlink(THREAD *th)
 {
-    if (thread->lprev != NULL) thread->lprev->lnext = thread->lnext;
-    else                       os_thread_list       = thread->lnext;
-    if (thread->lnext != NULL) thread->lnext->lprev = thread->lprev;
+    if (th->lprev != NULL) th->lprev->lnext = th->lnext;
+    else                   os_thread_list   = th->lnext;
+    if (th->lnext != NULL) th->lnext->lprev = th->lprev;
 }
 
-static void thread_qunlink(THREAD *thread)
+static void th_qunlink(THREAD *th)
 {
-    if (thread->qlink)
+    if (th->qlink)
     {
-        thread->qlink = false;
-        if (thread->qprev != NULL) thread->qprev->qnext = thread->qnext;
-        else                       os_thread_queue      = thread->qnext;
-        if (thread->qnext != NULL) thread->qnext->qprev = thread->qprev;
+        th->qlink = FALSE;
+        if (th->qprev != NULL) th->qprev->qnext = th->qnext;
+        else                   os_thread_queue  = th->qnext;
+        if (th->qnext != NULL) th->qnext->qprev = th->qprev;
     }
 }
 
-THREAD *thread_find(PTR addr)
+THREAD *th_find(PTR addr)
 {
-    THREAD *thread;
+    THREAD *th;
     if (addr == NULLPTR) return os_thread;
-    thread = os_thread_list;
-    while (thread != NULL && thread->addr != addr) thread = thread->lnext;
-    return thread;
+    for (th = os_thread_list; th != NULL && th->addr != addr; th = th->lnext);
+    return th;
 }
 
-void thread_init(PTR addr, s32 id, PTR entry, s32 arg, s32 s, u32 pri)
+void th_create(PTR addr, s32 id, PTR entry, s32 arg, s32 s, u32 pri)
 {
-    THREAD *thread = thread_find(addr);
-    if (thread == NULL)
-    {
-        thread = malloc(sizeof(*thread));
-        thread_llink(thread);
-    }
-#if defined(__i386__) || defined(__x86_64__)
-    thread->stack   = malloc(THREAD_STACK_SIZE);
-#endif
+    THREAD *th = th_find(addr);
+    if (th == NULL) th_llink(th = malloc(sizeof(THREAD)));
 #ifdef __PPC__
-    thread->stack   = memalign(32, THREAD_STACK_SIZE+16);
+    th->stack   = memalign(32, TH_STACK_SIZE);
+#else
+    th->stack   = malloc(TH_STACK_SIZE);
 #endif
-#ifdef __arm__
-    thread->stack   = memalign(16, THREAD_STACK_SIZE);
-#endif
-    thread->a0      = arg;
-    thread->sp      = s - 16;
-    thread->init    = true;
-    thread->ready   = true;
-    thread->qlink   = false;
-    thread->addr    = addr;
-    thread->entry   = entry;
-    thread->id      = id;
-    thread->pri     = pri;
+    th->a0      = arg;
+    th->sp      = s-16;
+    th->init    = TRUE;
+    th->ready   = TRUE;
+    th->qlink   = FALSE;
+    th->addr    = addr;
+    th->entry   = entry;
+    th->id      = id;
+    th->pri     = pri;
 }
 
-void thread_destroy(THREAD *thread)
+void th_destroy(THREAD *th)
 {
-    if (thread != NULL)
+    if (th != NULL)
     {
-        if (thread == os_thread)
+        if (th == os_thread)
         {
-            longjmp(sys_jmp, THREAD_YIELD_DESTROY);
+            longjmp(sys_jmp, TH_DESTROY);
         }
         else
         {
-            thread_qunlink(thread);
-            thread_lunlink(thread);
-            free(thread->stack);
-            free(thread);
+            th_qunlink(th);
+            th_lunlink(th);
+            free(th->stack);
+            free(th);
         }
     }
 }
 
-void thread_start(THREAD *thread)
+void th_start(THREAD *th)
 {
-    thread_qlink(thread);
-    thread_yield(THREAD_YIELD_QUEUE);
+    th_qlink(th);
+    th_yield(TH_QUEUE);
 }
 
-void thread_stop(THREAD *thread)
+void th_stop(THREAD *th)
 {
-    thread_qunlink(thread);
-    thread_yield(THREAD_YIELD_QUEUE);
+    th_qunlink(th);
+    th_yield(TH_QUEUE);
 }
 
-void thread_yield(int arg)
+void th_yield(int arg)
 {
     if (os_thread == NULL || setjmp(os_thread->jmp) == 0) longjmp(sys_jmp, arg);
 }

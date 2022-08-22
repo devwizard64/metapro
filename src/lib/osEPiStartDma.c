@@ -15,6 +15,7 @@ void lib_osEPiStartDma(void)
 #ifdef SRAM
     if (devAddr >= 0x08000000)
     {
+        devAddr -= 0x08000000;
         switch (direction)
         {
             case OS_READ:   sram_read(dramAddr, devAddr, size);     break;
