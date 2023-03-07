@@ -1,4 +1,4 @@
-static void asp_a_setbuff(u32 w0, u32 w1)
+static void a_setbuff(u32 w0, u32 w1)
 {
     uint flag    = w0 >> 16;
     uint dmemin  = w0 & 0xFFFF;

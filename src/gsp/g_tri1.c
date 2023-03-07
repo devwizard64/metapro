@@ -1,4 +1,4 @@
-static void gsp_g_tri1(UNUSED u32 w0, UNUSED u32 w1)
+static void g_tri1(UNUSED u32 w0, UNUSED u32 w1)
 {
     u8 t[3];
 #ifdef GSP_F3D

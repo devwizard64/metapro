@@ -1,4 +1,4 @@
-static void gdp_g_loadtile(u32 w0, u32 w1)
+static void g_loadtile(u32 w0, u32 w1)
 {
     TILE *tile = &gdp_tile[w1 >> 24 & 7];
     uint tmem = tile->tmem << 3;

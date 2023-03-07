@@ -1,4 +1,4 @@
-static void gsp_g_geometrymode(u32 w0, u32 w1)
+static void g_geometrymode(u32 w0, u32 w1)
 {
     gsp_geometry_mode &= w0;
     gsp_geometry_mode |= w1;

@@ -1,4 +1,4 @@
-static void gsp_g_obj_loadtxtr(UNUSED u32 w0, u32 w1)
+static void g_obj_loadtxtr(UNUSED u32 w0, u32 w1)
 {
     uObjTxtr *txtr = gsp_addr(w1);
     switch (txtr->type)

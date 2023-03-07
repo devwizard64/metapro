@@ -1,4 +1,4 @@
-static void gsp_g_moveword(u32 w0, u32 w1)
+static void g_moveword(u32 w0, u32 w1)
 {
 #ifdef GSP_F3D
     uint index  = w0 >>  0 & 0xFF;

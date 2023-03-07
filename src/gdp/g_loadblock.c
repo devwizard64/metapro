@@ -1,4 +1,4 @@
-static void gdp_g_loadblock(UNUSED u32 w0, UNUSED u32 w1)
+static void g_loadblock(UNUSED u32 w0, u32 w1)
 {
     TILE *tile = &gdp_tile[w1 >> 24 & 7];
     uint tmem = tile->tmem << 3;

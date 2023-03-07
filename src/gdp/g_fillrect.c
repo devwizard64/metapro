@@ -1,4 +1,4 @@
-static void gdp_g_fillrect(u32 w0, u32 w1)
+static void g_fillrect(u32 w0, u32 w1)
 {
     if (gdp_fill != 0xFFFC) gsp_fillrect(w0, w1);
 }

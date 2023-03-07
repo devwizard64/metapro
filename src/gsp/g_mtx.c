@@ -4,7 +4,7 @@
 #ifdef GSP_F3DEX2
 #define PUSH (!(flag & G_MTX_NOPUSH))
 #endif
-static void gsp_g_mtx(u32 w0, u32 w1)
+static void g_mtx(u32 w0, u32 w1)
 {
     f32 mf[4][4];
     uint flag;

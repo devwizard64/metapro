@@ -1,4 +1,4 @@
-static void gsp_g_vtx(u32 w0, u32 w1)
+static void g_vtx(u32 w0, u32 w1)
 {
 #ifdef GSP_F3D
 #ifdef GSP_F3DEX
@@ -7,8 +7,8 @@ static void gsp_g_vtx(u32 w0, u32 w1)
     uint size  = w0 >>  0 & 0x03FF;
     size++;
 #else
-    uint count = w0 >> 20 & 0x0F;
-    uint index = w0 >> 16 & 0x0F;
+    uint count = w0 >> 20 & 0xF;
+    uint index = w0 >> 16 & 0xF;
     uint size  = w0 >>  0 & 0xFFFF;
 #endif
 #endif

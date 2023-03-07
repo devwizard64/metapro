@@ -1344,15 +1344,15 @@ static void rsp_lqv(u32 inst)
 {
     uint x = (rs+INST_OFFQ) & 0xFFF;
     uint e = 0;
-    do {vt.b[e++^VX] = rsp_mem[x++];} while (x & 0x0F);
+    do {vt.b[e++^VX] = rsp_mem[x++];} while (x & 15);
     debugi("lqv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFQ, INST_RS);
 }
 
 static void rsp_lrv(u32 inst)
 {
     uint x = (rs+INST_OFFQ) & 0xFFF;
-    uint e = 16 - (x & 0x0F);
-    x &= ~0x0F;
+    uint e = 16 - (x & 15);
+    x &= ~15;
     while (e < 16) vt.b[e++^VX] = rsp_mem[x++];
     debugi("lrv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFQ, INST_RS);
 }
@@ -1507,15 +1507,15 @@ static void rsp_sqv(u32 inst)
 {
     uint x = (rs+INST_OFFQ) & 0xFFF;
     uint e = 0;
-    do {rsp_mem[x++] = vt.b[e++^VX];} while (x & 0x0F);
+    do {rsp_mem[x++] = vt.b[e++^VX];} while (x & 15);
     debugi("sqv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFQ, INST_RS);
 }
 
 static void rsp_srv(u32 inst)
 {
     uint x = (rs+INST_OFFQ) & 0xFFF;
-    uint e = 16 - (x & 0x0F);
-    x &= ~0x0F;
+    uint e = 16 - (x & 15);
+    x &= ~15;
     while (e < 16) rsp_mem[x++] = vt.b[e++^VX];
     debugi("srv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFQ, INST_RS);
 }

@@ -1,4 +1,4 @@
-static void asp_a_resample(u32 w0, u32 w1)
+static void a_resample(u32 w0, u32 w1)
 {
 #ifdef ASP_MAIN1
     uint flag    = w0 >> 16;
@@ -14,8 +14,8 @@ static void asp_a_resample(u32 w0, u32 w1)
     s16 *dmemin  = asp_s16(asp_dmemin);
 #endif
 #ifdef ASP_NAUDIO
-    s16 *dmemout = asp_s16(asp_dmemout + (w0 >> 2 & 0x0FFF));
-    s16 *dmemin  = (w0 & 3) ? asp_s16(0x0660) : asp_s16(asp_dmemin);
+    s16 *dmemout = asp_s16(asp_dmemout + (w0 >> 2 & 0xFFF));
+    s16 *dmemin  = (w0 & 3) ? asp_s16(0x660) : asp_s16(asp_dmemin);
 #endif
     uint count   = asp_count;
     int pos;

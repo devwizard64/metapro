@@ -30,11 +30,6 @@ header = (
     "#else\n"
     "#define BORDER_HT  0\n"
     "#endif\n"
-    "#ifdef __3DS__\n"
-    "#define BUFFER     1\n"
-    "#else\n"
-    "#define BUFFER     0\n"
-    "#endif\n"
     "\n"
     "#define __osExceptionPreamble   0x803266D0\n"
 )
@@ -115,7 +110,6 @@ a00_pat = {
 }
 
 a00_xpr = {
-    0x80247FC4: "BUFFER", # video_start
     0x80256D44: "(int)video_l + 28", # staff str l
     0x80256D7C: "(int)video_r - 28", # staff str r
     0x8027A354: "(int)video_l + 30 + 6*5", # "press" x

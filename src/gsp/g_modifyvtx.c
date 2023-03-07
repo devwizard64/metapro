@@ -1,4 +1,4 @@
-static void gsp_g_modifyvtx(u32 w0, u32 w1)
+static void g_modifyvtx(u32 w0, u32 w1)
 {
     uint offset = w0 >> 16 & 0xFF;
     uint index  = w0 >>  1 & 0x7FFF;

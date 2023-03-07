@@ -1,4 +1,4 @@
-static void gdp_g_setblendcolor(UNUSED u32 w0, UNUSED u32 w1)
+static void g_setblendcolor(UNUSED u32 w0, UNUSED u32 w1)
 {
 #if 0
     gdp_blend[0] = w1 >> 24;

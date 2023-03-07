@@ -1,4 +1,4 @@
-static void gsp_g_popmtx(UNUSED u32 w0, UNUSED u32 w1)
+static void g_popmtx(UNUSED u32 w0, UNUSED u32 w1)
 {
 #ifdef GSP_F3D
     gsp_mtx_modelview--;

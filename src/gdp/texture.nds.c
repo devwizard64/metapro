@@ -139,7 +139,7 @@ static void *gdp_texture_i4(TXTARG *arg, const u8 *src, uint w, uint h)
     do
     {
         uint h = src[0] >> 4;
-        uint l = src[0] >> 0 & 0x0F;
+        uint l = src[0] & 15;
         dst[0] = 0x421*(h << 1 | h >> 3) | (h << 12 & 0x8000);
         dst[0] = 0x421*(l << 1 | l >> 3) | (l << 12 & 0x8000);
         dst += 2;

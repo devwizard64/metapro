@@ -1,4 +1,4 @@
-static void gdp_g_setprimcolor(UNUSED u32 w0, u32 w1)
+static void g_setprimcolor(UNUSED u32 w0, u32 w1)
 {
     gdp_prim[0] = w1 >> 24;
     gdp_prim[1] = w1 >> 16;

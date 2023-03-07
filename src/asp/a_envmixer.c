@@ -11,7 +11,7 @@ static inline s32 mixer_macc(s32* Acc, s32* AdderStart, s32* AdderEnd, s32 Ramp)
     return volume;
 }
 
-static void asp_a_envmixer(u32 w0, u32 w1)
+static void a_envmixer(u32 w0, u32 w1)
 {
     uint  flag = w0 >> 16;
     void *addr = asp_addr(w1);
@@ -63,17 +63,17 @@ static void asp_a_envmixer(u32 w0, u32 w1)
     else
     {
         /* probably not the right address */
-        wordswap(asp_s16(0x0F90), addr, 0x50);
-        Wet = *asp_s16(0x0F90);
-        Dry = *asp_s16(0x0F92);
-        LTrg = *asp_s16(0x0F94) << 16 | *asp_u16(0x0F96);
-        RTrg = *asp_s16(0x0F96) << 16 | *asp_u16(0x0F98);
-        LRamp = *asp_s16(0x0F98) << 16 | *asp_u16(0x0F9A);
-        RRamp = *asp_s16(0x0F9A) << 16 | *asp_u16(0x0F9C);
-        LAdderEnd = *asp_s16(0x0F9C) << 16 | *asp_u16(0x0F9E);
-        RAdderEnd = *asp_s16(0x0F9E) << 16 | *asp_u16(0x0FA0);
-        LAdderStart = *asp_s16(0x0FA0) << 16 | *asp_u16(0x0FA2);
-        RAdderStart = *asp_s16(0x0FA2) << 16 | *asp_u16(0x0FA4);
+        wordswap(asp_s16(0xF90), addr, 0x50);
+        Wet = *asp_s16(0xF90);
+        Dry = *asp_s16(0xF92);
+        LTrg = *asp_s16(0xF94) << 16 | *asp_u16(0xF96);
+        RTrg = *asp_s16(0xF96) << 16 | *asp_u16(0xF98);
+        LRamp = *asp_s16(0xF98) << 16 | *asp_u16(0xF9A);
+        RRamp = *asp_s16(0xF9A) << 16 | *asp_u16(0xF9C);
+        LAdderEnd = *asp_s16(0xF9C) << 16 | *asp_u16(0xF9E);
+        RAdderEnd = *asp_s16(0xF9E) << 16 | *asp_u16(0xFA0);
+        LAdderStart = *asp_s16(0xFA0) << 16 | *asp_u16(0xFA2);
+        RAdderStart = *asp_s16(0xFA2) << 16 | *asp_u16(0xFA4);
     }
     if (!(flag & A_AUX))
     {
@@ -144,23 +144,23 @@ static void asp_a_envmixer(u32 w0, u32 w1)
             ptr++;
         }
     }
-    *asp_s16(0x0F90) = Wet;
-    *asp_s16(0x0F92) = Dry;
-    *asp_s16(0x0F94) = LTrg >> 16;
-    *asp_u16(0x0F96) = LTrg;
-    *asp_s16(0x0F96) = RTrg >> 16;
-    *asp_u16(0x0F98) = RTrg;
-    *asp_s16(0x0F98) = LRamp >> 16;
-    *asp_u16(0x0F9A) = LRamp;
-    *asp_s16(0x0F9A) = RRamp >> 16;
-    *asp_u16(0x0F9C) = RRamp;
-    *asp_s16(0x0F9C) = LAdderEnd >> 16;
-    *asp_u16(0x0F9E) = LAdderEnd;
-    *asp_s16(0x0F9E) = RAdderEnd >> 16;
-    *asp_u16(0x0FA0) = RAdderEnd;
-    *asp_s16(0x0FA0) = LAdderStart >> 16;
-    *asp_u16(0x0FA2) = LAdderStart;
-    *asp_s16(0x0FA2) = RAdderStart >> 16;
-    *asp_u16(0x0FA4) = RAdderStart;
-    wordswap(addr, asp_s16(0x0F90), 80);
+    *asp_s16(0xF90) = Wet;
+    *asp_s16(0xF92) = Dry;
+    *asp_s16(0xF94) = LTrg >> 16;
+    *asp_u16(0xF96) = LTrg;
+    *asp_s16(0xF96) = RTrg >> 16;
+    *asp_u16(0xF98) = RTrg;
+    *asp_s16(0xF98) = LRamp >> 16;
+    *asp_u16(0xF9A) = LRamp;
+    *asp_s16(0xF9A) = RRamp >> 16;
+    *asp_u16(0xF9C) = RRamp;
+    *asp_s16(0xF9C) = LAdderEnd >> 16;
+    *asp_u16(0xF9E) = LAdderEnd;
+    *asp_s16(0xF9E) = RAdderEnd >> 16;
+    *asp_u16(0xFA0) = RAdderEnd;
+    *asp_s16(0xFA0) = LAdderStart >> 16;
+    *asp_u16(0xFA2) = LAdderStart;
+    *asp_s16(0xFA2) = RAdderStart >> 16;
+    *asp_u16(0xFA4) = RAdderStart;
+    wordswap(addr, asp_s16(0xF90), 80);
 }

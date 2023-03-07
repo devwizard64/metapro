@@ -1,4 +1,4 @@
-static void asp_a_mixer(u32 w0, u32 w1)
+static void a_mixer(u32 w0, u32 w1)
 {
     if (asp_count > 0)
     {

@@ -1,7 +1,7 @@
 static GDP_COMBINE gdp_combine_cc_shade;
 static GDP_COMBINE gdp_combine_ac_shade;
 
-static void gsp_g_setothermode_h(u32 w0, u32 w1)
+static void g_setothermode_h(u32 w0, u32 w1)
 {
     uint shift = w0 >> 8 & 0xFF;
     uint mask  = w0 >> 0 & 0xFF;

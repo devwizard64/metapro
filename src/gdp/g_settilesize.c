@@ -1,4 +1,4 @@
-static void gdp_g_settilesize(u32 w0, u32 w1)
+static void g_settilesize(u32 w0, u32 w1)
 {
     TILE *tile = &gdp_tile[w1 >> 24 & 7];
     tile->ul[0] = (w0 >> 14 & 0x3FF);

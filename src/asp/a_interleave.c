@@ -1,4 +1,4 @@
-static void asp_a_interleave(UNUSED u32 w0, UNUSED u32 w1)
+static void a_interleave(UNUSED u32 w0, UNUSED u32 w1)
 {
     if (asp_count > 0)
     {

@@ -1,4 +1,4 @@
-static void asp_a_dmemmove(u32 w0, u32 w1)
+static void a_dmemmove(u32 w0, u32 w1)
 {
     uint count = w1 & 0xFFFF;
     if (count > 0)

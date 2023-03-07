@@ -188,7 +188,7 @@ void input_update(void)
 void audio_update(void *src, size_t size)
 {
     void *data;
-    if (SDL_GetQueuedAudioSize(audio_device) < 2048)
+    if (!sys_fast && SDL_GetQueuedAudioSize(audio_device) < 2048)
     {
         memset(data = malloc(2048), 0, 2048);
         SDL_QueueAudio(audio_device, data, 2048);

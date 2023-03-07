@@ -1,4 +1,4 @@
-static void gsp_g_tri2(u32 w0, u32 w1)
+static void g_tri2(u32 w0, u32 w1)
 {
     u8 a[3];
     u8 b[3];

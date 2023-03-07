@@ -112,6 +112,7 @@ typedef struct tile
     u8  pal;
     u8  fmt;
     u8  cm[2];
+    u8  mask[2];
     u8  shift[2];
     u16 ul[2];
     u16 lr[2];
@@ -293,8 +294,8 @@ static void *gdp_texture_ci4(TXTARG *arg, const u8 *src, uint w, uint h)
     uint len = w*h/2;
     do
     {
-        dst[0] = tlut[src[0] >> 4       ];
-        dst[1] = tlut[src[0] >> 0 & 0x0F];
+        dst[0] = tlut[src[0] >> 4];
+        dst[1] = tlut[src[0] & 15];
         dst += 2;
         src += 1;
         len -= 1;
@@ -1092,7 +1093,7 @@ static void gsp_start(PTR ucode, u32 *dl)
 #if 0
 #include "gsp/g_culldl.c"
 #else
-#define gsp_g_culldl            NULL
+#define g_culldl                NULL
 #endif
 #include "gsp/g_tri1.c"
 #include "gdp/g_noop.c"
@@ -1106,14 +1107,14 @@ static void gsp_start(PTR ucode, u32 *dl)
 #include "gsp/g_tri1.c"
 #include "gsp/g_tri2.c"
 
-#define gsp_g_quad              gsp_g_tri2
+#define g_quad                  g_tri2
 
-static void gsp_g_special_3(UNUSED u32 w0, UNUSED u32 w1)
+static void g_special_3(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_SPECIAL_3\n");
 }
 
-static void gsp_g_special_2(UNUSED u32 w0, UNUSED u32 w1)
+static void g_special_2(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_SPECIAL_2\n");
 }
@@ -1121,13 +1122,13 @@ static void gsp_g_special_2(UNUSED u32 w0, UNUSED u32 w1)
 #ifdef APP_UNK4
 #include "gsp/g_special_1.c"
 #else
-static void gsp_g_special_1(UNUSED u32 w0, UNUSED u32 w1)
+static void g_special_1(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_SPECIAL_1\n");
 }
 #endif
 
-static void gsp_g_dma_io(UNUSED u32 w0, UNUSED u32 w1)
+static void g_dma_io(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_DMA_IO\n");
 }
@@ -1147,17 +1148,17 @@ static void gsp_g_dma_io(UNUSED u32 w0, UNUSED u32 w1)
 #include "gsp/g_setothermode_h.c"
 #include "gsp/g_rdphalf_2.c"
 
-static void gsp_g_obj_rectangle(UNUSED u32 w0, UNUSED u32 w1)
+static void g_obj_rectangle(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_OBJ_RECTANGLE\n");
 }
 
-static void gsp_g_obj_sprite(UNUSED u32 w0, UNUSED u32 w1)
+static void g_obj_sprite(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_OBJ_SPRITE\n");
 }
 
-static void gsp_g_select_dl(UNUSED u32 w0, UNUSED u32 w1)
+static void g_select_dl(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_SELECT_DL\n");
 }
@@ -1167,12 +1168,12 @@ static void gsp_g_select_dl(UNUSED u32 w0, UNUSED u32 w1)
 #include "gsp/g_bg_copy.c"
 #include "gsp/g_obj_rendermode.c"
 
-static void gsp_g_obj_rectangle_r(UNUSED u32 w0, UNUSED u32 w1)
+static void g_obj_rectangle_r(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_OBJ_RECTANGLE_R\n");
 }
 
-static void gsp_g_obj_movemem(UNUSED u32 w0, UNUSED u32 w1)
+static void g_obj_movemem(UNUSED u32 w0, UNUSED u32 w1)
 {
     edebug("G_OBJ_MOVEMEM\n");
 }
@@ -1208,14 +1209,14 @@ static void gsp_g_obj_movemem(UNUSED u32 w0, UNUSED u32 w1)
 
 static GSPCALL *gsp_table[] =
 {
-    /* 0x00 */  gsp_g_spnoop,
+    /* 0x00 */  g_spnoop,
 #ifdef GSP_F3D
-    /* 0x01 */  gsp_g_mtx,
+    /* 0x01 */  g_mtx,
     /* 0x02 */  NULL,
-    /* 0x03 */  gsp_g_movemem,
-    /* 0x04 */  gsp_g_vtx,
+    /* 0x03 */  g_movemem,
+    /* 0x04 */  g_vtx,
     /* 0x05 */  NULL,
-    /* 0x06 */  gsp_g_dl,
+    /* 0x06 */  g_dl,
 #endif
 #ifdef GSP_F3DEX2
     /* 0x01 */  NULL,
@@ -1395,40 +1396,40 @@ static GSPCALL *gsp_table[] =
     /* 0xAE */  NULL,
 #ifdef GSP_F3D
 #ifdef GSP_F3DEX
-    /* 0xAF */  gsp_g_load_ucode,
-    /* 0xB0 */  gsp_g_branch_z,
-    /* 0xB1 */  gsp_g_tri2,
-    /* 0xB2 */  gsp_g_modifyvtx,
-    /* 0xB3 */  gsp_g_rdphalf_2,
-    /* 0xB4 */  gsp_g_rdphalf_1,
-    /* 0xB5 */  gsp_g_quad,
+    /* 0xAF */  g_load_ucode,
+    /* 0xB0 */  g_branch_z,
+    /* 0xB1 */  g_tri2,
+    /* 0xB2 */  g_modifyvtx,
+    /* 0xB3 */  g_rdphalf_2,
+    /* 0xB4 */  g_rdphalf_1,
+    /* 0xB5 */  g_quad,
 #else
     /* 0xAF */  NULL,
     /* 0xB0 */  NULL,
 #ifdef GSP_F3D_20D
-    /* 0xB1 */  gsp_g_rdphalf_cont,
-    /* 0xB2 */  gsp_g_rdphalf_2,
-    /* 0xB3 */  gsp_g_rdphalf_1,
-    /* 0xB4 */  gsp_g_perspnormalize,
+    /* 0xB1 */  g_rdphalf_cont,
+    /* 0xB2 */  g_rdphalf_2,
+    /* 0xB3 */  g_rdphalf_1,
+    /* 0xB4 */  g_perspnormalize,
 #else
     /* 0xB1 */  NULL,
-    /* 0xB2 */  gsp_g_rdphalf_cont,
-    /* 0xB3 */  gsp_g_rdphalf_2,
-    /* 0xB4 */  gsp_g_rdphalf_1,
+    /* 0xB2 */  g_rdphalf_cont,
+    /* 0xB3 */  g_rdphalf_2,
+    /* 0xB4 */  g_rdphalf_1,
 #endif
     /* 0xB5 */  NULL,
 #endif
-    /* 0xB6 */  gsp_g_cleargeometrymode,
-    /* 0xB7 */  gsp_g_setgeometrymode,
-    /* 0xB8 */  gsp_g_enddl,
-    /* 0xB9 */  gsp_g_setothermode_l,
-    /* 0xBA */  gsp_g_setothermode_h,
-    /* 0xBB */  gsp_g_texture,
-    /* 0xBC */  gsp_g_moveword,
-    /* 0xBD */  gsp_g_popmtx,
-    /* 0xBE */  gsp_g_culldl,
-    /* 0xBF */  gsp_g_tri1,
-    /* 0xC0 */  gdp_g_noop,
+    /* 0xB6 */  g_cleargeometrymode,
+    /* 0xB7 */  g_setgeometrymode,
+    /* 0xB8 */  g_enddl,
+    /* 0xB9 */  g_setothermode_l,
+    /* 0xBA */  g_setothermode_h,
+    /* 0xBB */  g_texture,
+    /* 0xBC */  g_moveword,
+    /* 0xBD */  g_popmtx,
+    /* 0xBE */  g_culldl,
+    /* 0xBF */  g_tri1,
+    /* 0xC0 */  g_noop,
 #endif
 #ifdef GSP_F3DEX2
     /* 0xAF */  NULL,
@@ -1488,68 +1489,68 @@ static GSPCALL *gsp_table[] =
     /* 0xE3 */  NULL,
 #endif
 #ifdef GSP_F3DEX2
-    /* 0xD3 */  gsp_g_special_3,
-    /* 0xD4 */  gsp_g_special_2,
-    /* 0xD5 */  gsp_g_special_1,
-    /* 0xD6 */  gsp_g_dma_io,
-    /* 0xD7 */  gsp_g_texture,
-    /* 0xD8 */  gsp_g_popmtx,
-    /* 0xD9 */  gsp_g_geometrymode,
-    /* 0xDA */  gsp_g_mtx,
-    /* 0xDB */  gsp_g_moveword,
-    /* 0xDC */  gsp_g_movemem,
-    /* 0xDD */  gsp_g_load_ucode,
-    /* 0xDE */  gsp_g_dl,
-    /* 0xDF */  gsp_g_enddl,
-    /* 0xE0 */  gdp_g_noop,
-    /* 0xE1 */  gsp_g_rdphalf_1,
-    /* 0xE2 */  gsp_g_setothermode_l,
-    /* 0xE3 */  gsp_g_setothermode_h,
+    /* 0xD3 */  g_special_3,
+    /* 0xD4 */  g_special_2,
+    /* 0xD5 */  g_special_1,
+    /* 0xD6 */  g_dma_io,
+    /* 0xD7 */  g_texture,
+    /* 0xD8 */  g_popmtx,
+    /* 0xD9 */  g_geometrymode,
+    /* 0xDA */  g_mtx,
+    /* 0xDB */  g_moveword,
+    /* 0xDC */  g_movemem,
+    /* 0xDD */  g_load_ucode,
+    /* 0xDE */  g_dl,
+    /* 0xDF */  g_enddl,
+    /* 0xE0 */  g_noop,
+    /* 0xE1 */  g_rdphalf_1,
+    /* 0xE2 */  g_setothermode_l,
+    /* 0xE3 */  g_setothermode_h,
 #endif
-    /* 0xE4 */  gdp_g_texrect,
-    /* 0xE5 */  gdp_g_texrectflip,
-    /* 0xE6 */  gdp_g_rdploadsync,
-    /* 0xE7 */  gdp_g_rdppipesync,
-    /* 0xE8 */  gdp_g_rdptilesync,
-    /* 0xE9 */  gdp_g_rdpfullsync,
-    /* 0xEA */  gdp_g_setkeygb,
-    /* 0xEB */  gdp_g_setkeyr,
-    /* 0xEC */  gdp_g_setconvert,
-    /* 0xED */  gdp_g_setscissor,
-    /* 0xEE */  gdp_g_setprimdepth,
-    /* 0xEF */  gdp_g_rdpsetothermode,
-    /* 0xF0 */  gdp_g_loadtlut,
+    /* 0xE4 */  g_texrect,
+    /* 0xE5 */  g_texrectflip,
+    /* 0xE6 */  g_rdploadsync,
+    /* 0xE7 */  g_rdppipesync,
+    /* 0xE8 */  g_rdptilesync,
+    /* 0xE9 */  g_rdpfullsync,
+    /* 0xEA */  g_setkeygb,
+    /* 0xEB */  g_setkeyr,
+    /* 0xEC */  g_setconvert,
+    /* 0xED */  g_setscissor,
+    /* 0xEE */  g_setprimdepth,
+    /* 0xEF */  g_rdpsetothermode,
+    /* 0xF0 */  g_loadtlut,
 #ifdef GSP_F3DEX2
-    /* 0xF1 */  gsp_g_rdphalf_2,
+    /* 0xF1 */  g_rdphalf_2,
 #else
     /* 0xF1 */  NULL,
 #endif
-    /* 0xF2 */  gdp_g_settilesize,
-    /* 0xF3 */  gdp_g_loadblock,
-    /* 0xF4 */  gdp_g_loadtile,
-    /* 0xF5 */  gdp_g_settile,
-    /* 0xF6 */  gdp_g_fillrect,
-    /* 0xF7 */  gdp_g_setfillcolor,
-    /* 0xF8 */  gdp_g_setfogcolor,
-    /* 0xF9 */  gdp_g_setblendcolor,
-    /* 0xFA */  gdp_g_setprimcolor,
-    /* 0xFB */  gdp_g_setenvcolor,
-    /* 0xFC */  gdp_g_setcombine,
-    /* 0xFD */  gdp_g_settimg,
-    /* 0xFE */  gdp_g_setzimg,
-    /* 0xFF */  gdp_g_setcimg,
+    /* 0xF2 */  g_settilesize,
+    /* 0xF3 */  g_loadblock,
+    /* 0xF4 */  g_loadtile,
+    /* 0xF5 */  g_settile,
+    /* 0xF6 */  g_fillrect,
+    /* 0xF7 */  g_setfillcolor,
+    /* 0xF8 */  g_setfogcolor,
+    /* 0xF9 */  g_setblendcolor,
+    /* 0xFA */  g_setprimcolor,
+    /* 0xFB */  g_setenvcolor,
+    /* 0xFC */  g_setcombine,
+    /* 0xFD */  g_settimg,
+    /* 0xFE */  g_setzimg,
+    /* 0xFF */  g_setcimg,
 };
 
 #ifdef GSP_F3DEX2
 static GSPCALL *const gsp_table_F3DEX2[] =
 {
-    /* 0x01 */  gsp_g_vtx,
-    /* 0x02 */  gsp_g_modifyvtx,
-    /* 0x03 */  gsp_g_culldl,
-    /* 0x04 */  gsp_g_branch_z,
-    /* 0x05 */  gsp_g_tri1,
-    /* 0x06 */  gsp_g_tri2,
-    /* 0x07 */  gsp_g_quad,
+    /* 0x01 */  g_vtx,
+    /* 0x02 */  g_modifyvtx,
+    /* 0x03 */  g_culldl,
+    /* 0x04 */  g_branch_z,
+    /* 0x05 */  g_tri1,
+    /* 0x06 */  g_tri2,
+    /* 0x07 */  g_quad,
     /* 0x08 */  NULL,
     /* 0x09 */  NULL,
     /* 0x0A */  NULL,
@@ -1558,31 +1559,31 @@ static GSPCALL *const gsp_table_F3DEX2[] =
 
 static GSPCALL *const gsp_table_S2DEX2[] =
 {
-    /* 0x01 */  gsp_g_obj_rectangle,
-    /* 0x02 */  gsp_g_obj_sprite,
-    /* 0x03 */  gsp_g_culldl,
-    /* 0x04 */  gsp_g_select_dl,
-    /* 0x05 */  gsp_g_obj_loadtxtr,
-    /* 0x06 */  gsp_g_obj_loadtxtr,
-    /* 0x07 */  gsp_g_obj_loadtxtr,
-    /* 0x08 */  gsp_g_obj_loadtxtr,
-    /* 0x09 */  gsp_g_bg_1cyc,
-    /* 0x0A */  gsp_g_bg_copy,
-    /* 0x0B */  gsp_g_obj_rendermode,
+    /* 0x01 */  g_obj_rectangle,
+    /* 0x02 */  g_obj_sprite,
+    /* 0x03 */  g_culldl,
+    /* 0x04 */  g_select_dl,
+    /* 0x05 */  g_obj_loadtxtr,
+    /* 0x06 */  g_obj_loadtxtr,
+    /* 0x07 */  g_obj_loadtxtr,
+    /* 0x08 */  g_obj_loadtxtr,
+    /* 0x09 */  g_bg_1cyc,
+    /* 0x0A */  g_bg_copy,
+    /* 0x0B */  g_obj_rendermode,
 };
 
 static void gsp_start_F3DEX2(void)
 {
     memcpy(&gsp_table[0x01], gsp_table_F3DEX2, sizeof(gsp_table_F3DEX2));
-    gsp_table[G_MTX]     = gsp_g_mtx;
-    gsp_table[G_MOVEMEM] = gsp_g_movemem;
+    gsp_table[G_MTX]     = g_mtx;
+    gsp_table[G_MOVEMEM] = g_movemem;
 }
 
 static void gsp_start_S2DEX2(void)
 {
     memcpy(&gsp_table[0x01], gsp_table_S2DEX2, sizeof(gsp_table_S2DEX2));
-    gsp_table[G_OBJ_RECTANGLE_R] = gsp_g_obj_rectangle_r;
-    gsp_table[G_OBJ_MOVEMEM]     = gsp_g_obj_movemem;
+    gsp_table[G_OBJ_RECTANGLE_R] = g_obj_rectangle_r;
+    gsp_table[G_OBJ_MOVEMEM]     = g_obj_movemem;
 }
 #endif
 

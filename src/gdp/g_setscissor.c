@@ -1,4 +1,4 @@
-static void gdp_g_setscissor(u32 w0, u32 w1)
+static void g_setscissor(u32 w0, u32 w1)
 {
     int l = w0 >> 12 & 0xFFF;
     int t = w0 >>  0 & 0xFFF;

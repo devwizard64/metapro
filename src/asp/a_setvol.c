@@ -1,4 +1,4 @@
-static void asp_a_setvol(u32 w0, u32 w1)
+static void a_setvol(u32 w0, u32 w1)
 {
     uint flag = w0 >> 16;
 #ifdef ASP_MAIN1

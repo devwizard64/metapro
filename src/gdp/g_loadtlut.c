@@ -1,5 +1,5 @@
 #ifndef APP_UNSM
-static void gdp_g_loadtlut(u32 w0, u32 w1)
+static void g_loadtlut(u32 w0, u32 w1)
 {
     TILE *tile = &gdp_tile[w1 >> 24 & 7];
     uint tmem = tile->tmem << 3;
@@ -13,5 +13,5 @@ static void gdp_g_loadtlut(u32 w0, u32 w1)
     gsp_new_texture = TRUE;
 }
 #else
-#define gdp_g_loadtlut          NULL
+#define g_loadtlut              NULL
 #endif
