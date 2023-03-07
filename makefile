@@ -1,11 +1,11 @@
 APP     ?= UNSME00
 DEBUG   ?= 1
-ifeq ($(DEBUG),0)
-	LLE ?= 0
-	OPT ?= -O2
-else
+ifneq ($(DEBUG),0)
 	LLE ?= 1
 	OPT ?= -O0
+else
+	LLE ?= 0
+	OPT ?= -O2
 endif
 
 LIBOGC  := $(DEVKITPRO)/libogc
@@ -121,92 +121,77 @@ clean:
 
 $(BUILD)/native/app.elf: $(OBJ)
 	$(LD) $(LDFLAG) -Wl,-Map,$(@:.elf=.map) -o $@ $(OBJ) -lm -lSDL2 -lGL
+$(BUILD)/native/src/%.o: src/%.c $(BUILD)/app.h
+	@mkdir -p $(dir $@)
+	$(CC) $(CCFLAG) -MMD -MP -c -o $@ $<
+$(BUILD)/native/app/%.o: $(BUILD)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
+-include $(OBJ:.o=.d)
 
 $(BUILD)/win32/app.exe: $(W32_OBJ)
 	$(W32_LD) $(W32_LDFLAG) -Wl,-Map,$(@:.exe=.map) -o $@ $(W32_OBJ) -lmingw32 -lm -lSDL2main -lSDL2 -lopengl32
+$(BUILD)/win32/src/%.o: src/%.c $(BUILD)/app.h
+	@mkdir -p $(dir $@)
+	$(W32_CC) $(W32_CCFLAG) -MMD -MP -c -o $@ $<
+$(BUILD)/win32/app/%.o: $(BUILD)/%.c
+	@mkdir -p $(dir $@)
+	$(W32_CC) $(W32_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
+-include $(W32_OBJ:.o=.d)
 
 $(BUILD)/osx/app.elf: $(OSX_OBJ)
 	$(OSX_LD) $(OSX_LDFLAG) -o $@ $(OSX_OBJ) -lm -framework SDL2 -framework OpenGL
 	install_name_tool -add_rpath $(HOME)/Library/Frameworks $@
+$(BUILD)/osx/src/%.o: src/%.c $(BUILD)/app.h
+	@mkdir -p $(dir $@)
+	$(OSX_CC) $(OSX_CCFLAG) -MMD -MP -c -o $@ $<
+$(BUILD)/osx/app/%.o: $(BUILD)/%.c
+	@mkdir -p $(dir $@)
+	$(OSX_CC) $(OSX_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
+-include $(OSX_OBJ:.o=.d)
 
 $(BUILD)/gcn/app.dol: $(DOL_OBJ)
 	$(DOL_LD) $(DOL_LDFLAG) -Wl,-Map,$(@:.dol=.map) -o $(@:.dol=.elf) $(DOL_OBJ) -lfat -lm -logc
 	elf2dol $(@:.dol=.elf) $@
+$(BUILD)/gcn/src/%.o: src/%.c $(BUILD)/app.h
+	@mkdir -p $(dir $@)
+	$(DOL_CC) $(DOL_CCFLAG) -MMD -MP -c -o $@ $<
+$(BUILD)/gcn/app/%.o: $(BUILD)/%.c
+	@mkdir -p $(dir $@)
+	$(DOL_CC) $(DOL_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
+-include $(DOL_OBJ:.o=.d)
 
 $(BUILD)/wii/app.dol: $(RVL_OBJ)
 	$(RVL_LD) $(RVL_LDFLAG) -Wl,-Map,$(@:.dol=.map) -o $(@:.dol=.elf) $(RVL_OBJ) -lfat -lm -logc
 	elf2dol $(@:.dol=.elf) $@
+$(BUILD)/wii/src/%.o: src/%.c $(BUILD)/app.h
+	@mkdir -p $(dir $@)
+	$(RVL_CC) $(RVL_CCFLAG) -MMD -MP -c -o $@ $<
+$(BUILD)/wii/app/%.o: $(BUILD)/%.c
+	@mkdir -p $(dir $@)
+	$(RVL_CC) $(RVL_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
+-include $(RVL_OBJ:.o=.d)
 
 $(BUILD)/nds/app.nds: $(NTR_OBJ)
 	$(NTR_LD) $(NTR_LDFLAG) -Wl,-Map,$(@:.nds=.map) -o $(@:.nds=.elf) $(NTR_OBJ) -lfat -lm -lnds9
 	ndstool -c $@ -9 $(@:.nds=.elf)
+$(BUILD)/nds/src/%.o: src/%.c $(BUILD)/app.h
+	@mkdir -p $(dir $@)
+	$(NTR_CC) $(NTR_CCFLAG) -MMD -MP -c -o $@ $<
+$(BUILD)/nds/app/%.o: $(BUILD)/%.c
+	@mkdir -p $(dir $@)
+	$(NTR_CC) $(NTR_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
+-include $(NTR_OBJ:.o=.d)
 
 $(BUILD)/3ds/app.3dsx: $(CTR_OBJ) $(PICAGL)/lib/libpicaGL.a
 	$(CTR_LD) $(CTR_LDFLAG) -Wl,-Map,$(@:.3dsx=.map) -o $(@:.3dsx=.elf) $(CTR_OBJ) -lpicaGL -lm -lctru
 	3dsxtool $(@:.3dsx=.elf) $@
-
-$(BUILD)/native/src/%.o: src/%.c $(BUILD)/app.h
-	@mkdir -p $(dir $@)
-	$(CC) $(CCFLAG) -MMD -MP -c -o $@ $<
-
-$(BUILD)/win32/src/%.o: src/%.c $(BUILD)/app.h
-	@mkdir -p $(dir $@)
-	$(W32_CC) $(W32_CCFLAG) -MMD -MP -c -o $@ $<
-
-$(BUILD)/osx/src/%.o: src/%.c $(BUILD)/app.h
-	@mkdir -p $(dir $@)
-	$(OSX_CC) $(OSX_CCFLAG) -MMD -MP -c -o $@ $<
-
-$(BUILD)/gcn/src/%.o: src/%.c $(BUILD)/app.h
-	@mkdir -p $(dir $@)
-	$(DOL_CC) $(DOL_CCFLAG) -MMD -MP -c -o $@ $<
-
-$(BUILD)/wii/src/%.o: src/%.c $(BUILD)/app.h
-	@mkdir -p $(dir $@)
-	$(RVL_CC) $(RVL_CCFLAG) -MMD -MP -c -o $@ $<
-
-$(BUILD)/nds/src/%.o: src/%.c $(BUILD)/app.h
-	@mkdir -p $(dir $@)
-	$(NTR_CC) $(NTR_CCFLAG) -MMD -MP -c -o $@ $<
-
 $(BUILD)/3ds/src/%.o: src/%.c $(BUILD)/app.h
 	@mkdir -p $(dir $@)
 	$(CTR_CC) $(CTR_CCFLAG) -MMD -MP -c -o $@ $<
-
-$(BUILD)/native/app/%.o: $(BUILD)/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
-
-$(BUILD)/win32/app/%.o: $(BUILD)/%.c
-	@mkdir -p $(dir $@)
-	$(W32_CC) $(W32_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
-
-$(BUILD)/osx/app/%.o: $(BUILD)/%.c
-	@mkdir -p $(dir $@)
-	$(OSX_CC) $(OSX_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
-
-$(BUILD)/gcn/app/%.o: $(BUILD)/%.c
-	@mkdir -p $(dir $@)
-	$(DOL_CC) $(DOL_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
-
-$(BUILD)/wii/app/%.o: $(BUILD)/%.c
-	@mkdir -p $(dir $@)
-	$(RVL_CC) $(RVL_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
-
-$(BUILD)/nds/app/%.o: $(BUILD)/%.c
-	@mkdir -p $(dir $@)
-	$(NTR_CC) $(NTR_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
-
 $(BUILD)/3ds/app/%.o: $(BUILD)/%.c
 	@mkdir -p $(dir $@)
 	$(CTR_CC) $(CTR_CCFLAG) $(WARN) -MMD -MP -c -o $@ $<
-
--include $(OBJ:.o=.d)
--include $(W32_OBJ:.o=.d)
--include $(OSX_OBJ:.o=.d)
--include $(DOL_OBJ:.o=.d)
--include $(RVL_OBJ:.o=.d)
--include $(NTR_OBJ:.o=.d)
 -include $(CTR_OBJ:.o=.d)
 
 $(addprefix $(BUILD)/,$(notdir $(APP_OBJ:.o=.c))): $(BUILD)/app.h
