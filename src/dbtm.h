@@ -16,7 +16,11 @@ typedef clock_t DBTM;
 #endif
 #ifdef GEKKO
 #define dbtm()          gettime()
-#define DBTM_CLOCK      (TB_BUS_CLOCK/4)
+#if defined(HW_RVL)
+#define DBTM_CLOCK      (243000000/4)
+#elif defined(HW_DOL)
+#define DBTM_CLOCK      (162000000/4)
+#endif
 typedef u64 DBTM;
 #endif
 #ifdef __NDS__
