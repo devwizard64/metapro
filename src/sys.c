@@ -146,7 +146,7 @@ void sys_main(void (*start)(void))
         memcpy(&cpu, &th->cpu, sizeof(CPU));
         if (th->init)
         {
-            void *stack = th->stack + TH_STACK_SIZE;
+            void *stack = th->stack + TH_STACK_SIZE - 16;
             th->init = FALSE;
 #ifdef __GNUC__
             asm volatile(

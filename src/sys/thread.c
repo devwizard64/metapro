@@ -1,4 +1,4 @@
-#define TH_STACK_SIZE   0x10000
+#define TH_STACK_SIZE   0x4000
 
 static THREAD *os_thread_list  = NULL;
 static THREAD *os_thread_queue = NULL;
