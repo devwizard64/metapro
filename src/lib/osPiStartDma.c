@@ -13,7 +13,7 @@ void lib_osPiStartDma(void)
     OSMesgQueue *mq = cpu_ptr(*cpu_s32(sp+0x18));
     switch (direction)
     {
-        case OS_READ:   dma(vAddr, devAddr, nbytes);    break;
+        case OS_READ:   cart_rd(vAddr, devAddr, nbytes);    break;
     }
     v0 = mesg_send(mq, 0, OS_MESG_NOBLOCK);
 }

@@ -4,7 +4,7 @@ void *framebuffer = NULL;
 static GXRModeObj *video_rmode = NULL;
 
 #ifdef __WII__
-static void input_power(void)
+static void power_callback(void)
 {
     SYS_ResetSystem(SYS_POWEROFF, 0, 0);
 }
@@ -52,7 +52,7 @@ static void app_init(void)
     GX_SetDispCopyGamma(GX_GM_1_0);
     PAD_Init();
 #ifdef __WII__
-    SYS_SetPowerCallback(input_power);
+    SYS_SetPowerCallback(power_callback);
 #endif
     AUDIO_Init(NULL);
     AUDIO_SetDSPSampleRate(AI_SAMPLERATE_32KHZ);

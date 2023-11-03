@@ -15,7 +15,7 @@
 #define PATH_EEPROM PATH_ROOT "eeprom.bin"
 #define PATH_SRAM   PATH_ROOT "sram.bin"
 #define PATH_DRAM   PATH_ROOT "dram.bin"
-#define PATH_INPUT  PATH_ROOT "input.bin"
+#define PATH_CONT   PATH_ROOT "cont.bin"
 
 #ifdef APP_UCZL
 #define CPU_DRAM_SIZE   0xC00000
@@ -167,14 +167,14 @@ extern void *__nullswap(void *dst, const void *src, u32 size);
 extern void *__byteswap(void *dst, const void *src, u32 size);
 extern void *__halfswap(void *dst, const void *src, u32 size);
 extern void *__wordswap(void *dst, const void *src, u32 size);
-extern void dma(void *dst, PTR src, u32 size);
+extern void cart_rd(void *dst, PTR src, u32 size);
 #if EEPROM
-extern void eeprom_read(void *dst, uint src, u32 size);
-extern void eeprom_write(uint dst, const void *src, u32 size);
+extern void eeprom_rd(void *dst, uint src, u32 size);
+extern void eeprom_wr(uint dst, const void *src, u32 size);
 #endif
 #ifdef SRAM
-extern void sram_read(void *dst, PTR src, u32 size);
-extern void sram_write(PTR dst, const void *src, u32 size);
+extern void sram_rd(void *dst, PTR src, u32 size);
+extern void sram_wr(PTR dst, const void *src, u32 size);
 #endif
 extern void cpu_init(void);
 extern void cpu_exit(void);

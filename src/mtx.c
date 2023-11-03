@@ -1,8 +1,8 @@
 #include "types.h"
 
-void mtx_read(f32 *dst, const s16 *src)
+void mtx_rd(f32 *dst, const s16 *src)
 {
-    uint cnt = 4*4;
+    uint len = 4*4;
     do
     {
 #ifdef __EB__
@@ -14,14 +14,14 @@ void mtx_read(f32 *dst, const s16 *src)
 #endif
         dst += 2;
         src += 2;
-        cnt -= 2;
+        len -= 2;
     }
-    while (cnt > 0);
+    while (len > 0);
 }
 
-void mtx_write(s16 *dst, const f32 *src)
+void mtx_wr(s16 *dst, const f32 *src)
 {
-    uint cnt = 4*4;
+    uint len = 4*4;
     do
     {
         s32 a = 0x10000 * src[0];
@@ -39,9 +39,9 @@ void mtx_write(s16 *dst, const f32 *src)
 #endif
         dst += 2;
         src += 2;
-        cnt -= 2;
+        len -= 2;
     }
-    while (cnt > 0);
+    while (len > 0);
 }
 
 void mtx_cat(f32 mf[4][4], f32 a[4][4], f32 b[4][4])

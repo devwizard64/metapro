@@ -9,7 +9,7 @@
 
 #ifdef RSP_DEBUG
 #define debugi(...) \
-    {printf("rsp: 1%03X ", (rsp.pc-4) & 0xFFF); printf(__VA_ARGS__);}
+    {printf("rsp: 1%03X ", rsp.pc-4); printf(__VA_ARGS__);}
 #else
 #define debugi(...) {}
 #endif
@@ -35,15 +35,15 @@
 
 #define VX  (AX_H >> 1)
 
-#define INST_F0     (inst >> 26       )
-#define INST_F1     (inst >>  0 & 0x3F)
-#define INST_R0     (inst >> 21 & 0x1F)
-#define INST_R1     (inst >> 16 & 0x1F)
-#define INST_R2     (inst >> 11 & 0x1F)
-#define INST_R3     (inst >>  6 & 0x1F)
-#define INST_E0     (inst >> 21 & 0x0F)
-#define INST_E1     (inst >> 11 & 0x0F)
-#define INST_E2     (inst >>  7 & 0x0F)
+#define INST_F0     (inst >> 26     )
+#define INST_F1     (inst >>  0 & 63)
+#define INST_R0     (inst >> 21 & 31)
+#define INST_R1     (inst >> 16 & 31)
+#define INST_R2     (inst >> 11 & 31)
+#define INST_R3     (inst >>  6 & 31)
+#define INST_E0     (inst >> 21 & 15)
+#define INST_E1     (inst >> 11 & 15)
+#define INST_E2     (inst >>  7 & 15)
 
 #define INST_OP     INST_F0
 #define INST_FUNC   INST_F1
@@ -65,8 +65,8 @@
 #define INST_IMMS   ((s16)inst)
 #define INST_IMMU   ((u16)inst)
 #define INST_IMMH   (inst << 16)
-#define INST_BDST   (rsp.pc + ((s16)inst << 2))
-#define INST_JDST   ((rsp.pc & 0xF0000000) | (inst << 2 & 0x0FFFFFFC))
+#define INST_BDST   ((rsp.pc + ((s16)inst << 2)) & 0xFFC)
+#define INST_JDST   (inst << 2 & 0xFFC)
 
 #define INST_EVS    str_element[INST_EV]
 #define INST_DES    str_element[INST_DE]
@@ -78,6 +78,10 @@
 #define vs  rsp.vreg[INST_VS]
 #define vd  rsp.vreg[INST_VD]
 #define ev  rsp_element[INST_EV]
+
+#define MEM(bank, addr) rsp_mem[bank | ((addr) & 0xFFF)]
+#define DMEM(addr)      MEM(0x0000, addr)
+#define IMEM(addr)      MEM(0x1000, addr)
 
 typedef void RSPCALL(u32 inst);
 
@@ -135,16 +139,15 @@ static u32 rsp_dma_rd(u32 len)
     uint count  = (len >> 12 &  0xFF);
     uint length = (len >>  0 & 0xFF8) + 8;
     uint i;
+    uint n;
     for (i = 0; i <= count; i++)
     {
-        __byteswap(&rsp_mem[bank | (mem & 0xFFF)], &cpu_dram[dram], length);
-        mem  += length;
-        dram += length;
+        for (n = 0; n < length; n++) MEM(bank, mem++) = cpu_dram[dram++^AX_B];
         dram += skip;
     }
-    rsp.mem_addr  = bank | mem;
-    rsp.dram_addr = dram;
-    return (len & 0xFF800000) | 0xFF8;
+    rsp.mem_addr  = bank | (mem & 0xFF8);
+    rsp.dram_addr = (dram & 0xFFFFF8);
+    return skip << 20 | 0xFF8;
 }
 
 static u32 rsp_dma_wr(u32 len)
@@ -156,16 +159,15 @@ static u32 rsp_dma_wr(u32 len)
     uint count  = (len >> 12 &  0xFF);
     uint length = (len >>  0 & 0xFF8) + 8;
     uint i;
+    uint n;
     for (i = 0; i <= count; i++)
     {
-        __byteswap(&cpu_dram[dram], &rsp_mem[bank | (mem & 0xFFF)], length);
-        mem  += length;
-        dram += length;
+        for (n = 0; n < length; n++) cpu_dram[dram++^AX_B] = MEM(bank, mem++);
         dram += skip;
     }
-    rsp.mem_addr  = bank | mem;
-    rsp.dram_addr = dram;
-    return (len & 0xFF800000) | 0xFF8;
+    rsp.mem_addr  = bank | (mem & 0xFF8);
+    rsp.dram_addr = (dram & 0xFFFFF8);
+    return skip << 20 | 0xFF8;
 }
 
 static void rsp_branch(uint addr)
@@ -256,14 +258,14 @@ static void rsp_srav(u32 inst)
 
 static void rsp_jr(u32 inst)
 {
-    rsp_branch(rs);
+    rsp_branch(rs & 0xFFC);
     debugi("jr $%d\n", INST_RS);
 }
 
 static void rsp_jalr(u32 inst)
 {
     rd = rsp.pc + 4;
-    rsp_branch(rs);
+    rsp_branch(rs & 0xFFC);
     debugi("jalr $%d, $%d\n", INST_RD, INST_RS);
 }
 
@@ -470,14 +472,14 @@ static void rsp_regimm(u32 inst)
 static void rsp_j(u32 inst)
 {
     rsp_branch(INST_JDST);
-    debugi("j 0x%08X\n", INST_JDST);
+    debugi("j 0x1%03X\n", INST_JDST);
 }
 
 static void rsp_jal(u32 inst)
 {
     rsp.reg[31] = rsp.pc + 4;
     rsp_branch(INST_JDST);
-    debugi("jal 0x%08X\n", INST_JDST);
+    debugi("jal 0x1%03X\n", INST_JDST);
 }
 
 static void rsp_beq(u32 inst)
@@ -649,24 +651,39 @@ static void rsp_cop0(u32 inst)
 
 static void rsp_mfc2(u32 inst)
 {
-    rt = vs.s[INST_E >> 1];
+    rt = vs.b[(INST_E+0)^VX] << 8 | vs.b[((INST_E+1)&15)^VX];
     debugi("mfc2 $%d, $v%d[%d]\n", INST_RT, INST_RD, INST_E);
 }
 
 static void rsp_cfc2(UNUSED u32 inst)
 {
-    edebug("rsp: cfc2 $%d, $c%d\n", rt, rd);
+    switch (INST_RD & 3)
+    {
+        case 0: rt = rsp.vcc;   break;
+        case 1: rt = rsp.vco;   break;
+        case 2: rt = rsp.vce;   break;
+        case 3: rt = rsp.vce;   break;
+    }
+    debugi("cfc2 $%d, $c%d\n", INST_RT, INST_RD);
 }
 
 static void rsp_mtc2(u32 inst)
 {
-    vs.s[INST_E >> 1] = rt;
+    vs.b[(INST_E+0)^VX] = rt >> 8;
+    if (INST_E+1 < 16) vs.b[(INST_E+1)^VX] = rt >> 0;
     debugi("mtc2 $%d, $v%d[%d]\n", INST_RT, INST_RD, INST_E);
 }
 
 static void rsp_ctc2(UNUSED u32 inst)
 {
-    edebug("rsp: ctc2 $%d, $c%d\n", rt, rd);
+    switch (INST_RD & 3)
+    {
+        case 0: rsp.vcc = rt;   break;
+        case 1: rsp.vco = rt;   break;
+        case 2: rsp.vce = rt;   break;
+        case 3: rsp.vce = rt;   break;
+    }
+    debugi("ctc2 $%d, $c%d\n", INST_RT, INST_RD);
 }
 
 static void rsp_vmulf(u32 inst)
@@ -1243,184 +1260,163 @@ static void rsp_cop2(u32 inst)
 
 static void rsp_lb(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_IMMS) & 0xFFF];
-    rt = (s8)(x[0]);
+    u8 a = DMEM(rs+INST_IMMS+0);
+    rt = (s8)(a);
     debugi("lb $%d, 0x%04X($%d)\n", INST_RT, INST_IMMU, INST_RS);
 }
 
 static void rsp_lh(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_IMMS) & 0xFFF];
-    rt = (s16)(x[0] << 8 | x[1]);
+    u8 a = DMEM(rs+INST_IMMS+0);
+    u8 b = DMEM(rs+INST_IMMS+1);
+    rt = (s16)(a << 8 | b);
     debugi("lh $%d, 0x%04X($%d)\n", INST_RT, INST_IMMU, INST_RS);
 }
 
 static void rsp_lw(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_IMMS) & 0xFFF];
-    rt = (s32)(x[0] << 24 | x[1] << 16 | x[2] << 8 | x[3]);
+    u8 a = DMEM(rs+INST_IMMS+0);
+    u8 b = DMEM(rs+INST_IMMS+1);
+    u8 c = DMEM(rs+INST_IMMS+2);
+    u8 d = DMEM(rs+INST_IMMS+3);
+    rt = (s32)(a << 24 | b << 16 | c << 8 | d);
     debugi("lw $%d, 0x%04X($%d)\n", INST_RT, INST_IMMU, INST_RS);
 }
 
 static void rsp_lbu(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_IMMS) & 0xFFF];
-    rt = x[0];
+    u8 a = DMEM(rs+INST_IMMS+0);
+    rt = a;
     debugi("lbu $%d, 0x%04X($%d)\n", INST_RT, INST_IMMU, INST_RS);
 }
 
 static void rsp_lhu(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_IMMS) & 0xFFF];
-    rt = x[0] << 8 | x[1];
+    u8 a = DMEM(rs+INST_IMMS+0);
+    u8 b = DMEM(rs+INST_IMMS+1);
+    rt = a << 8 | b;
     debugi("lhu $%d, 0x%04X($%d)\n", INST_RT, INST_IMMU, INST_RS);
 }
 
 static void rsp_sb(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_IMMS) & 0xFFF];
-    x[0] = rt >> 0;
+    DMEM(rs+INST_IMMS+0) = rt >> 0;
     debugi("sb $%d, 0x%04X($%d)\n", INST_RT, INST_IMMU, INST_RS);
 }
 
 static void rsp_sh(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_IMMS) & 0xFFF];
-    x[0] = rt >> 8;
-    x[1] = rt >> 0;
+    DMEM(rs+INST_IMMS+0) = rt >> 8;
+    DMEM(rs+INST_IMMS+1) = rt >> 0;
     debugi("sh $%d, 0x%04X($%d)\n", INST_RT, INST_IMMU, INST_RS);
 }
 
 static void rsp_sw(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_IMMS) & 0xFFF];
-    x[0] = rt >> 24;
-    x[1] = rt >> 16;
-    x[2] = rt >>  8;
-    x[3] = rt >>  0;
+    DMEM(rs+INST_IMMS+0) = rt >> 24;
+    DMEM(rs+INST_IMMS+1) = rt >> 16;
+    DMEM(rs+INST_IMMS+2) = rt >>  8;
+    DMEM(rs+INST_IMMS+3) = rt >>  0;
     debugi("sw $%d, 0x%04X($%d)\n", INST_RT, INST_IMMU, INST_RS);
 }
 
 static void rsp_lbv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFB) & 0xFFF];
-    vt.b[(INST_E+0)^VX] = x[0];
+    int i;
+    uint x = rs+INST_OFFB;
+    uint e = INST_E;
+    for (i = 0; i < 1 && e < 16; i++) vt.b[e++^VX] = DMEM(x++);
     debugi("lbv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFB, INST_RS);
 }
 
 static void rsp_lsv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFS) & 0xFFF];
-    vt.b[(INST_E+0)^VX] = x[0];
-    vt.b[(INST_E+1)^VX] = x[1];
+    int i;
+    uint x = rs+INST_OFFS;
+    uint e = INST_E;
+    for (i = 0; i < 2 && e < 16; i++) vt.b[e++^VX] = DMEM(x++);
     debugi("lsv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFS, INST_RS);
 }
 
 static void rsp_llv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFL) & 0xFFF];
-    vt.b[(INST_E+0)^VX] = x[0];
-    vt.b[(INST_E+1)^VX] = x[1];
-    vt.b[(INST_E+2)^VX] = x[2];
-    vt.b[(INST_E+3)^VX] = x[3];
+    int i;
+    uint x = rs+INST_OFFL;
+    uint e = INST_E;
+    for (i = 0; i < 4 && e < 16; i++) vt.b[e++^VX] = DMEM(x++);
     debugi("llv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFL, INST_RS);
 }
 
 static void rsp_ldv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFD) & 0xFFF];
-    vt.b[(INST_E+0)^VX] = x[0];
-    vt.b[(INST_E+1)^VX] = x[1];
-    vt.b[(INST_E+2)^VX] = x[2];
-    vt.b[(INST_E+3)^VX] = x[3];
-    vt.b[(INST_E+4)^VX] = x[4];
-    vt.b[(INST_E+5)^VX] = x[5];
-    vt.b[(INST_E+6)^VX] = x[6];
-    vt.b[(INST_E+7)^VX] = x[7];
+    int i;
+    uint x = rs+INST_OFFD;
+    uint e = INST_E;
+    for (i = 0; i < 8 && e < 16; i++) vt.b[e++^VX] = DMEM(x++);
     debugi("ldv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFD, INST_RS);
 }
 
 static void rsp_lqv(u32 inst)
 {
-    uint x = (rs+INST_OFFQ) & 0xFFF;
-    uint e = 0;
-    do {vt.b[e++^VX] = rsp_mem[x++];} while (x & 15);
+    uint x = rs+INST_OFFQ;
+    uint e = INST_E;
+    do {vt.b[e++^VX] = DMEM(x++);} while ((x & 15) && e < 16);
     debugi("lqv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFQ, INST_RS);
 }
 
 static void rsp_lrv(u32 inst)
 {
-    uint x = (rs+INST_OFFQ) & 0xFFF;
-    uint e = 16 - (x & 15);
-    x &= ~15;
-    while (e < 16) vt.b[e++^VX] = rsp_mem[x++];
+    uint x = rs+INST_OFFQ - INST_E;
+    uint e = 16;
+    do {vt.b[--e^VX] = DMEM(--x);} while ((x & 15));
     debugi("lrv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFQ, INST_RS);
 }
 
 static void rsp_lpv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFB) & 0xFFF];
-    vt.s[0] = x[0] << 8;
-    vt.s[1] = x[1] << 8;
-    vt.s[2] = x[2] << 8;
-    vt.s[3] = x[3] << 8;
-    vt.s[4] = x[4] << 8;
-    vt.s[5] = x[5] << 8;
-    vt.s[6] = x[6] << 8;
-    vt.s[7] = x[7] << 8;
-    debugi("lpv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFB, INST_RS);
+    int i;
+    uint x = rs+INST_OFFD;
+    for (i = 0; i < 8; i++) vt.s[i] = DMEM(x+i) << 8;
+    debugi("lpv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFD, INST_RS);
 }
 
 static void rsp_luv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFB) & 0xFFF];
-    vt.s[0] = x[0] << 7;
-    vt.s[1] = x[1] << 7;
-    vt.s[2] = x[2] << 7;
-    vt.s[3] = x[3] << 7;
-    vt.s[4] = x[4] << 7;
-    vt.s[5] = x[5] << 7;
-    vt.s[6] = x[6] << 7;
-    vt.s[7] = x[7] << 7;
-    debugi("luv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFB, INST_RS);
+    int i;
+    uint x = rs+INST_OFFD;
+    for (i = 0; i < 8; i++) vt.s[i] = DMEM(x+i) << 7;
+    debugi("luv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFD, INST_RS);
 }
 
 static void rsp_lhv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFB) & 0xFFF];
-    vt.s[0] = x[2*0] << 7;
-    vt.s[1] = x[2*1] << 7;
-    vt.s[2] = x[2*2] << 7;
-    vt.s[3] = x[2*3] << 7;
-    vt.s[4] = x[2*4] << 7;
-    vt.s[5] = x[2*5] << 7;
-    vt.s[6] = x[2*6] << 7;
-    vt.s[7] = x[2*7] << 7;
-    debugi("lhv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFB, INST_RS);
+    int i;
+    uint x = rs+INST_OFFQ;
+    for (i = 0; i < 8; i++) vt.s[i] = DMEM(x+2*i) << 7;
+    debugi("lhv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFQ, INST_RS);
 }
 
 static void rsp_lfv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFB) & 0xFFF];
-    vt.s[INST_E+0] = x[4*0] << 7;
-    vt.s[INST_E+1] = x[4*1] << 7;
-    vt.s[INST_E+2] = x[4*2] << 7;
-    vt.s[INST_E+3] = x[4*3] << 7;
-    debugi("lfv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFB, INST_RS);
+    int i;
+    uint x = rs+INST_OFFD;
+    uint e = INST_E >> 1;
+    for (i = 0; i < 4; i++) vt.s[e++] = DMEM(x+4*i) << 7;
+    debugi("lfv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFQ, INST_RS);
 }
 
 static void rsp_ltv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFB) & 0xFFF];
-    uint e = INST_E >> 1;
     int i;
+    uint x = rs+INST_OFFQ;
+    uint e = INST_E >> 1;
     for (i = 0; i < 8; i++)
     {
-        rsp.vreg[INST_VT+e].b[2*i+(0^VX)] = *x++;
-        rsp.vreg[INST_VT+e].b[2*i+(1^VX)] = *x++;
+        rsp.vreg[INST_VT+e].b[2*i+(0^VX)] = DMEM(x++);
+        rsp.vreg[INST_VT+e].b[2*i+(1^VX)] = DMEM(x++);
         e = (e+1) & 7;
     }
-    debugi("ltv $v%d[%d], 0x%02X($%d)\n",INST_VT, INST_E, INST_OFFB, INST_RS);
+    debugi("ltv $v%d[%d], 0x%02X($%d)\n",INST_VT, INST_E, INST_OFFQ, INST_RS);
 }
 
 static RSPCALL *const rsp_lwc2_table[] =
@@ -1466,110 +1462,86 @@ static void rsp_lwc2(u32 inst)
 
 static void rsp_sbv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFB) & 0xFFF];
-    x[0] = vt.b[(INST_E+0)^VX];
+    int i;
+    uint x = rs+INST_OFFB;
+    uint e = INST_E;
+    for (i = 0; i < 1; i++) DMEM(x++) = vt.b[e++^VX];
     debugi("sbv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFB, INST_RS);
 }
 
 static void rsp_ssv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFS) & 0xFFF];
-    x[0] = vt.b[(INST_E+0)^VX];
-    x[1] = vt.b[(INST_E+1)^VX];
+    int i;
+    uint x = rs+INST_OFFS;
+    uint e = INST_E;
+    for (i = 0; i < 2; i++) DMEM(x++) = vt.b[e++^VX];
     debugi("ssv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFS, INST_RS);
 }
 
 static void rsp_slv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFL) & 0xFFF];
-    x[0] = vt.b[(INST_E+0)^VX];
-    x[1] = vt.b[(INST_E+1)^VX];
-    x[2] = vt.b[(INST_E+2)^VX];
-    x[3] = vt.b[(INST_E+3)^VX];
+    int i;
+    uint x = rs+INST_OFFL;
+    uint e = INST_E;
+    for (i = 0; i < 4; i++) DMEM(x++) = vt.b[e++^VX];
     debugi("slv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFL, INST_RS);
 }
 
 static void rsp_sdv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFD) & 0xFFF];
-    x[0] = vt.b[(INST_E+0)^VX];
-    x[1] = vt.b[(INST_E+1)^VX];
-    x[2] = vt.b[(INST_E+2)^VX];
-    x[3] = vt.b[(INST_E+3)^VX];
-    x[4] = vt.b[(INST_E+4)^VX];
-    x[5] = vt.b[(INST_E+5)^VX];
-    x[6] = vt.b[(INST_E+6)^VX];
-    x[7] = vt.b[(INST_E+7)^VX];
+    int i;
+    uint x = rs+INST_OFFD;
+    uint e = INST_E;
+    for (i = 0; i < 8; i++) DMEM(x++) = vt.b[e++^VX];
     debugi("sdv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFD, INST_RS);
 }
 
 static void rsp_sqv(u32 inst)
 {
-    uint x = (rs+INST_OFFQ) & 0xFFF;
-    uint e = 0;
-    do {rsp_mem[x++] = vt.b[e++^VX];} while (x & 15);
+    uint x = rs+INST_OFFQ;
+    uint e = INST_E;
+    do {DMEM(x++) = vt.b[e++^VX];} while ((x & 15) && e < 16);
     debugi("sqv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFQ, INST_RS);
 }
 
 static void rsp_srv(u32 inst)
 {
-    uint x = (rs+INST_OFFQ) & 0xFFF;
-    uint e = 16 - (x & 15);
-    x &= ~15;
-    while (e < 16) rsp_mem[x++] = vt.b[e++^VX];
+    uint x = rs+INST_OFFQ - INST_E;
+    uint e = 16;
+    do {DMEM(--x) = vt.b[--e^VX];} while ((x & 15));
     debugi("srv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFQ, INST_RS);
 }
 
 static void rsp_spv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFB) & 0xFFF];
-    x[0] = vt.s[0] >> 8;
-    x[1] = vt.s[1] >> 8;
-    x[2] = vt.s[2] >> 8;
-    x[3] = vt.s[3] >> 8;
-    x[4] = vt.s[4] >> 8;
-    x[5] = vt.s[5] >> 8;
-    x[6] = vt.s[6] >> 8;
-    x[7] = vt.s[7] >> 8;
-    debugi("spv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFB, INST_RS);
+    int i;
+    uint x = rs+INST_OFFD;
+    for (i = 0; i < 8; i++) DMEM(x++) = vt.s[i] >> 8;
+    debugi("spv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFD, INST_RS);
 }
 
 static void rsp_suv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFB) & 0xFFF];
-    x[0] = vt.s[0] >> 7;
-    x[1] = vt.s[1] >> 7;
-    x[2] = vt.s[2] >> 7;
-    x[3] = vt.s[3] >> 7;
-    x[4] = vt.s[4] >> 7;
-    x[5] = vt.s[5] >> 7;
-    x[6] = vt.s[6] >> 7;
-    x[7] = vt.s[7] >> 7;
-    debugi("suv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFB, INST_RS);
+    int i;
+    uint x = rs+INST_OFFD;
+    for (i = 0; i < 8; i++) DMEM(x++) = vt.s[i] >> 7;
+    debugi("suv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFD, INST_RS);
 }
 
 static void rsp_shv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFB) & 0xFFF];
-    x[2*0] = vt.s[0] >> 7;
-    x[2*1] = vt.s[1] >> 7;
-    x[2*2] = vt.s[2] >> 7;
-    x[2*3] = vt.s[3] >> 7;
-    x[2*4] = vt.s[4] >> 7;
-    x[2*5] = vt.s[5] >> 7;
-    x[2*6] = vt.s[6] >> 7;
-    x[2*7] = vt.s[7] >> 7;
-    debugi("shv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFB, INST_RS);
+    int i;
+    uint x = rs+INST_OFFQ;
+    for (i = 0; i < 8; i++) DMEM(x+2*i) = vt.s[i] >> 7;
+    debugi("shv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFQ, INST_RS);
 }
 
 static void rsp_sfv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFB) & 0xFFF];
-    x[4*0] = vt.s[INST_E+0] >> 7;
-    x[4*1] = vt.s[INST_E+1] >> 7;
-    x[4*2] = vt.s[INST_E+2] >> 7;
-    x[4*3] = vt.s[INST_E+3] >> 7;
-    debugi("sfv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFB, INST_RS);
+    int i;
+    uint x = rs+INST_OFFD;
+    for (i = 0; i < 4; i++) DMEM(x+4*i) = vt.s[i] >> 7;
+    debugi("sfv $v%d[%d], 0x%04X($%d)\n", INST_VT, INST_E, INST_OFFD, INST_RS);
 }
 
 static void rsp_swv(UNUSED u32 inst)
@@ -1581,16 +1553,16 @@ static void rsp_swv(UNUSED u32 inst)
 
 static void rsp_stv(u32 inst)
 {
-    u8 *x = &rsp_mem[(rs+INST_OFFB) & 0xFFF];
-    uint e = INST_E >> 1;
     int i;
+    uint x = rs+INST_OFFQ;
+    uint e = INST_E >> 1;
     for (i = 0; i < 8; i++)
     {
-        *x++ = rsp.vreg[INST_VT+e].b[2*i+(0^VX)];
-        *x++ = rsp.vreg[INST_VT+e].b[2*i+(1^VX)];
+        DMEM(x++) = rsp.vreg[INST_VT+e].b[2*i+(0^VX)];
+        DMEM(x++) = rsp.vreg[INST_VT+e].b[2*i+(1^VX)];
         e = (e+1) & 7;
     }
-    debugi("stv $v%d[%d], 0x%02X($%d)\n",INST_VT, INST_E, INST_OFFB, INST_RS);
+    debugi("stv $v%d[%d], 0x%02X($%d)\n",INST_VT, INST_E, INST_OFFQ, INST_RS);
 }
 
 static RSPCALL *const rsp_swc2_table[] =
@@ -1712,9 +1684,9 @@ void rsp_main(OSTask *task)
 #ifdef RSP_DEBUG
     int step = FALSE;
 #endif
-    byteswap(&rsp_mem[0x0FC0], task, sizeof(OSTask));
+    byteswap(&DMEM(0xFC0), task, sizeof(OSTask));
     byteswap(
-        &rsp_mem[0x1000],
+        &IMEM(0),
         &cpu_dram[task->ucode_boot],
         task->ucode_boot_size
     );
@@ -1722,19 +1694,19 @@ void rsp_main(OSTask *task)
     rsp.pc = 0;
     for (;;)
     {
-        u8 *x = &rsp_mem[0x1000 | (rsp.pc & 0xFFF)];
+        u8 *x = &rsp_mem[0x1000 | rsp.pc];
         u32 inst = x[0] << 24 | x[1] << 16 | x[2] << 8 | x[3];
         rsp.pc += 4;
 #if 0
-        if ((rsp.pc & 0xFFF) == 0x000) edebug("rsp: pc over 0x%08X\n", rsp.pc);
+        if (rsp.pc == 0x000) edebug("rsp: pc over\n");
 #else
-        if ((rsp.pc & 0xFFF) == 0x000) return;
+        if (rsp.pc == 0x000) return;
 #endif
         rsp.reg[0] = 0;
         rsp_op(inst);
 #ifdef RSP_DEBUG
 #if 0
-        if ((rsp.pc & 0xFFF) == 0x5C8 /*0x644*/) step = TRUE;
+        if (rsp.pc == 0x5C8 /*0x644*/) step = TRUE;
 #endif
         if (step)
         {

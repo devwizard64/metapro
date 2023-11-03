@@ -17,5 +17,5 @@ void lib_guPerspective(void)
     float f = *cpu_f32(sp+0x14);
     *cpu_u16(a1) = 0xFFFF;
     mtx_perspective(mf, fovy, aspect, n, f);
-    mtx_write(cpu_ptr(a0), &mf[0][0]);
+    mtx_wr(cpu_ptr(a0), &mf[0][0]);
 }

@@ -29,5 +29,5 @@ void lib_guOrtho(void)
 #else
     mtx_ortho(mf, l, r, b, t, n, f);
 #endif
-    mtx_write(cpu_ptr(a0), &mf[0][0]);
+    mtx_wr(cpu_ptr(a0), &mf[0][0]);
 }

@@ -26,7 +26,7 @@ static void g_mtx(u32 w0, u32 w1)
     else
 #endif
     {
-        mtx_read(&mf[0][0], gsp_addr(w1));
+        mtx_rd(&mf[0][0], gsp_addr(w1));
     }
 #ifdef GSP_F3D
     flag = w0 >> 16;
@@ -64,7 +64,7 @@ static void g_mtx(u32 w0, u32 w1)
         }
         gsp_flush_mm();
 #ifdef APP_UNK4
-        mtx_write(gsp_mtx, &MM[0][0]);
+        mtx_wr(gsp_mtx, &MM[0][0]);
 #endif
         gsp_new_light = TRUE;
     }

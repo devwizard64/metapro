@@ -19,8 +19,8 @@
     mtx_ortho(mf, _x-_w, _x+_w, b, t, n, f);                        \
 }
 
-extern void mtx_read(f32 *dst, const s16 *src);
-extern void mtx_write(s16 *dst, const f32 *src);
+extern void mtx_rd(f32 *dst, const s16 *src);
+extern void mtx_wr(s16 *dst, const f32 *src);
 extern void mtx_cat(f32 mf[4][4], f32 a[4][4], f32 b[4][4]);
 extern void mtx_identity(f32 mf[4][4]);
 extern void mtx_ortho(

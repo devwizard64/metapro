@@ -155,12 +155,12 @@ void *__wordswap(void *dst, const void *src, u32 size)
 typedef void *CPU_SWAP(void *dst, const void *src, u32 size);
 static CPU_SWAP *cpu_swap = __nullswap;
 
-void dma(void *dst, PTR src, u32 size)
+void cart_rd(void *dst, PTR src, u32 size)
 {
 #if defined(APP_DCALL) || defined(APP_CACHE)
     uint i;
 #endif
-    FILE *f;
+    FILE *fp;
 #ifdef APP_DCALL
     for (i = 0; i < lenof(dcall_ptr); i++)
     {
@@ -180,11 +180,11 @@ void dma(void *dst, PTR src, u32 size)
         }
     }
 #endif
-    if ((f = fopen(PATH_APP, "rb")) != NULL)
+    if ((fp = fopen(PATH_APP, "rb")) != NULL)
     {
-        fseek(f, src, SEEK_SET);
-        fread(dst, 1, size, f);
-        fclose(f);
+        fseek(fp, src, SEEK_SET);
+        fread(dst, 1, size, fp);
+        fclose(fp);
         cpu_swap(dst, dst, size);
     }
     else
@@ -197,14 +197,14 @@ void dma(void *dst, PTR src, u32 size)
 }
 
 #if EEPROM
-void eeprom_read(void *dst, uint src, u32 size)
+void eeprom_rd(void *dst, uint src, u32 size)
 {
-    FILE *f;
-    if ((f = fopen(PATH_EEPROM, "rb")) != NULL)
+    FILE *fp;
+    if ((fp = fopen(PATH_EEPROM, "rb")) != NULL)
     {
-        fseek(f, 8*src, SEEK_SET);
-        fread(dst, 1, size, f);
-        fclose(f);
+        fseek(fp, 8*src, SEEK_SET);
+        fread(dst, 1, size, fp);
+        fclose(fp);
         byteswap(dst, dst, size);
     }
     else
@@ -213,19 +213,19 @@ void eeprom_read(void *dst, uint src, u32 size)
     }
 }
 
-void eeprom_write(uint dst, const void *src, u32 size)
+void eeprom_wr(uint dst, const void *src, u32 size)
 {
-    FILE *f;
+    FILE *fp;
     if (
-        (f = fopen(PATH_EEPROM, "r+b")) != NULL ||
-        (f = fopen(PATH_EEPROM, "wb")) != NULL
+        (fp = fopen(PATH_EEPROM, "r+b")) != NULL ||
+        (fp = fopen(PATH_EEPROM, "wb")) != NULL
     )
     {
         char *data = malloc(size);
         byteswap(data, src, size);
-        fseek(f, 8*dst, SEEK_SET);
-        fwrite(data, 1, size, f);
-        fclose(f);
+        fseek(fp, 8*dst, SEEK_SET);
+        fwrite(data, 1, size, fp);
+        fclose(fp);
         free(data);
     }
     else
@@ -236,14 +236,14 @@ void eeprom_write(uint dst, const void *src, u32 size)
 #endif
 
 #ifdef SRAM
-void sram_read(void *dst, PTR src, u32 size)
+void sram_rd(void *dst, PTR src, u32 size)
 {
-    FILE *f;
-    if ((f = fopen(PATH_SRAM, "rb")) != NULL)
+    FILE *fp;
+    if ((fp = fopen(PATH_SRAM, "rb")) != NULL)
     {
-        fseek(f, src, SEEK_SET);
-        fread(dst, 1, size, f);
-        fclose(f);
+        fseek(fp, src, SEEK_SET);
+        fread(dst, 1, size, fp);
+        fclose(fp);
     }
     else
     {
@@ -251,17 +251,17 @@ void sram_read(void *dst, PTR src, u32 size)
     }
 }
 
-void sram_write(PTR dst, const void *src, u32 size)
+void sram_wr(PTR dst, const void *src, u32 size)
 {
-    FILE *f;
+    FILE *fp;
     if (
-        (f = fopen(PATH_SRAM, "r+b")) != NULL ||
-        (f = fopen(PATH_SRAM, "wb")) != NULL
+        (fp = fopen(PATH_SRAM, "r+b")) != NULL ||
+        (fp = fopen(PATH_SRAM, "wb")) != NULL
     )
     {
-        fseek(f, dst, SEEK_SET);
-        fwrite(src, 1, size, f);
-        fclose(f);
+        fseek(fp, dst, SEEK_SET);
+        fwrite(src, 1, size, fp);
+        fclose(fp);
     }
     else
     {
@@ -272,14 +272,14 @@ void sram_write(PTR dst, const void *src, u32 size)
 
 void cpu_init(void)
 {
-    FILE *f;
-    if ((f = fopen(PATH_APP, "rb")) != NULL)
+    FILE *fp;
+    if ((fp = fopen(PATH_APP, "rb")) != NULL)
     {
 #ifdef APP_CACHE
         uint i;
 #endif
         u32 mode;
-        fread(&mode, 1, sizeof(mode), f);
+        fread(&mode, 1, 4, fp);
         switch (mode)
         {
             case 0x40123780: cpu_swap = __byteswap; break;
@@ -290,13 +290,13 @@ void cpu_init(void)
         for (i = 0; i < lenof(cache_ptr); i++)
         {
             const CACHE *cache = &cache_table[i];
-            fseek(f, cache->addr, SEEK_SET);
+            fseek(fp, cache->addr, SEEK_SET);
             cache_ptr[i] = malloc(cache->size);
-            fread(cache_ptr[i], 1, cache->size, f);
+            fread(cache_ptr[i], 1, cache->size, fp);
             cpu_swap(cache_ptr[i], cache_ptr[i], cache->size);
         }
 #endif
-        fclose(f);
+        fclose(fp);
     }
     else
     {
@@ -314,14 +314,14 @@ void cpu_exit(void)
 
 void cpu_save(void)
 {
-    FILE *f;
-    if ((f = fopen(PATH_DRAM, "wb")) != NULL)
+    FILE *fp;
+    if ((fp = fopen(PATH_DRAM, "wb")) != NULL)
     {
-        fwrite(cpu_dram, 1, sizeof(cpu_dram), f);
+        fwrite(cpu_dram, 1, sizeof(cpu_dram), fp);
 #ifdef APP_DCALL
-        fwrite(dcall_ptr, 1, sizeof(dcall_ptr), f);
+        fwrite(dcall_ptr, 1, sizeof(dcall_ptr), fp);
 #endif
-        fclose(f);
+        fclose(fp);
     }
     else
     {
@@ -331,14 +331,14 @@ void cpu_save(void)
 
 void cpu_load(void)
 {
-    FILE *f;
-    if ((f = fopen(PATH_DRAM, "rb")) != NULL)
+    FILE *fp;
+    if ((fp = fopen(PATH_DRAM, "rb")) != NULL)
     {
-        fread(cpu_dram, 1, sizeof(cpu_dram), f);
+        fread(cpu_dram, 1, sizeof(cpu_dram), fp);
 #ifdef APP_DCALL
-        fread(dcall_ptr, 1, sizeof(dcall_ptr), f);
+        fread(dcall_ptr, 1, sizeof(dcall_ptr), fp);
 #endif
-        fclose(f);
+        fclose(fp);
 #if defined(GSP_F3D) || defined(GSP_F3DEX2)
         gsp_cache();
 #endif

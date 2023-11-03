@@ -98,10 +98,8 @@ extern void lib_osContInit(void);
 #define lib_osInvalDCache()
 extern void lib_osPiStartDma(void);
 #define lib_osInvalICache()
-#define lib_osEepromLongRead() \
-    {eeprom_read(cpu_ptr(a2), a1, a3); v0 = 0;}
-#define lib_osEepromLongWrite() \
-    {eeprom_write(a1, cpu_ptr(a2), a3); v0 = 0;}
+#define lib_osEepromLongRead() {eeprom_rd(cpu_ptr(a2), a1, a3); v0 = 0;}
+#define lib_osEepromLongWrite() {eeprom_wr(a1, cpu_ptr(a2), a3); v0 = 0;}
 extern void lib_guOrtho(void);
 extern void lib_guPerspective(void);
 #define lib_osGetTime() {v0 = 0; v1 = 0;}
@@ -144,8 +142,8 @@ LIB_SE(__osPiRelAccess)
 #define lib_osViGetCurrentFramebuffer() {v0 = video_buf;}
 #define lib_osGetThreadId() {v0 = th_find(a0)->id;}
 #define lib_osSetIntMask() {v0 = 0;}
-#define lib_osGetMemSize() {v0 = MIN(0x800000, CPU_DRAM_SIZE);}
-#define lib_osEPiReadIo() {dma(cpu_ptr(a2), a1, 4); v0 = 0;}
+#define lib_osGetMemSize() {v0 = MIN(CPU_DRAM_SIZE, 0x800000);}
+#define lib_osEPiReadIo() {cart_rd(cpu_ptr(a2), a1, 4); v0 = 0;}
 #define lib_osSetTimer()                                    \
 {                                                           \
     tm_create(                                              \
@@ -195,8 +193,7 @@ LIB_SE(UCZLJ00_801D2CB0)
 
 /* UNK4E00 */
 #define lib_osStopThread() {th_stop(th_find(a0));}
-#define lib_osEepromWrite() \
-    {eeprom_write(a1, cpu_ptr(a2), 8); v0 = 0;}
+#define lib_osEepromWrite() {eeprom_wr(a1, cpu_ptr(a2), 8); v0 = 0;}
 #define lib_osViGetNextFramebuffer() {v0 = video_buf;}
 #define lib_osEPiLinkHandle() {v0 = 0;}
 #define lib_osGetThreadPri() {v0 = th_find(a0)->pri;}

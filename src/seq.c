@@ -20,18 +20,18 @@ void seq_init(int argc, char *argv[])
     char *arg[4] = {0};
     const char *path = PATH_APP;
     int i;
-    FILE *f;
+    FILE *fp;
     size_t size;
     if (argc < 3)
     {
         fprintf(stderr, "usage: %s <seq> <bnk> [...]\n", argv[0]);
         exit(1);
     }
-    if ((f = fopen("config.txt", "r")) == NULL)
+    if ((fp = fopen("config.txt", "r")) == NULL)
     {
         eprint("could not read '%s'\n", "config.txt");
     }
-    while (fgets(str, sizeof(str), f) != NULL)
+    while (fgets(str, sizeof(str), fp) != NULL)
     {
         char *s;
         if ((s = strtok(str, "\t ")) == NULL) continue;
@@ -46,15 +46,15 @@ void seq_init(int argc, char *argv[])
             }
         }
     }
-    fclose(f);
+    fclose(fp);
     if (arg[0] != NULL) path = arg[0];
     if (arg[1] != NULL)
     {
-        if ((f = fopen(arg[1], "r")) == NULL)
+        if ((fp = fopen(arg[1], "r")) == NULL)
         {
             eprint("could not read '%s'\n", arg[1]);
         }
-        while (fgets(str, sizeof(str), f) != NULL)
+        while (fgets(str, sizeof(str), fp) != NULL)
         {
             char *s;
             u32 addr;
@@ -66,7 +66,7 @@ void seq_init(int argc, char *argv[])
             if      (arg[2] != NULL && strcmp(arg[2], s) == 0) ctl = addr;
             else if (arg[3] != NULL && strcmp(arg[3], s) == 0) tbl = addr;
         }
-        fclose(f);
+        fclose(fp);
     }
     else
     {
@@ -83,15 +83,15 @@ void seq_init(int argc, char *argv[])
             if (errno) eprint("invalid tbl: %s\n", arg[3]);
         }
     }
-    if ((f = fopen(path, "rb")) == NULL)
+    if ((fp = fopen(path, "rb")) == NULL)
     {
         eprint("could not read '%s'\n", path);
     }
-    fseek(f, 0, SEEK_END);
-    audio = malloc(size = ftell(f));
-    fseek(f, 0, SEEK_SET);
-    fread(audio, 1, size, f);
-    fclose(f);
+    fseek(fp, 0, SEEK_END);
+    audio = malloc(size = ftell(fp));
+    fseek(fp, 0, SEEK_SET);
+    fread(audio, 1, size, fp);
+    fclose(fp);
     __byteswap(audio, audio, size);
     for (i = 0; i < 4; i++) if (arg[i] != NULL) free(arg[i]);
     seq = argv[1];
@@ -146,15 +146,15 @@ void lib_osPiStartDma_seq(void)
     }
     else if (devAddr == _audioseqSegmentRomStart+0x10)
     {
-        FILE *f;
-        if ((f = fopen(seq, "rb")) != NULL)
+        FILE *fp;
+        if ((fp = fopen(seq, "rb")) != NULL)
         {
             size_t size;
-            fseek(f, 0, SEEK_END);
-            size = ftell(f);
-            fseek(f, 0, SEEK_SET);
-            fread(vAddr, 1, size, f);
-            fclose(f);
+            fseek(fp, 0, SEEK_END);
+            size = ftell(fp);
+            fseek(fp, 0, SEEK_SET);
+            fread(vAddr, 1, size, fp);
+            fclose(fp);
             __byteswap(vAddr, vAddr, size);
         }
         else

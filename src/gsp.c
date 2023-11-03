@@ -348,22 +348,22 @@ static GDP_TEXTURE *gdp_texture_table[] =
 
 static const f32 gdp_texture_shift_table[] =
 {
-    /*  0 */ 1.0F / (32 << 0),
-    /*  1 */ 1.0F / (32 << 1),
-    /*  2 */ 1.0F / (32 << 2),
-    /*  3 */ 1.0F / (32 << 3),
-    /*  4 */ 1.0F / (32 << 4),
-    /*  5 */ 1.0F / (32 << 5),
-    /*  6 */ 1.0F / (32 << 6),
-    /*  7 */ 1.0F / (32 << 7),
-    /*  8 */ 1.0F / (32 << 8),
-    /*  9 */ 1.0F / (32 << 9),
-    /* 10 */ 1.0F / (32 << 0),
-    /* -5 */ 1.0F / (32 >> 5),
-    /* -4 */ 1.0F / (32 >> 4),
-    /* -3 */ 1.0F / (32 >> 3),
-    /* -2 */ 1.0F / (32 >> 2),
-    /* -1 */ 1.0F / (32 >> 1),
+    /*  0 */ 1.0F / (32 <<  0),
+    /*  1 */ 1.0F / (32 <<  1),
+    /*  2 */ 1.0F / (32 <<  2),
+    /*  3 */ 1.0F / (32 <<  3),
+    /*  4 */ 1.0F / (32 <<  4),
+    /*  5 */ 1.0F / (32 <<  5),
+    /*  6 */ 1.0F / (32 <<  6),
+    /*  7 */ 1.0F / (32 <<  7),
+    /*  8 */ 1.0F / (32 <<  8),
+    /*  9 */ 1.0F / (32 <<  9),
+    /* 10 */ 1.0F / (32 << 10),
+    /* -5 */ 1.0F / (32 >>  5),
+    /* -4 */ 1.0F / (32 >>  4),
+    /* -3 */ 1.0F / (32 >>  3),
+    /* -2 */ 1.0F / (32 >>  2),
+    /* -1 */ 1.0F / (32 >>  1),
 };
 
 #if defined(__NATIVE__) || defined(__3DS__)
@@ -443,28 +443,25 @@ static void gdp_set_texture(
     uint cms, uint cmt
 )
 {
-    TXTCACHE *txtcache;
+    TXTCACHE *tc;
     GDP_TEXTURE *texture;
-    txtcache = gdp_txtcache;
-    while (txtcache != NULL)
+    for (tc = gdp_txtcache; tc != NULL; tc = tc->next)
     {
-        if (
-            txtcache->timg == timg && txtcache->fmt == fmt
-#ifndef __NDS__
-            && txtcache->tf == tf
+#ifdef __NDS__
+        if (tc->timg == timg && tc->fmt == fmt)
+#else
+        if (tc->timg == timg && tc->fmt == fmt && tc->tf == tf)
 #endif
-        )
         {
 #if defined(__NATIVE__) || defined(__NDS__) || defined(__3DS__)
-            glBindTexture(GL_TEXTURE_2D, txtcache->name);
+            glBindTexture(GL_TEXTURE_2D, tc->name);
 #endif
 #ifdef GEKKO
             GX_InvalidateTexAll();
-            GX_LoadTexObj(&txtcache->obj, GX_TEXMAP0);
+            GX_LoadTexObj(&tc->obj, GX_TEXMAP0);
 #endif
             return;
         }
-        txtcache = txtcache->next;
     }
     texture = gdp_texture_table[fmt];
     if (texture != NULL)
@@ -478,19 +475,25 @@ static void gdp_set_texture(
 #endif
 #endif
         TXTARG arg;
-        txtcache = malloc(sizeof(TXTCACHE));
-        txtcache->next = gdp_txtcache;
-        gdp_txtcache = txtcache;
-        txtcache->timg = timg;
-        txtcache->fmt  = fmt;
-        txtcache->tf   = tf;
+        tc = malloc(sizeof(TXTCACHE));
+        tc->next = gdp_txtcache;
+        gdp_txtcache = tc;
+        tc->timg = timg;
+        tc->fmt  = fmt;
+        tc->tf   = tf;
+#if defined(APP_UNSM) && defined(APP_J00)
+        if (tc->timg >= &cpu_dram[0x208100] && tc->timg < &cpu_dram[0x2211A0])
+        {
+            gsp_new_cache = TRUE;
+        }
+#endif
 #if defined(__NATIVE__) || defined(__NDS__) || defined(__3DS__)
         buf = texture(&arg, src, w, h);
 #ifndef __NDS__
         glFlush();
 #endif
-        glGenTextures(1, &txtcache->name);
-        glBindTexture(GL_TEXTURE_2D, txtcache->name);
+        glGenTextures(1, &tc->name);
+        glBindTexture(GL_TEXTURE_2D, tc->name);
 #ifdef __NDS__
         sizex = gdp_texture_sizeno(w);
         sizey = gdp_texture_sizeno(h);
@@ -529,16 +532,16 @@ static void gdp_set_texture(
         free(buf);
 #endif
 #ifdef GEKKO
-        txtcache->buf = texture(&arg, src, w, h);
+        tc->buf = texture(&arg, src, w, h);
         GX_InitTexObj(
-            &txtcache->obj, txtcache->buf, w, h, arg.fmt,
+            &tc->obj, tc->buf, w, h, arg.fmt,
             gdp_texture_cm_table[cms],
             gdp_texture_cm_table[cmt],
             GX_FALSE
         );
-        GX_InitTexObjFilterMode(&txtcache->obj, gdp_tf, gdp_tf);
+        GX_InitTexObjFilterMode(&tc->obj, gdp_tf, gdp_tf);
         GX_InvalidateTexAll();
-        GX_LoadTexObj(&txtcache->obj, GX_TEXMAP0);
+        GX_LoadTexObj(&tc->obj, GX_TEXMAP0);
 #endif
     }
     else
@@ -1743,22 +1746,25 @@ void gsp_update(PTR ucode, u32 *dl)
     f32 mf[4][4];
 #endif
 #ifdef APP_UNK4
-    if (gsp_new_cache)
+    gsp_new_cache = TRUE;
 #endif
+    if (gsp_new_cache)
     {
+        TXTCACHE *tc;
+        TXTCACHE *tcn;
         gsp_new_cache = FALSE;
-        while (gdp_txtcache != NULL)
+        for (tc = gdp_txtcache; tc != NULL; tc = tcn)
         {
-            TXTCACHE *txtcache = gdp_txtcache;
+            tcn = tc->next;
 #if defined(__NATIVE__) || defined(__NDS__) || defined(__3DS__)
-            glDeleteTextures(1, &txtcache->name);
+            glDeleteTextures(1, &tc->name);
 #endif
 #ifdef GEKKO
-            free(txtcache->buf);
+            free(tc->buf);
 #endif
-            gdp_txtcache = txtcache->next;
-            free(txtcache);
+            free(tc);
         }
+        gdp_txtcache = NULL;
     }
 #if defined(__NATIVE__) || defined(__3DS__)
     glViewport(0, 0, video_w, video_h);

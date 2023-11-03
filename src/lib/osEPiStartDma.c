@@ -18,8 +18,8 @@ void lib_osEPiStartDma(void)
         devAddr -= 0x08000000;
         switch (direction)
         {
-            case OS_READ:   sram_read(dramAddr, devAddr, size);     break;
-            case OS_WRITE:  sram_write(devAddr, dramAddr, size);    break;
+            case OS_READ:   sram_rd(dramAddr, devAddr, size);   break;
+            case OS_WRITE:  sram_wr(devAddr, dramAddr, size);   break;
         }
     }
     else
@@ -27,7 +27,7 @@ void lib_osEPiStartDma(void)
     {
         switch (direction)
         {
-            case OS_READ:   dma(dramAddr, devAddr, size);   break;
+            case OS_READ:   cart_rd(dramAddr, devAddr, size);   break;
         }
     }
     v0 = mesg_send(mq, 0, OS_MESG_NOBLOCK);

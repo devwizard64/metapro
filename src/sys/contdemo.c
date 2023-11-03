@@ -4,18 +4,18 @@ static size_t contdemo_size = 0;
 
 static void contdemo_init(void)
 {
-#ifdef INPUT_WRITE
+#ifdef CONT_WRITE
     contdemo_data = contdemo = malloc(4*30*60*60*2);
 #else
-    FILE *f;
-    if ((f = fopen(PATH_INPUT, "rb")) != NULL)
+    FILE *fp;
+    if ((fp = fopen(PATH_CONT, "rb")) != NULL)
     {
-        fseek(f, 0, SEEK_END);
-        contdemo_size = ftell(f);
-        fseek(f, 0, SEEK_SET);
+        fseek(fp, 0, SEEK_END);
+        contdemo_size = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
         contdemo_data = contdemo = malloc(contdemo_size);
-        fread(contdemo_data, 1, contdemo_size, f);
-        fclose(f);
+        fread(contdemo_data, 1, contdemo_size, fp);
+        fclose(fp);
     }
 #endif
 }
@@ -27,44 +27,44 @@ static void contdemo_exit(void)
 
 static void contdemo_save(void)
 {
-#ifdef INPUT_WRITE
-    FILE *f;
-    if ((f = fopen(PATH_INPUT, "wb")) != NULL)
+#ifdef CONT_WRITE
+    FILE *fp;
+    if ((fp = fopen(PATH_CONT, "wb")) != NULL)
     {
-        fwrite(contdemo_data, 1, contdemo-contdemo_data, f);
-        fclose(f);
+        fwrite(contdemo_data, 1, contdemo-contdemo_data, fp);
+        fclose(fp);
     }
     else
     {
-        wdebug("could not write '%s'\n", PATH_INPUT);
+        wdebug("could not write '%s'\n", PATH_CONT);
     }
 #endif
 }
 
 static void contdemo_load(void)
 {
-#ifdef INPUT_WRITE
-    FILE *f;
-    if ((f = fopen(PATH_INPUT, "rb")) != NULL)
+#ifdef CONT_WRITE
+    FILE *fp;
+    if ((fp = fopen(PATH_CONT, "rb")) != NULL)
     {
         size_t size;
-        fseek(f, 0, SEEK_END);
-        size = ftell(f);
-        fseek(f, 0, SEEK_SET);
-        fread(contdemo_data, 1, size, f);
-        fclose(f);
+        fseek(fp, 0, SEEK_END);
+        size = ftell(fp);
+        fseek(fp, 0, SEEK_SET);
+        fread(contdemo_data, 1, size, fp);
+        fclose(fp);
         contdemo = (u8 *)contdemo_data + size;
     }
     else
     {
-        wdebug("could not read '%s'\n", PATH_INPUT);
+        wdebug("could not read '%s'\n", PATH_CONT);
     }
 #endif
 }
 
 void contdemo_update(void)
 {
-#ifdef INPUT_WRITE
+#ifdef CONT_WRITE
     contdemo[0] = os_cont_pad[0].button >> 8;
     contdemo[1] = os_cont_pad[0].button >> 0;
     contdemo[2] = os_cont_pad[0].stick_x;
