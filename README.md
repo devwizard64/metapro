@@ -13,10 +13,10 @@ Install dependencies (Debian):
 ```
 apt install make python3 gcc
 ```
-For Win32 (cross compile): `apt install gcc-mingw-w64-i686`
-For OSX: Install SDL2 and OpenGL frameworks
-For GameCube/Wii: Install devkitPPC
-For DSi/3DS: Install devkitARM
+* For Win32 (cross compile): `apt install gcc-mingw-w64-i686`
+* For OSX: Install SDL2 and OpenGL frameworks
+* For GameCube/Wii: Install devkitPPC
+* For DSi/3DS: Install devkitARM
 
 Build:
 ```
