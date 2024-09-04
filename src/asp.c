@@ -15,21 +15,21 @@ typedef void ASPCALL(u32 w0, u32 w1);
 0x0000 - 0x02C0: asp_data.bin
 0x0320: asp_addr_table
 0x0360: asp_var
-    0x00: asp_dmemin
-    0x02: asp_dmemout
-    0x04: asp_count
-    0x06: asp_vol_l
-    0x08: asp_vol_r
-    0x0A: asp_aux_0
-    0x0C: asp_aux_1
-    0x0E: asp_aux_2
-    0x10: asp_voltgt_l
-    0x12: asp_volrate_l
-    0x16: asp_voltgt_r
-    0x18: asp_volrate_r
-    0x1C: asp_dry_gain
-    0x1E: asp_wet_gain
-    0x10: asp_loop
+	0x00: asp_dmemin
+	0x02: asp_dmemout
+	0x04: asp_count
+	0x06: asp_vol_l
+	0x08: asp_vol_r
+	0x0A: asp_aux_0
+	0x0C: asp_aux_1
+	0x0E: asp_aux_2
+	0x10: asp_voltgt_l
+	0x12: asp_volrate_l
+	0x16: asp_voltgt_r
+	0x18: asp_volrate_r
+	0x1C: asp_dry_gain
+	0x1E: asp_wet_gain
+	0x10: asp_loop
 0x0380: asp_alist
 0x04C0: asp_adpcm
 0x05C0: asp_sample
@@ -94,10 +94,10 @@ static s16 *asp_loop;       /* ? */
 static void *asp_addr(PTR addr)
 {
 #ifdef ASP_MAIN
-    return &asp_addr_table[addr >> 24 & 0xF][addr & 0xFFFFFF];
+	return &asp_addr_table[addr >> 24 & 0xF][addr & 0xFFFFFF];
 #endif
 #ifdef ASP_NAUDIO
-    return &cpu_dram[addr];
+	return &cpu_dram[addr];
 #endif
 }
 
@@ -111,7 +111,7 @@ static void a_spnoop(UNUSED u32 w0, UNUSED u32 w1)
 #ifdef ASP_MAIN2
 static void a_addmixer(UNUSED u32 w0, UNUSED u32 w1)
 {
-    edebug("A_ADDMIXER\n");
+	edebug("A_ADDMIXER\n");
 }
 #else
 #include "asp/a_envmixer.c" /* not verified */
@@ -124,12 +124,12 @@ static void a_addmixer(UNUSED u32 w0, UNUSED u32 w1)
 #ifdef ASP_NAUDIO
 static void a_mp3(UNUSED u32 w0, UNUSED u32 w1)
 {
-    edebug("A_MP3\n");
+	edebug("A_MP3\n");
 }
 
 static void a_mp3addy(UNUSED u32 w0, UNUSED u32 w1)
 {
-    edebug("A_MP3ADDY\n");
+	edebug("A_MP3ADDY\n");
 }
 #else
 #include "asp/a_segment.c"
@@ -139,7 +139,7 @@ static void a_mp3addy(UNUSED u32 w0, UNUSED u32 w1)
 #ifdef ASP_MAIN2
 static void a_duplicate(UNUSED u32 w0, UNUSED u32 w1)
 {
-    edebug("A_DUPLICATE\n");
+	edebug("A_DUPLICATE\n");
 }
 #else
 #include "asp/a_setvol.c"
@@ -153,7 +153,7 @@ static void a_duplicate(UNUSED u32 w0, UNUSED u32 w1)
 #ifdef ASP_MAIN2
 static void a_hilogain(UNUSED u32 w0, UNUSED u32 w1)
 {
-    edebug("A_HILOGAIN\n");
+	edebug("A_HILOGAIN\n");
 }
 #else
 static void a_polef(UNUSED u32 w0, UNUSED u32 w1)
@@ -166,12 +166,12 @@ static void a_polef(UNUSED u32 w0, UNUSED u32 w1)
 #ifdef ASP_MAIN2
 static void a_interl(UNUSED u32 w0, UNUSED u32 w1)
 {
-    edebug("A_INTERL\n");
+	edebug("A_INTERL\n");
 }
 
 static void a_envsetup1(UNUSED u32 w0, UNUSED u32 w1)
 {
-    edebug("A_ENVSETUP1\n");
+	edebug("A_ENVSETUP1\n");
 }
 
 #include "asp/a_envmixer.c"
@@ -179,90 +179,90 @@ static void a_envsetup1(UNUSED u32 w0, UNUSED u32 w1)
 
 static void a_envsetup2(UNUSED u32 w0, UNUSED u32 w1)
 {
-    edebug("A_ENVSETUP2\n");
+	edebug("A_ENVSETUP2\n");
 }
 #endif
 
 static ASPCALL *const asp_table[] =
 {
-    /* 0x00 */  a_spnoop,
-    /* 0x01 */  a_adpcm,
-    /* 0x02 */  a_clearbuff,
+	/* 0x00 */  a_spnoop,
+	/* 0x01 */  a_adpcm,
+	/* 0x02 */  a_clearbuff,
 #ifdef ASP_MAIN2
-    /* 0x03 */  a_spnoop,
-    /* 0x04 */  a_addmixer,
-    /* 0x05 */  a_spnoop,
+	/* 0x03 */  a_spnoop,
+	/* 0x04 */  a_addmixer,
+	/* 0x05 */  a_spnoop,
 #else
-    /* 0x03 */  a_envmixer,
-    /* 0x04 */  a_loadbuff,
-    /* 0x05 */  a_resample,
+	/* 0x03 */  a_envmixer,
+	/* 0x04 */  a_loadbuff,
+	/* 0x05 */  a_resample,
 #endif
-    /* 0x06 */  a_savebuff,
+	/* 0x06 */  a_savebuff,
 #ifdef ASP_NAUDIO
-    /* 0x07 */  a_mp3,
-    /* 0x08 */  a_mp3addy,
+	/* 0x07 */  a_mp3,
+	/* 0x08 */  a_mp3addy,
 #else
-    /* 0x07 */  a_segment,
-    /* 0x08 */  a_setbuff,
+	/* 0x07 */  a_segment,
+	/* 0x08 */  a_setbuff,
 #endif
 #ifdef ASP_MAIN2
-    /* 0x09 */  a_duplicate,
+	/* 0x09 */  a_duplicate,
 #else
-    /* 0x09 */  a_setvol,
+	/* 0x09 */  a_setvol,
 #endif
-    /* 0x0A */  a_dmemmove,
-    /* 0x0B */  a_loadadpcm,
-    /* 0x0C */  a_mixer,
-    /* 0x0D */  a_interleave,
+	/* 0x0A */  a_dmemmove,
+	/* 0x0B */  a_loadadpcm,
+	/* 0x0C */  a_mixer,
+	/* 0x0D */  a_interleave,
 #ifdef ASP_MAIN2
-    /* 0x0E */  a_hilogain,
+	/* 0x0E */  a_hilogain,
 #else
-    /* 0x0E */  a_polef,
+	/* 0x0E */  a_polef,
 #endif
-    /* 0x0F */  a_setloop,
+	/* 0x0F */  a_setloop,
 #ifdef ASP_MAIN2
-    /* 0x10 */  a_spnoop,
-    /* 0x11 */  a_interl,
-    /* 0x12 */  a_envsetup1,
-    /* 0x13 */  a_envmixer,
-    /* 0x14 */  a_loadbuff,
-    /* 0x15 */  a_savebuff,
-    /* 0x16 */  a_envsetup2,
-    /* 0x17 */  a_spnoop,
-    /* 0x18 */  a_hilogain,
-    /* 0x19 */  a_spnoop,
-    /* 0x1A */  a_duplicate,
-    /* 0x1B */  a_spnoop,
-    /* 0x1C */  a_spnoop,
-    /* 0x1D */  a_spnoop,
-    /* 0x1E */  a_spnoop,
-    /* 0x1F */  a_spnoop,
+	/* 0x10 */  a_spnoop,
+	/* 0x11 */  a_interl,
+	/* 0x12 */  a_envsetup1,
+	/* 0x13 */  a_envmixer,
+	/* 0x14 */  a_loadbuff,
+	/* 0x15 */  a_savebuff,
+	/* 0x16 */  a_envsetup2,
+	/* 0x17 */  a_spnoop,
+	/* 0x18 */  a_hilogain,
+	/* 0x19 */  a_spnoop,
+	/* 0x1A */  a_duplicate,
+	/* 0x1B */  a_spnoop,
+	/* 0x1C */  a_spnoop,
+	/* 0x1D */  a_spnoop,
+	/* 0x1E */  a_spnoop,
+	/* 0x1F */  a_spnoop,
 #endif
 };
 
 void asp_update(u32 *al, uint size)
 {
 #ifdef ASP_NAUDIO
-    while (size > 0)
+	while (size > 0)
 #else
-    do
+	do
 #endif
-    {
-        u32 w0 = al[0];
-        u32 w1 = al[1];
-        al += 2;
-        if (w0 >> 24 < lenof(asp_table))
-        {
-            asp_table[w0 >> 24](w0, w1);
-        }
-        else
-        {
-            wdebug("invalid Acmd {{0x%08" FMT_X ", 0x%08" FMT_X "}}\n", w0, w1);
-        }
-        size -= 8;
-    }
+	{
+		u32 w0 = al[0];
+		u32 w1 = al[1];
+		al += 2;
+		if (w0 >> 24 < lenof(asp_table))
+		{
+			asp_table[w0 >> 24](w0, w1);
+		}
+		else
+		{
+			wdebug("invalid Acmd {{0x%08" FMT_X ", 0x%08" FMT_X "}}\n", w0, w1);
+		}
+		size -= 8;
+	}
 #ifndef ASP_NAUDIO
-    while (size > 0);
+	while (size > 0);
 #endif
 }
 

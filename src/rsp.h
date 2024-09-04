@@ -5,27 +5,27 @@
 
 typedef union vreg
 {
-    s8  b[16];
-    s16 s[8];
-    u16 u[8];
+	s8  b[16];
+	s16 s[8];
+	u16 u[8];
 }
 VREG;
 
 typedef struct rsp
 {
-    s32 reg[32];
-    VREG vreg[32];
-    s64 acc[8];
-    u16 vcc;
-    u16 vco;
-    u8  vce;
-    s8  bcode;
-    u16 baddr;
-    u16 pc;
-    u16 mem_addr;
-    PTR dram_addr;
-    u32 rd_len;
-    u32 wr_len;
+	s32 reg[32];
+	VREG vreg[32];
+	s64 acc[8];
+	u16 vcc;
+	u16 vco;
+	u8  vce;
+	s8  bcode;
+	u16 baddr;
+	u16 pc;
+	u16 mem_addr;
+	PTR dram_addr;
+	u32 rd_len;
+	u32 wr_len;
 }
 RSP;
 

@@ -1,4 +1,4 @@
 static void g_load_ucode(UNUSED u32 w0, u32 w1)
 {
-    gsp_start(__ptr(gsp_addr(w1)), gsp_dl_stack[gsp_dl_index]);
+	gsp_start(__ptr(gsp_addr(w1)), gsp_dl_stack[gsp_dl_index]);
 }

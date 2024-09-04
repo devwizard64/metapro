@@ -43,11 +43,11 @@
 #if defined(__UNSMJ00_0021D7D0_C__) || \
     defined(__UNSME00_0021F4C0_C__) || \
     defined(__UNSMC03_0020AAF0_C__)
-#define __tlb(addr)                                             \
-(                                                               \
-    ((PTR)(addr) >= 0x04000000U && (PTR)(addr) < 0x04040000U) ? \
-    ((PTR)(addr) - (0x04000000U-0x00390000U)) :                 \
-    ((PTR)(addr) & 0x1FFFFFFF)                                  \
+#define __tlb(addr) \
+( \
+	((PTR)(addr) >= 0x04000000 && (PTR)(addr) < 0x04040000) ? \
+	((PTR)(addr) - (0x04000000-0x00390000)) : \
+	((PTR)(addr) & 0x1FFFFFFF) \
 )
 #else
 #if 0
@@ -67,83 +67,83 @@ extern PTR __tlb(PTR addr);
 #define cpu_u32(addr)   ((u32  *)&cpu_dram[__tlb(addr)^AX_W])
 #define cpu_f32(addr)   ((f32  *)&cpu_dram[__tlb(addr)^AX_W])
 
-#define __lwl(addr, val)                        \
-{                                               \
-    PTR _addr = addr;                           \
-    int _i = _addr & 3;                         \
-    _addr &= ~3;                                \
-    val &= cpu_lwl_mask[_i];                    \
-    val |= *cpu_u32(_addr) << cpu_l_shift[_i];  \
+#define __lwl(addr, val) \
+{ \
+	PTR _addr = addr; \
+	int _i = _addr & 3; \
+	_addr &= ~3; \
+	val &= cpu_lwl_mask[_i]; \
+	val |= *cpu_u32(_addr) << cpu_l_shift[_i];  \
 }
-#define __lwr(addr, val)                        \
-{                                               \
-    PTR _addr = addr;                           \
-    int _i = _addr & 3;                         \
-    _addr &= ~3;                                \
-    val &= cpu_lwr_mask[_i];                    \
-    val |= *cpu_u32(_addr) >> cpu_r_shift[_i];  \
+#define __lwr(addr, val) \
+{ \
+	PTR _addr = addr; \
+	int _i = _addr & 3; \
+	_addr &= ~3; \
+	val &= cpu_lwr_mask[_i]; \
+	val |= *cpu_u32(_addr) >> cpu_r_shift[_i];  \
 }
-#define __swl(addr, val)                        \
-{                                               \
-    PTR _addr = addr;                           \
-    u32 _val  = val;                            \
-    int _i = _addr & 3;                         \
-    _addr &= ~3;                                \
-    _val <<= cpu_l_shift[_i];                   \
-    _val |= *cpu_u32(_addr) & cpu_swl_mask[_i]; \
-    *cpu_u32(_addr) = _val;                     \
+#define __swl(addr, val) \
+{ \
+	PTR _addr = addr; \
+	u32 _val  = val; \
+	int _i = _addr & 3; \
+	_addr &= ~3; \
+	_val <<= cpu_l_shift[_i]; \
+	_val |= *cpu_u32(_addr) & cpu_swl_mask[_i]; \
+	*cpu_u32(_addr) = _val; \
 }
-#define __swr(addr, val)                        \
-{                                               \
-    PTR _addr = addr;                           \
-    u32 _val  = val;                            \
-    int _i = _addr & 3;                         \
-    _addr &= ~3;                                \
-    _val <<= cpu_r_shift[_i];                   \
-    _val |= *cpu_u32(_addr) & cpu_swr_mask[_i]; \
-    *cpu_u32(_addr) = _val;                     \
+#define __swr(addr, val) \
+{ \
+	PTR _addr = addr; \
+	u32 _val  = val; \
+	int _i = _addr & 3; \
+	_addr &= ~3; \
+	_val <<= cpu_r_shift[_i]; \
+	_val |= *cpu_u32(_addr) & cpu_swr_mask[_i]; \
+	*cpu_u32(_addr) = _val; \
 }
-#define __ld(addr, x)                                       \
-{                                                           \
-    x = (s64)*cpu_s32((addr)+0) << 32 | *cpu_u32((addr)+4); \
+#define __ld(addr, x) \
+{ \
+	x = (s64)*cpu_s32((addr)+0) << 32 | *cpu_u32((addr)+4); \
 }
-#define __sd(addr, x)                       \
-{                                           \
-    *cpu_s32((addr)+0) = (s64)(x) >> 32;    \
-    *cpu_s32((addr)+4) = (s64)(x) >>  0;    \
+#define __sd(addr, x) \
+{ \
+	*cpu_s32((addr)+0) = (s64)(x) >> 32; \
+	*cpu_s32((addr)+4) = (s64)(x) >>  0; \
 }
-#define __ldc1(addr, x)             \
-{                                   \
-    x.i[1^IX] = *cpu_s32((addr)+0); \
-    x.i[0^IX] = *cpu_s32((addr)+4); \
+#define __ldc1(addr, x) \
+{ \
+	x.i[1^IX] = *cpu_s32((addr)+0); \
+	x.i[0^IX] = *cpu_s32((addr)+4); \
 }
-#define __sdc1(addr, x)             \
-{                                   \
-    *cpu_s32((addr)+0) = x.i[1^IX]; \
-    *cpu_s32((addr)+4) = x.i[0^IX]; \
+#define __sdc1(addr, x) \
+{ \
+	*cpu_s32((addr)+0) = x.i[1^IX]; \
+	*cpu_s32((addr)+4) = x.i[0^IX]; \
 }
 
 typedef union reg
 {
-    s32 i[2];
-    u32 iu[2];
-    s64 ll;
-    u64 llu;
-    f32 f[2];
-    f64 d;
+	s32 i[2];
+	u32 iu[2];
+	s64 ll;
+	u64 llu;
+	f32 f[2];
+	f64 d;
 }
 REG;
 
 typedef struct cpu
 {
 #if CPU_ARG_LEN > 0
-    s32 arg[CPU_ARG_LEN];
+	s32 arg[CPU_ARG_LEN];
 #endif
 #if CPU_EXT_LEN > 0
-    s64 ext[CPU_EXT_LEN];
+	s64 ext[CPU_EXT_LEN];
 #endif
 #if CPU_REG_LEN > 0
-    REG reg[CPU_REG_LEN];
+	REG reg[CPU_REG_LEN];
 #endif
 }
 CPU;
@@ -152,8 +152,8 @@ extern const u32 cpu_lwl_mask[];
 extern const u32 cpu_lwr_mask[];
 extern const u32 cpu_swl_mask[];
 extern const u32 cpu_swr_mask[];
-extern const u8  cpu_l_shift[];
-extern const u8  cpu_r_shift[];
+extern const u8 cpu_l_shift[];
+extern const u8 cpu_r_shift[];
 
 extern u8 cpu_dram[CPU_DRAM_SIZE];
 extern CPU cpu;

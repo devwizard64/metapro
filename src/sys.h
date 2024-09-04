@@ -5,37 +5,38 @@
 
 #include "ultra64.h"
 
+#define TH_RESET        -1
 #define TH_QUEUE        1
 #define TH_BREAK        2
 #define TH_DESTROY      3
 
 typedef struct thread
 {
-    struct thread *lprev;
-    struct thread *lnext;
-    struct thread *qprev;
-    struct thread *qnext;
-    u8     *stack;
-    jmp_buf jmp;
-    CPU     cpu;
-    bool    init;
-    bool    ready;
-    bool    qlink;
-    PTR     addr;
-    PTR     entry;
-    s32     id;
-    s32     pri;
+	struct thread *lprev;
+	struct thread *lnext;
+	struct thread *qprev;
+	struct thread *qnext;
+	u8 *stack;
+	jmp_buf jmp;
+	CPU cpu;
+	bool init;
+	bool ready;
+	bool qlink;
+	PTR addr;
+	PTR entry;
+	s32 id;
+	s32 pri;
 }
 THREAD;
 
 typedef struct timer
 {
-    struct timer *prev;
-    struct timer *next;
-    PTR     addr;
-    u64     countdown;
-    u64     interval;
-    __OSEventState event;
+	struct timer *prev;
+	struct timer *next;
+	PTR addr;
+	u64 countdown;
+	u64 interval;
+	__OSEventState event;
 }
 TIMER;
 

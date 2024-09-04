@@ -47,7 +47,7 @@ ifneq ($(LLE),0)
 	FLAG    += -DLLE
 endif
 FLAG    += -Wall -Wextra
-WARN    := -Wno-uninitialized
+WARN    := -Wno-uninitialized -Wno-infinite-recursion
 
 CC      := gcc
 LD      := gcc

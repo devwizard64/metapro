@@ -21,18 +21,18 @@
 #define lib_osMapTLB()
 #define lib_osUnmapTLBAll()
 #define lib_osCreateMesgQueue() {mesg_create(cpu_ptr(a0), a1, a2);}
-#define lib_osSetEventMesg()        \
-{                                   \
-    __osEventStateTab[a0].mq  = a1; \
-    __osEventStateTab[a0].msg = a2; \
+#define lib_osSetEventMesg() \
+{ \
+	__osEventStateTab[a0].mq  = a1; \
+	__osEventStateTab[a0].msg = a2; \
 }
-#define lib_osViSetEvent()                      \
-{                                               \
-    __osEventStateTab[OS_EVENT_VI].mq  = a0;    \
-    __osEventStateTab[OS_EVENT_VI].msg = a1;    \
+#define lib_osViSetEvent() \
+{ \
+	__osEventStateTab[OS_EVENT_VI].mq  = a0; \
+	__osEventStateTab[OS_EVENT_VI].msg = a1; \
 }
 #define lib_osCreateThread() \
-    {th_create(a0, a1, a2, a3, *cpu_s32(sp+0x10), *cpu_s32(sp+0x14));}
+	{th_create(a0, a1, a2, a3, *cpu_s32(sp+0x10), *cpu_s32(sp+0x14));}
 #define lib_osRecvMesg() {v0 = mesg_recv(cpu_ptr(a0), a1, a2);}
 #define lib_osSpTaskLoad()
 extern void lib_osSpTaskStartGo(void);
@@ -47,53 +47,53 @@ extern void lib_osSpTaskStartGo(void);
 #define lib_osViSetSpecialFeatures()
 #define lib_osCreatePiManager()
 #define lib_osSetThreadPri() \
-    {th_find(a0)->pri = a1; th_yield(TH_QUEUE);}
+	{th_find(a0)->pri = a1; th_yield(TH_QUEUE);}
 extern void lib_osInitialize(void);
 #define lib_osViSwapBuffer() {video_buf = a0;}
 #define lib_osContStartReadData() \
-    {v0 = mesg_send(cpu_ptr(a0), 0, OS_MESG_NOBLOCK);}
+	{v0 = mesg_send(cpu_ptr(a0), 0, OS_MESG_NOBLOCK);}
 extern void lib_osContGetReadData(void);
 extern void lib_osContInit(void);
 #define lib_osEepromProbe() {v0 = EEPROM;}
-#define lib___ull_rem()                 \
-{                                       \
-    u64 _a = (u64)a0 << 32 | (u32)a1;   \
-    u64 _b = (u64)a2 << 32 | (u32)a3;   \
-    u64 _x = _a % _b;                   \
-    v0 = _x >> 32;                      \
-    v1 = _x >>  0;                      \
+#define lib___ull_rem() \
+{ \
+	u64 _a = (u64)a0 << 32 | (u32)a1; \
+	u64 _b = (u64)a2 << 32 | (u32)a3; \
+	u64 _x = _a % _b; \
+	v0 = _x >> 32; \
+	v1 = _x >>  0; \
 }
-#define lib___ull_div()                 \
-{                                       \
-    u64 _a = (u64)a0 << 32 | (u32)a1;   \
-    u64 _b = (u64)a2 << 32 | (u32)a3;   \
-    u64 _x = _a / _b;                   \
-    v0 = _x >> 32;                      \
-    v1 = _x >>  0;                      \
+#define lib___ull_div() \
+{ \
+	u64 _a = (u64)a0 << 32 | (u32)a1; \
+	u64 _b = (u64)a2 << 32 | (u32)a3; \
+	u64 _x = _a / _b; \
+	v0 = _x >> 32; \
+	v1 = _x >>  0; \
 }
-#define lib___ll_lshift()               \
-{                                       \
-    s64 _a = (s64)a0 << 32 | (u32)a1;   \
-    s64 _b = (s64)a2 << 32 | (u32)a3;   \
-    s64 _x = _a << _b;                  \
-    v0 = _x >> 32;                      \
-    v1 = _x >>  0;                      \
+#define lib___ll_lshift() \
+{ \
+	s64 _a = (s64)a0 << 32 | (u32)a1; \
+	s64 _b = (s64)a2 << 32 | (u32)a3; \
+	s64 _x = _a << _b; \
+	v0 = _x >> 32; \
+	v1 = _x >>  0; \
 }
-#define lib___ll_div()                  \
-{                                       \
-    s64 _a = (s64)a0 << 32 | (u32)a1;   \
-    s64 _b = (s64)a2 << 32 | (u32)a3;   \
-    s64 _x = _a / _b;                   \
-    v0 = _x >> 32;                      \
-    v1 = _x >>  0;                      \
+#define lib___ll_div() \
+{ \
+	s64 _a = (s64)a0 << 32 | (u32)a1; \
+	s64 _b = (s64)a2 << 32 | (u32)a3; \
+	s64 _x = _a / _b; \
+	v0 = _x >> 32; \
+	v1 = _x >>  0; \
 }
-#define lib___ll_mul()                  \
-{                                       \
-    s64 _a = (s64)a0 << 32 | (u32)a1;   \
-    s64 _b = (s64)a2 << 32 | (u32)a3;   \
-    s64 _x = _a * _b;                   \
-    v0 = _x >> 32;                      \
-    v1 = _x >>  0;                      \
+#define lib___ll_mul() \
+{ \
+	s64 _a = (s64)a0 << 32 | (u32)a1; \
+	s64 _b = (s64)a2 << 32 | (u32)a3; \
+	s64 _x = _a * _b; \
+	v0 = _x >> 32; \
+	v1 = _x >>  0; \
 }
 #define lib_osInvalDCache()
 extern void lib_osPiStartDma(void);
@@ -144,13 +144,13 @@ LIB_SE(__osPiRelAccess)
 #define lib_osSetIntMask() {v0 = 0;}
 #define lib_osGetMemSize() {v0 = MIN(CPU_DRAM_SIZE, 0x800000);}
 #define lib_osEPiReadIo() {cart_rd(cpu_ptr(a2), a1, 4); v0 = 0;}
-#define lib_osSetTimer()                                    \
-{                                                           \
-    tm_create(                                              \
-        a0, (u64)a2 << 32 | (u32)a3,                        \
-        (u64)*cpu_u32(sp+0x10) << 32 | *cpu_u32(sp+0x14),   \
-        *cpu_u32(sp+0x18), *cpu_u32(sp+0x1C)                \
-    );                                                      \
+#define lib_osSetTimer() \
+{ \
+	tm_create( \
+		a0, (u64)a2 << 32 | (u32)a3, \
+		(u64)*cpu_u32(sp+0x10) << 32 | *cpu_u32(sp+0x14), \
+		*cpu_u32(sp+0x18), *cpu_u32(sp+0x1C) \
+	); \
 }
 
 #define lib___osMotorAccess() {v0 = 0;}
@@ -158,7 +158,7 @@ LIB_SE(__osPiRelAccess)
 #define lib_osStopTimer() {tm_destroy(tm_find(a0));}
 #define lib_osAfterPreNMI() {v0 = 0;}
 #define lib_osContStartQuery() \
-    {v0 = mesg_send(cpu_ptr(a0), 0, OS_MESG_NOBLOCK);}
+	{v0 = mesg_send(cpu_ptr(a0), 0, OS_MESG_NOBLOCK);}
 extern void lib_osContGetQuery(void);
 LIB_SE(__osGetActiveQueue)
 LIB_SE(osDpGetStatus)
